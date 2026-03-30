@@ -100,3 +100,6 @@ InitTestScene*.unity*
 
 # MacOS
 .DS_Store
+
+# JetBrains
+.idea/
