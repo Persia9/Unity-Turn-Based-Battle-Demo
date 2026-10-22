@@ -3,7 +3,7 @@
 ## 概要
 
 本プロジェクトは、Unity を用いた 1vs1 のターン制バトルデモです。
-Zenject / UniTask / R3 / MessagePipe / MasterMemory / Wwise / Addressables を組み合わせ、
+Zenject / UniTask / R3 / MessagePipe / MasterMemory / Addressables を組み合わせ、
 実務を意識したクライアントアーキテクチャで構成しています。
 
 本デモでは、ゲームフロー自体はシンプルに保ちつつ、
@@ -14,7 +14,6 @@ Zenject / UniTask / R3 / MessagePipe / MasterMemory / Wwise / Addressables を�
 * UI を定義駆動で生成・配置
 * マスターデータを MasterMemory で管理
 * モジュール間通知を MessagePipe で疎結合化
-* 音響基盤を Wwise で抽象化
 * データ配布と更新を Addressables で分割管理
 
 ---
@@ -47,13 +46,12 @@ Zenject / UniTask / R3 / MessagePipe / MasterMemory / Wwise / Addressables を�
                ▼                             ▼
 ┌──────────────────────────────┐  ┌──────────────────────────────┐
 │        Infrastructure        │  │          Installers          │
-│  Asset / UI / Audio / Data   │  │  Zenject Composition Root    │
+│  Asset / UI / Data           │  │  Zenject Composition Root    │
 │  Message / Save / Scene      │  │  ProjectInstaller            │
 │                              │  │  SceneInstaller              │
 │  - Addressables              │  │  UIInstaller                 │
 │  - MasterMemory              │  └──────────────────────────────┘
 │  - MessagePipe               │
-│  - Wwise                     │
 └──────────────────────────────┘
 ```
 
@@ -77,7 +75,6 @@ Zenject / UniTask / R3 / MessagePipe / MasterMemory / Wwise / Addressables を�
 * Unity API
 * Zenject
 * Addressables
-* Wwise
 * MessagePipe
 
 つまり、**もっとも純度の高いロジック層**です。
@@ -92,7 +89,7 @@ Domain を直接 UI から呼ばず、UseCase を経由することで、
 
 * StartBattleUseCase
 * AttackUseCase
-* ResultPopupOpenUseCase
+* PlayPlayerTurnUseCase（プレイヤー行動から敵行動までの進行）
 
 ### 4. Infrastructure
 
@@ -104,7 +101,6 @@ Domain を直接 UI から呼ばず、UseCase を経由することで、
 
 * AssetService（Addressables）
 * UIService / PopupService
-* AudioService（Wwise）
 * MasterDataRepository（MasterMemory）
 * Messaging（MessagePipe）
 * Save / Scene
@@ -200,9 +196,6 @@ MasterMemory を利用し、マスターデータを分割して管理してい�
 
   * UIMaster
 
-* master_audio.bytes
-
-  * AudioEventMaster
 
 ### 分割理由
 
@@ -224,27 +217,11 @@ MasterMemory の `MemoryDatabase` として利用します。
 * BattleStarted
 * DamageApplied
 * BattleFinished
-* PlaySeRequested
 * OpenPopupRequested
 
 これにより、
-UI、Audio、Log などの機能を直接参照せずに連携でき、
+UI、Log などの機能を直接参照せずに連携でき、
 **疎結合な構成**を維持できます。
-
----
-
-## オーディオ方針
-
-オーディオ再生は Wwise を直接各所から呼ばず、
-`IAudioService` を介して抽象化しています。
-
-これにより、
-
-* 実装差し替えが容易
-* 業務ロジックと音響実装を分離できる
-* テスト時にダミー実装へ置き換え可能
-
-という利点があります。
 
 ---
 
@@ -257,7 +234,6 @@ Assets/
 ├─ Application
 ├─ Infrastructure
 │  ├─ Asset
-│  ├─ Audio
 │  ├─ MasterData
 │  ├─ Messaging
 │  ├─ Scene
@@ -280,7 +256,7 @@ Assets/
 ```text
 BattleHudView
   ↓ ボタン入力
-BattleViewModel
+PlayPlayerTurnUseCase
   ↓
 AttackUseCase
   ↓
@@ -289,9 +265,8 @@ BattleSystem
 DamageApplied を Publish
   ↓
 - BattleViewModel が HP を更新
-- AudioHandler が SE 再生要求を処理
 - LogHandler がログを追加
-- 必要に応じて ResultPopup を開く
+- BattleFinished を受けた Presenter が ResultPopup を開く
 ```
 
 このように、入力、業務フロー、純ロジック、通知、表示更新を分離しています。
@@ -306,7 +281,7 @@ DamageApplied を Publish
 * 拡張しやすいこと
 * 依存関係が明確であること
 * 実案件に近い説明ができること
-* UI / Audio / Data / Logic が混ざらないこと
+* UI / Data / Logic が混ざらないこと
 
 そのため、従来の「巨大な Manager を中心にした構成」ではなく、
 責務ごとにサービスと層を分けた構成を採用しています。

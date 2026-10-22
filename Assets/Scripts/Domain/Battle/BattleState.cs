@@ -13,6 +13,10 @@ namespace Domain.Battle
 
         public void Initialize(BattleUnitSnapshot player, BattleUnitSnapshot enemy)
         {
+            if (player.MaxHp <= 0 || player.Hp <= 0 || player.Hp > player.MaxHp)
+                throw new ArgumentOutOfRangeException(nameof(player));
+            if (enemy.MaxHp <= 0 || enemy.Hp <= 0 || enemy.Hp > enemy.MaxHp)
+                throw new ArgumentOutOfRangeException(nameof(enemy));
             Player = player;
             Enemy = enemy;
             CurrentTurn = TurnOwner.Player;
@@ -23,6 +27,10 @@ namespace Domain.Battle
 
         public void ApplyDamage(BattleSide targetSide, int damage)
         {
+            if (TurnCount == 0) throw new InvalidOperationException("Battle is not initialized.");
+            if (damage < 0) throw new ArgumentOutOfRangeException(nameof(damage));
+            if (targetSide != BattleSide.Player && targetSide != BattleSide.Enemy)
+                throw new ArgumentOutOfRangeException(nameof(targetSide));
             if (IsFinished) throw new InvalidOperationException("Battle already finished.");
 
             if (targetSide == BattleSide.Player)

@@ -442,7 +442,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1652223e2ade8fa48a3c14a6908fc86d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Presentation.Battle.BattleHudView
+  m_EditorClassIdentifier: BattleDemo.Runtime::Presentation.Battle.BattleHudView
   _attackButton: {fileID: 4069661801254584820}
   _turnText: {fileID: 8541659608970743502}
   _playerHpText: {fileID: 7308575735604151851}

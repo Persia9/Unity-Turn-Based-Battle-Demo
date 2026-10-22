@@ -1,0 +1,15 @@
+{
+  "name": "BattleDemo.Application.Tests",
+  "references": [
+    "BattleDemo.Runtime",
+    "BattleDemo.Domain",
+    "UniTask",
+    "MessagePipe"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

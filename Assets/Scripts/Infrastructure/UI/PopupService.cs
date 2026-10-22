@@ -5,18 +5,19 @@ namespace Infrastructure.UI
     public sealed class PopupService : IPopupService
     {
         private readonly IUIService _uiService;
+        private readonly IUIDefinitionRepository _definitions;
 
-        public PopupService(IUIService uiService)
+        public PopupService(IUIService uiService, IUIDefinitionRepository definitions)
         {
             _uiService = uiService;
+            _definitions = definitions;
         }
 
         public UniTask<TView> OpenPopup<TView, TContext>(string uiId, TContext context)
             where TView : UIView, IUIContextReceiver<TContext>
         {
-            // 通常の UI と異なる振る舞い
-            // todo
-            
+            if (_definitions.Get(uiId).Type != UIType.Popup)
+                throw new System.InvalidOperationException($"{uiId} is not a popup.");
             return _uiService.Open<TView, TContext>(uiId, context);
         }
 

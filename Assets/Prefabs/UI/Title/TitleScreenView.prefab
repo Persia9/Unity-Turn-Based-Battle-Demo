@@ -524,7 +524,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3324e9402029ed14188c10682a15cd27, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Presentation.Title.TitleScreenView
+  m_EditorClassIdentifier: BattleDemo.Runtime::Presentation.Title.TitleScreenView
   _startButton: {fileID: 7500211904427594081}
 --- !u!1 &8491171009732700421
 GameObject:

@@ -370,7 +370,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28340c8708a79594b879be445d6e0cb6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Infrastructure.UI.UIRoot
+  m_EditorClassIdentifier: BattleDemo.Runtime::Infrastructure.UI.UIRoot
   _hudRoot: {fileID: 3362933860469972471}
   _screenRoot: {fileID: 8562121378790371983}
   _popupRoot: {fileID: 5338134628637497710}

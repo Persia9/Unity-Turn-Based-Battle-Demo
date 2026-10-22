@@ -73,4 +73,4 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 33cce082e61f6f04ab7ca4e9e75c339f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Installers.ProjectInstaller
+  m_EditorClassIdentifier: BattleDemo.Runtime::Installers.ProjectInstaller

@@ -8,81 +8,52 @@ namespace Application.UseCases
 {
     public sealed class AttackUseCase
     {
-        private readonly IBattleSession _battleSession;
-        private readonly BattleSystem _battleSystem;
-        private readonly ISkillRepository _skillRepository;
-        private readonly ICharacterRepository _characterRepository;
-        private readonly IPublisher<DamageAppliedMessage> _damagePublisher;
-        private readonly IPublisher<TurnChangedMessage> _turnPublisher;
-        private readonly IPublisher<BattleFinishedMessage> _finishPublisher;
-        private readonly IPublisher<PlaySeRequestedMessage> _sePublisher;
+        private readonly IBattleSession _session;
+        private readonly BattleSystem _rules;
+        private readonly ISkillRepository _skills;
+        private readonly ICharacterRepository _characters;
+        private readonly IPublisher<DamageAppliedMessage> _damage;
+        private readonly IPublisher<TurnChangedMessage> _turn;
+        private readonly IPublisher<BattleFinishedMessage> _finish;
+        private bool _executing;
 
-        public AttackUseCase(
-            IBattleSession battleSession,
-            BattleSystem battleSystem,
-            ISkillRepository skillRepository,
-            ICharacterRepository characterRepository,
-            IPublisher<DamageAppliedMessage> damagePublisher,
-            IPublisher<TurnChangedMessage> turnPublisher,
-            IPublisher<BattleFinishedMessage> finishPublisher,
-            IPublisher<PlaySeRequestedMessage> sePublisher)
+        public AttackUseCase(IBattleSession battleSession, BattleSystem battleSystem,
+            ISkillRepository skillRepository, ICharacterRepository characterRepository,
+            IPublisher<DamageAppliedMessage> damagePublisher, IPublisher<TurnChangedMessage> turnPublisher,
+            IPublisher<BattleFinishedMessage> finishPublisher)
         {
-            _battleSession = battleSession;
-            _battleSystem = battleSystem;
-            _skillRepository = skillRepository;
-            _characterRepository = characterRepository;
-            _damagePublisher = damagePublisher;
-            _turnPublisher = turnPublisher;
-            _finishPublisher = finishPublisher;
-            _sePublisher = sePublisher;
+            _session = battleSession; _rules = battleSystem; _skills = skillRepository;
+            _characters = characterRepository; _damage = damagePublisher;
+            _turn = turnPublisher; _finish = finishPublisher;
         }
 
-        public void ExecutePlayerAttack()
+        public bool ExecutePlayerAttack() => Execute(TurnOwner.Player, BattleSide.Enemy);
+        public bool ExecuteEnemyAttack() => Execute(TurnOwner.Enemy, BattleSide.Player);
+
+        private bool Execute(TurnOwner actor, BattleSide target)
         {
-            var state = _battleSession.State;
-            if (state.IsFinished || state.CurrentTurn != TurnOwner.Player) return;
-
-            var character = _characterRepository.Get(state.Player.CharacterId);
-            var skill = _skillRepository.Get(character.DefaultSkillId);
-
-            var damage = _battleSystem.CalculateDamage(skill.Power);
-            state.ApplyDamage(BattleSide.Enemy, damage);
-
-            _sePublisher.Publish(new PlaySeRequestedMessage(skill.SeEventId));
-            _damagePublisher.Publish(new DamageAppliedMessage(BattleSide.Enemy, damage, state.Enemy.Hp));
-
-            if (state.IsFinished)
+            var state = _session.State;
+            if (_executing || state.TurnCount == 0 || state.IsFinished || state.CurrentTurn != actor) return false;
+            _executing = true;
+            try
             {
-                _finishPublisher.Publish(new BattleFinishedMessage(state.Winner.Value));
-                return;
+                var attacker = actor == TurnOwner.Player ? state.Player : state.Enemy;
+                var character = _characters.Get(attacker.CharacterId);
+                var skill = _skills.Get(character.DefaultSkillId);
+                var damage = _rules.CalculateDamage(skill.Power);
+                state.ApplyDamage(target, damage);
+                var hp = target == BattleSide.Player ? state.Player.Hp : state.Enemy.Hp;
+                _damage.Publish(new DamageAppliedMessage(target, damage, hp));
+                if (state.IsFinished)
+                    _finish.Publish(new BattleFinishedMessage(state.Winner.Value));
+                else
+                {
+                    state.NextTurn();
+                    _turn.Publish(new TurnChangedMessage(state.CurrentTurn, state.TurnCount));
+                }
+                return true;
             }
-
-            state.NextTurn();
-            _turnPublisher.Publish(new TurnChangedMessage(state.CurrentTurn, state.TurnCount));
-        }
-
-        public void ExecuteEnemyAttack()
-        {
-            var state = _battleSession.State;
-            if (state.IsFinished || state.CurrentTurn != TurnOwner.Enemy) return;
-
-            var character = _characterRepository.Get(state.Enemy.CharacterId);
-            var skill = _skillRepository.Get(character.DefaultSkillId);
-
-            var damage = _battleSystem.CalculateDamage(skill.Power);
-            state.ApplyDamage(BattleSide.Player, damage);
-
-            _sePublisher.Publish(new PlaySeRequestedMessage(skill.SeEventId));
-            _damagePublisher.Publish(new DamageAppliedMessage(BattleSide.Player, damage, state.Player.Hp));
-
-            if (state.IsFinished)
-            {
-                _finishPublisher.Publish(new BattleFinishedMessage(state.Winner.Value));
-                return;
-            }
-
-            state.NextTurn();
-            _turnPublisher.Publish(new TurnChangedMessage(state.CurrentTurn, state.TurnCount));
+            finally { _executing = false; }
         }
     }
 }

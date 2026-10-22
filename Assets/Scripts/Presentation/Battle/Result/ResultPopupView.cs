@@ -2,6 +2,9 @@ using Infrastructure.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Application.UseCases;
+using Cysharp.Threading.Tasks;
+using Zenject;
 
 namespace Presentation.Battle.Result
 {
@@ -11,6 +14,7 @@ namespace Presentation.Battle.Result
         [SerializeField] private Button _closeButton;
 
         private ResultPopupContext _context;
+        [Inject] private ReturnToTitleUseCase _returnToTitle;
 
         public void SetContext(ResultPopupContext context)
         {
@@ -22,15 +26,16 @@ namespace Presentation.Battle.Result
             _resultText.text = _context.IsWin ? "Victory" : "Defeat";
             _closeButton.onClick.AddListener(OnCloseClicked);
         }
-        
+
         public override void OnClosed()
         {
             _closeButton.onClick.RemoveListener(OnCloseClicked);
         }
-        
+
         private void OnCloseClicked()
         {
-            
+            _closeButton.interactable = false;
+            _returnToTitle.Execute().Forget();
         }
     }
 }

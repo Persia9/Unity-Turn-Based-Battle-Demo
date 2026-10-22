@@ -19,8 +19,22 @@ namespace Infrastructure.UI
         public async UniTask<T> Create<T>(string prefabKey) where T : UIView
         {
             var prefab = await _assetService.Load<GameObject>(prefabKey);
-            var instance = _container.InstantiatePrefab(prefab);
-            return instance.GetComponent<T>();
+            GameObject instance = null;
+            try
+            {
+                instance = _container.InstantiatePrefab(prefab);
+                var view = instance.GetComponent<T>();
+                if (view == null) throw new System.InvalidOperationException($"{prefabKey} has no {typeof(T).Name}.");
+                // Keep the loaded prefab alive for as long as its clone exists.
+                instance.AddComponent<UIViewAssetLease>().Initialize(_assetService, prefab);
+                return view;
+            }
+            catch
+            {
+                if (instance != null) Object.Destroy(instance);
+                await _assetService.Release(prefab);
+                throw;
+            }
         }
     }
 }

@@ -29,7 +29,10 @@ namespace Presentation.Title
 
         private async UniTask Run()
         {
-            await _startBattleUseCase.Execute(1);
+            if (!_startButton.interactable) return;
+            _startButton.interactable = false;
+            try { await _startBattleUseCase.Execute(1); }
+            finally { if (this != null) _startButton.interactable = true; }
         }
     }
 }

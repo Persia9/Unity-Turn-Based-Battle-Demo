@@ -10,6 +10,5 @@ namespace Infrastructure.MasterData.Masters
         [PrimaryKey] public int Id { get; set; }
         public string Name { get; set; }
         public int Power { get; set; }
-        public string SeEventId { get; set; }
     }
 }

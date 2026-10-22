@@ -20,14 +20,16 @@ namespace Presentation.Battle
         [SerializeField] private TMP_Text _logText;
 
         [Inject] private BattleViewModel _viewModel;
-        [Inject] private AttackUseCase _attackUseCase;
-        [Inject] private EnemyTurnRunner _enemyTurnRunner;
+        [Inject] private PlayPlayerTurnUseCase _playTurn;
         [Inject] private IBattleSession _battleSession;
 
-        private readonly CompositeDisposable _disposables = new();
+        private CompositeDisposable _disposables;
+        private System.Threading.CancellationTokenSource _turnCancellation;
 
         public override void OnOpened()
         {
+            _disposables = new CompositeDisposable();
+            _turnCancellation = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
             _attackButton.onClick.AddListener(OnAttackClicked);
 
             _viewModel.TurnText.Subscribe(x => _turnText.text = x).AddTo(_disposables);
@@ -44,14 +46,18 @@ namespace Presentation.Battle
             _viewModel.EnemyMaxHp.Value = state.Enemy.MaxHp;
             _viewModel.EnemyHp.Value = state.Enemy.Hp;
             _viewModel.TurnCount.Value = state.TurnCount;
-            _viewModel.TurnText.Value = $"Turn {state.TurnCount} / Player";
+            _viewModel.CanPlayerAct.Value = !state.IsFinished && state.CurrentTurn == TurnOwner.Player;
+            _viewModel.TurnText.Value = $"Turn {state.TurnCount} / {state.CurrentTurn}";
             _viewModel.AppendLog("Battle Start");
         }
 
         public override void OnClosed()
         {
             _attackButton.onClick.RemoveListener(OnAttackClicked);
-            _disposables.Dispose();
+            _disposables?.Dispose();
+            _turnCancellation?.Cancel();
+            _turnCancellation?.Dispose();
+            _turnCancellation = null;
         }
 
         private void RefreshPlayerHp()
@@ -66,16 +72,9 @@ namespace Presentation.Battle
 
         private void OnAttackClicked()
         {
-            _attackUseCase.ExecutePlayerAttack();
-            if (_battleSession.State.CurrentTurn == TurnOwner.Enemy && !_battleSession.State.IsFinished)
-            {
-                RunEnemyTurn().Forget();
-            }
+            _playTurn.Execute(_turnCancellation.Token).Forget();
         }
 
-        private async UniTask RunEnemyTurn()
-        {
-            await _enemyTurnRunner.RunAsync();
-        }
+        private void OnDestroy() => OnClosed();
     }
 }

@@ -49,7 +49,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b3fb9b3f05d25904894305e5df25e9ef, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Presentation.Battle.Result.ResultPopupView
+  m_EditorClassIdentifier: BattleDemo.Runtime::Presentation.Battle.Result.ResultPopupView
   _resultText: {fileID: 6755044407546894148}
   _closeButton: {fileID: 2985586001230976093}
 --- !u!1 &1949293824162313917

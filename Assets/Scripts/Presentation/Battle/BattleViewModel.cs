@@ -3,7 +3,7 @@ using R3;
 
 namespace Presentation.Battle
 {
-    public sealed class BattleViewModel
+    public sealed class BattleViewModel : System.IDisposable
     {
         public ReactiveProperty<int> PlayerHp { get; } = new(0);
         public ReactiveProperty<int> PlayerMaxHp { get; } = new(0);
@@ -19,7 +19,13 @@ namespace Presentation.Battle
         public void AppendLog(string log)
         {
             _logs.Add(log);
+            if (_logs.Count > 40) _logs.RemoveAt(0);
             LogText.Value = string.Join("\n", _logs);
+        }
+        public void Dispose()
+        {
+            PlayerHp.Dispose(); PlayerMaxHp.Dispose(); EnemyHp.Dispose(); EnemyMaxHp.Dispose();
+            TurnCount.Dispose(); TurnText.Dispose(); CanPlayerAct.Dispose(); LogText.Dispose();
         }
     }
 }

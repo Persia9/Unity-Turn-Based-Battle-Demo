@@ -10,6 +10,8 @@ namespace Installers
 
         public override void InstallBindings()
         {
+            Container.Bind<UIRegistry>().AsSingle();
+            Container.Bind<IUIViewFactory>().To<UIViewFactory>().AsSingle();
             Container.Bind<IUILayerService>()
                 .To<UILayerService>()
                 .AsSingle()
@@ -20,13 +22,10 @@ namespace Installers
                     _uiRoot.OverlayRoot,
                     _uiRoot.TopRoot);
 
-            Container.Bind<IUIService>().To<UIService>().AsSingle();
+            Container.BindInterfacesTo<UIService>().AsSingle();
             Container.Bind<IPopupService>().To<PopupService>().AsSingle();
             Container.Bind<IScreenService>().To<ScreenService>().AsSingle();
 
-            // Container.Bind<OpenResultPopupUseCase>().AsSingle();
-            //
-            // Container.BindInterfacesAndSelfTo<BattleEventPresenter>().AsSingle();
         }
     }
 }

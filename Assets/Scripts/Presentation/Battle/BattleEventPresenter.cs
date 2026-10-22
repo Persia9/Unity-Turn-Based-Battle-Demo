@@ -1,6 +1,7 @@
 using System;
 using Application.Messages;
-using Application.UseCases;
+using Infrastructure.UI;
+using Presentation.Battle.Result;
 using Cysharp.Threading.Tasks;
 using Domain.Battle;
 using MessagePipe;
@@ -22,7 +23,7 @@ namespace Presentation.Battle
         private IDisposable _d4;
 
         private readonly BattleViewModel _viewModel;
-        private readonly OpenResultPopupUseCase _openResultPopupUseCase;
+        private readonly IPopupService _popupService;
 
         public BattleEventPresenter(
             ISubscriber<BattleStartedMessage> battleStarted,
@@ -30,14 +31,14 @@ namespace Presentation.Battle
             ISubscriber<TurnChangedMessage> turnChanged,
             ISubscriber<BattleFinishedMessage> battleFinished,
             BattleViewModel viewModel,
-            OpenResultPopupUseCase openResultPopupUseCase)
+            IPopupService popupService)
         {
             _battleStarted = battleStarted;
             _damageApplied = damageApplied;
             _turnChanged = turnChanged;
             _battleFinished = battleFinished;
             _viewModel = viewModel;
-            _openResultPopupUseCase = openResultPopupUseCase;
+            _popupService = popupService;
         }
 
         public void Initialize()
@@ -80,7 +81,8 @@ namespace Presentation.Battle
         {
             _viewModel.CanPlayerAct.Value = false;
             _viewModel.AppendLog($"Battle finished. Winner: {message.Winner}");
-            _openResultPopupUseCase.Execute(message.Winner == BattleSide.Player).Forget();
+            _popupService.OpenPopup<ResultPopupView, ResultPopupContext>(
+                "ResultPopup", new ResultPopupContext(message.Winner == BattleSide.Player)).Forget();
         }
 
         public void Dispose()

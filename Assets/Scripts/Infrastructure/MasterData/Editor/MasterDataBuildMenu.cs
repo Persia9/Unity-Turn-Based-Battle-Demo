@@ -22,8 +22,8 @@ namespace Infrastructure.MasterData.Editor
             });
             coreBuilder.Append(new[]
             {
-                new SkillMaster { Id = 1, Name = "Slash", Power = 20, SeEventId = "se_attack" },
-                new SkillMaster { Id = 2, Name = "Bite", Power = 15, SeEventId = "se_damage" },
+                new SkillMaster { Id = 1, Name = "Slash", Power = 20 },
+                new SkillMaster { Id = 2, Name = "Bite", Power = 15 },
             });
             coreBuilder.Append(new[]
             {
@@ -50,18 +50,8 @@ namespace Infrastructure.MasterData.Editor
                 },
             });
 
-            var audioBuilder = new DatabaseBuilder();
-            audioBuilder.Append(new[]
-            {
-                new AudioEventMaster { Id = "bgm_title", EventName = "Play_BGM_Title" },
-                new AudioEventMaster { Id = "bgm_battle", EventName = "Play_BGM_Battle" },
-                new AudioEventMaster { Id = "se_attack", EventName = "Play_SE_Attack" },
-                new AudioEventMaster { Id = "se_damage", EventName = "Play_SE_Damage" },
-            });
-
             Write("Assets/MasterData/Binary/master_core.bytes", coreBuilder.Build());
             Write("Assets/MasterData/Binary/master_ui.bytes", uiBuilder.Build());
-            Write("Assets/MasterData/Binary/master_audio.bytes", audioBuilder.Build());
 
             AssetDatabase.Refresh();
             Debug.Log("Demo master data built.");

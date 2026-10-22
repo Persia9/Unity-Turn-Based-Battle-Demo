@@ -9,10 +9,13 @@ namespace Installers
         public override void InstallBindings()
         {
             base.InstallBindings();
+            Container.BindInterfacesAndSelfTo<BattleViewModel>().AsSingle();
+            Container.Bind<ITurnDelay>().To<UniTaskTurnDelay>().AsSingle();
+            Container.BindInterfacesAndSelfTo<PlayPlayerTurnUseCase>().AsSingle();
 
             Container.BindInterfacesAndSelfTo<BattleSceneEntryPoint>().AsSingle();
 
-            Container.Bind<OpenResultPopupUseCase>().AsSingle();
+
 
             Container.BindInterfacesAndSelfTo<BattleEventPresenter>().AsSingle();
         }

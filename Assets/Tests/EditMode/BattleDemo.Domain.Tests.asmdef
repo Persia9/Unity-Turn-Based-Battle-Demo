@@ -1,0 +1,6 @@
+{
+  "name": "BattleDemo.Domain.Tests",
+  "references": ["BattleDemo.Domain"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

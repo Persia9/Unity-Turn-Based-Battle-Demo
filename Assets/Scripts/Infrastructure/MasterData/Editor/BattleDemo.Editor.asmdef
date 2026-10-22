@@ -1,0 +1,9 @@
+{
+  "name": "BattleDemo.Editor",
+  "references": [
+    "BattleDemo.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

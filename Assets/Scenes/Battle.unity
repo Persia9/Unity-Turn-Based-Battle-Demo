@@ -195,7 +195,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9807dad15d8138044bd1248e8cc2f355, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Installers.BattleSceneInstaller
+  m_EditorClassIdentifier: BattleDemo.Runtime::Installers.BattleSceneInstaller
   _uiRoot: {fileID: 8041170615447333028}
 --- !u!1 &109155262
 GameObject:
@@ -238,7 +238,6 @@ GameObject:
   m_Component:
   - component: {fileID: 330585546}
   - component: {fileID: 330585545}
-  - component: {fileID: 330585544}
   - component: {fileID: 330585547}
   m_Layer: 0
   m_Name: Main Camera
@@ -247,14 +246,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &330585544
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 330585543}
-  m_Enabled: 1
 --- !u!20 &330585545
 Camera:
   m_ObjectHideFlags: 0
@@ -1023,7 +1014,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28340c8708a79594b879be445d6e0cb6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Infrastructure.UI.UIRoot
+  m_EditorClassIdentifier: BattleDemo.Runtime::Infrastructure.UI.UIRoot
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

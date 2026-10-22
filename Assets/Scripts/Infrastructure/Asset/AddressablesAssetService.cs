@@ -8,7 +8,17 @@ namespace Infrastructure.Asset
     {
         public async UniTask<T> Load<T>(string key) where T : Object
         {
-            return await Addressables.LoadAssetAsync<T>(key);
+            var handle = Addressables.LoadAssetAsync<T>(key);
+            try
+            {
+                return await handle.ToUniTask<T>();
+            }
+            catch
+            {
+                // Successful loads are released by their owner; failed loads have no owner.
+                if (handle.IsValid()) Addressables.Release(handle);
+                throw;
+            }
         }
 
         public async UniTask Release(object assetOrInstance)
