@@ -10,5 +10,7 @@ namespace Infrastructure.MasterData.Masters
         [PrimaryKey] public int Id { get; set; }
         public int PlayerCharacterId { get; set; }
         public int EnemyCharacterId { get; set; }
+        public int EnemyPattern { get; set; }
+        public string DisplayName { get; set; }
     }
 }

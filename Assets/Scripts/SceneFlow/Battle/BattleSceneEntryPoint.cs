@@ -1,8 +1,6 @@
-using Application.UseCases;
 using Application.Services;
+using Application.UseCases;
 using Cysharp.Threading.Tasks;
-using Domain.Battle;
-using Infrastructure.MasterData.Repositories;
 using Infrastructure.UI;
 using Presentation.Battle;
 using Zenject;
@@ -14,24 +12,15 @@ namespace SceneFlow.Battle
         private readonly IUIService _ui;
         private readonly InitializeMasterDataUseCase _initialize;
         private readonly IBattleSession _session;
-        private readonly IStageRepository _stages;
-        private readonly ICharacterRepository _characters;
+        private readonly RunFlowUseCase _flow;
         public BattleSceneEntryPoint(IUIService ui, InitializeMasterDataUseCase initialize,
-            IBattleSession session, IStageRepository stages, ICharacterRepository characters)
-        { _ui = ui; _initialize = initialize; _session = session; _stages = stages; _characters = characters; }
+            IBattleSession session, RunFlowUseCase flow)
+        { _ui = ui; _initialize = initialize; _session = session; _flow = flow; }
         public void Initialize() => Run().Forget();
         private async UniTask Run()
         {
             await _initialize.Execute();
-            // Support playing the Battle scene directly in the Editor.
-            if (_session.State.TurnCount == 0 || _session.State.IsFinished)
-            {
-                var stage = _stages.Get(1);
-                var player = _characters.Get(stage.PlayerCharacterId);
-                var enemy = _characters.Get(stage.EnemyCharacterId);
-                _session.Initialize(new BattleUnitSnapshot(player.Id, player.Name, player.MaxHp, player.MaxHp, player.Attack),
-                    new BattleUnitSnapshot(enemy.Id, enemy.Name, enemy.MaxHp, enemy.MaxHp, enemy.Attack));
-            }
+            if (_session.State.TurnCount == 0) _flow.PrepareCurrentBattle();
             await _ui.Open<BattleHudView>("BattleHud");
         }
     }

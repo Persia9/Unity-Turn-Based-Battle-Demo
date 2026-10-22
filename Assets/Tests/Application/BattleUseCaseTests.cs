@@ -27,10 +27,11 @@ public sealed class BattleUseCaseTests
     private sealed class Skills : ISkillRepository
     {
         public bool Fail;
+        public int EnemyPower = 15;
         public SkillMaster Get(int id)
         {
             if (Fail) throw new InvalidOperationException("Missing skill");
-            return new SkillMaster { Id = id, Power = id == 1 ? 20 : 15 };
+            return new SkillMaster { Id = id, Power = id == 1 ? 20 : EnemyPower };
         }
     }
     private sealed class ControlledDelay : ITurnDelay
@@ -47,6 +48,7 @@ public sealed class BattleUseCaseTests
         public readonly Recorder<DamageAppliedMessage> Damage = new();
         public readonly Recorder<TurnChangedMessage> Turns = new();
         public readonly Recorder<BattleFinishedMessage> Finish = new();
+        public readonly Recorder<BattleActionResolvedMessage> Actions = new();
         public readonly List<string> Order = new();
         public readonly AttackUseCase Attack;
         public Fixture(int enemyHp = 80, int playerHp = 100)
@@ -55,11 +57,11 @@ public sealed class BattleUseCaseTests
             Damage.OnPublish = _ => Order.Add("damage");
             Turns.OnPublish = _ => Order.Add("turn");
             Finish.OnPublish = _ => Order.Add("finish");
-            Attack = new AttackUseCase(Session, new BattleSystem(), Skills, new Characters(), Damage, Turns, Finish);
+            Attack = new AttackUseCase(Session, new BattleSystem(), Skills, new Characters(), Damage, Turns, Finish, Actions);
         }
         public void Restart(int enemyHp = 80, int playerHp = 100) => Session.Initialize(
             new BattleUnitSnapshot(1, "Hero", 100, playerHp, 20),
-            new BattleUnitSnapshot(2, "Slime", 80, enemyHp, 15));
+            new BattleUnitSnapshot(2, "Slime", Math.Max(80, enemyHp), enemyHp, 15));
     }
 
     [Test] public void NormalAttackPublishesDamageThenTurn()
@@ -123,7 +125,7 @@ public sealed class BattleUseCaseTests
     {
         var f = new Fixture();
         var attack = new AttackUseCase(new BattleSession(), new BattleSystem(), f.Skills,
-            new Characters(), f.Damage, f.Turns, f.Finish);
+            new Characters(), f.Damage, f.Turns, f.Finish, f.Actions);
         Assert.That(attack.ExecutePlayerAttack(), Is.False);
         Assert.That(f.Damage.Messages, Is.Empty);
     }
@@ -198,5 +200,87 @@ public sealed class BattleUseCaseTests
         await flow.Execute(cancellation.Token);
         Assert.That(f.Damage.Messages, Is.Empty);
     }
-}
 
+    [Test] public void DefendAdvancesTurnWithoutPublishingDamage()
+    {
+        var f = new Fixture();
+        Assert.That(f.Attack.ExecutePlayerAction(BattleAction.Defend), Is.True);
+        Assert.That(f.Damage.Messages, Is.Empty);
+        Assert.That(f.Turns.Messages.Count, Is.EqualTo(1));
+        Assert.That(f.Actions.Messages[0].Result.Action, Is.EqualTo(BattleAction.Defend));
+        Assert.That(f.Session.State.IsPlayerDefending, Is.True);
+        f.Attack.ExecuteEnemyAttack();
+        Assert.That(f.Session.State.Player.Hp, Is.EqualTo(92));
+        Assert.That(f.Session.State.IsPlayerDefending, Is.False);
+    }
+    [Test] public void StrongAttackDealsDoubleAndHonorsTwoSubsequentPlayerTurns()
+    {
+        var f = new Fixture(enemyHp: 140);
+        Assert.That(f.Attack.ExecutePlayerAction(BattleAction.StrongAttack), Is.True);
+        Assert.That(f.Session.State.Enemy.Hp, Is.EqualTo(100));
+        f.Attack.ExecuteEnemyAttack();
+        var messageCount = f.Actions.Messages.Count;
+        Assert.That(f.Attack.ExecutePlayerAction(BattleAction.StrongAttack), Is.False);
+        Assert.That(f.Actions.Messages.Count, Is.EqualTo(messageCount));
+        Assert.That(f.Session.State.CurrentTurn, Is.EqualTo(TurnOwner.Player));
+        f.Attack.ExecutePlayerAction(BattleAction.Defend); f.Attack.ExecuteEnemyAttack();
+        Assert.That(f.Attack.ExecutePlayerAction(BattleAction.StrongAttack), Is.False);
+        f.Attack.ExecutePlayerAction(BattleAction.Defend); f.Attack.ExecuteEnemyAttack();
+        Assert.That(f.Attack.ExecutePlayerAction(BattleAction.StrongAttack), Is.True);
+    }
+    [Test] public async Task DefenseIsRunThroughTheSameTurnOrchestration()
+    {
+        var f = new Fixture(); var delay = new ControlledDelay();
+        using var flow = new PlayPlayerTurnUseCase(f.Attack, f.Session, delay);
+        var pending = flow.Execute(BattleAction.Defend, CancellationToken.None);
+        Assert.That(f.Session.State.IsPlayerDefending, Is.True);
+        delay.Completion.TrySetResult(); await pending;
+        Assert.That(f.Session.State.Player.Hp, Is.EqualTo(92));
+        Assert.That(f.Session.State.CurrentTurn, Is.EqualTo(TurnOwner.Player));
+    }
+    [Test] public async Task UnavailableStrongAttackDoesNotScheduleEnemy()
+    {
+        var f = new Fixture(); f.Attack.ExecutePlayerAction(BattleAction.StrongAttack); f.Attack.ExecuteEnemyAttack();
+        var delay = new ControlledDelay();
+        using var flow = new PlayPlayerTurnUseCase(f.Attack, f.Session, delay);
+        await flow.Execute(BattleAction.StrongAttack, CancellationToken.None);
+        Assert.That(delay.Calls, Is.Zero);
+        Assert.That(f.Session.State.CurrentTurn, Is.EqualTo(TurnOwner.Player));
+    }
+    [Test] public void LethalStrongAttackFinishesOnceWithoutEnemyTurn()
+    {
+        var f = new Fixture(enemyHp: 40);
+        f.Attack.ExecutePlayerAction(BattleAction.StrongAttack);
+        Assert.That(f.Finish.Messages.Count, Is.EqualTo(1));
+        Assert.That(f.Session.State.Enemy.Hp, Is.Zero);
+        Assert.That(f.Attack.ExecuteEnemyAttack(), Is.False);
+        Assert.That(f.Turns.Messages, Is.Empty);
+    }
+    [Test] public void InvalidActionDoesNotChangeBattle()
+    {
+        var f = new Fixture();
+        Assert.That(f.Attack.ExecutePlayerAction((BattleAction)999), Is.False);
+        Assert.That(f.Actions.Messages, Is.Empty);
+        Assert.That(f.Session.State.Enemy.Hp, Is.EqualTo(80));
+    }
+    [Test] public void DemoCanBeWonByUsingForecastDefenseAndStrongAttack()
+    {
+        var f = new Fixture(enemyHp: 140); f.Skills.EnemyPower = 10;
+        foreach (var action in new[] { BattleAction.StrongAttack, BattleAction.Attack, BattleAction.Defend,
+            BattleAction.StrongAttack, BattleAction.Attack, BattleAction.Attack })
+        {
+            Assert.That(f.Attack.ExecutePlayerAction(action), Is.True);
+            if (!f.Session.State.IsFinished) f.Attack.ExecuteEnemyAttack();
+        }
+        Assert.That(f.Session.State.Winner, Is.EqualTo(BattleSide.Player));
+        Assert.That(f.Session.State.Player.Hp, Is.EqualTo(45));
+    }
+    [Test] public void DemoRepeatedNormalAttacksLose()
+    {
+        var f = new Fixture(enemyHp: 140); f.Skills.EnemyPower = 10;
+        for (int i = 0; i < 10 && !f.Session.State.IsFinished; i++)
+        { f.Attack.ExecutePlayerAttack(); f.Attack.ExecuteEnemyAttack(); }
+        Assert.That(f.Session.State.Winner, Is.EqualTo(BattleSide.Enemy));
+        Assert.That(f.Finish.Messages.Count, Is.EqualTo(1));
+    }
+}

@@ -18,16 +18,22 @@ namespace Infrastructure.MasterData.Editor
             coreBuilder.Append(new[]
             {
                 new CharacterMaster { Id = 1, Name = "Hero", MaxHp = 100, Attack = 20, DefaultSkillId = 1 },
-                new CharacterMaster { Id = 2, Name = "Slime", MaxHp = 80, Attack = 15, DefaultSkillId = 2 },
+                new CharacterMaster { Id = 2, Name = "Slime", MaxHp = 80, Attack = 8, DefaultSkillId = 2 },
+                new CharacterMaster { Id = 3, Name = "Sentinel", MaxHp = 130, Attack = 10, DefaultSkillId = 3 },
+                new CharacterMaster { Id = 4, Name = "Iron Warden", MaxHp = 150, Attack = 10, DefaultSkillId = 4 },
             });
             coreBuilder.Append(new[]
             {
                 new SkillMaster { Id = 1, Name = "Slash", Power = 20 },
-                new SkillMaster { Id = 2, Name = "Bite", Power = 15 },
+                new SkillMaster { Id = 2, Name = "Bite", Power = 8 },
+                new SkillMaster { Id = 3, Name = "Slam", Power = 10 },
+                new SkillMaster { Id = 4, Name = "Crush", Power = 10 },
             });
             coreBuilder.Append(new[]
             {
-                new StageMaster { Id = 1, PlayerCharacterId = 1, EnemyCharacterId = 2 },
+                new StageMaster { Id = 1, PlayerCharacterId = 1, EnemyCharacterId = 2, EnemyPattern = 0, DisplayName = "First Encounter" },
+                new StageMaster { Id = 2, PlayerCharacterId = 1, EnemyCharacterId = 3, EnemyPattern = 1, DisplayName = "Read the Forecast" },
+                new StageMaster { Id = 3, PlayerCharacterId = 1, EnemyCharacterId = 4, EnemyPattern = 2, DisplayName = "Iron Warden" },
             });
 
             var uiBuilder = new DatabaseBuilder();

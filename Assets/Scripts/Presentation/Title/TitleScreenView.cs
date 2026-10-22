@@ -10,7 +10,7 @@ namespace Presentation.Title
     public sealed class TitleScreenView : UIView
     {
         [SerializeField] private Button _startButton;
-        [Inject] private StartBattleUseCase _startBattleUseCase;
+        [Inject] private RunFlowUseCase _runFlow;
 
         public override void OnOpened()
         {
@@ -31,7 +31,7 @@ namespace Presentation.Title
         {
             if (!_startButton.interactable) return;
             _startButton.interactable = false;
-            try { await _startBattleUseCase.Execute(1); }
+            try { await _runFlow.StartNewRun(); }
             finally { if (this != null) _startButton.interactable = true; }
         }
     }

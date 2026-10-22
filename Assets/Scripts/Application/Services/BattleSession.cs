@@ -7,9 +7,10 @@ namespace Application.Services
         public int Revision { get; private set; }
         public BattleState State { get; } = new();
 
-        public void Initialize(BattleUnitSnapshot player, BattleUnitSnapshot enemy)
+        public void Initialize(BattleUnitSnapshot player, BattleUnitSnapshot enemy,
+            EnemyAttackPattern pattern = EnemyAttackPattern.EveryThirdTurn, int damageBonus = 0, int guardDamagePercent = 50)
         {
-            State.Initialize(player, enemy);
+            State.Initialize(player, enemy, pattern, damageBonus, guardDamagePercent);
             Revision++;
         }
     }

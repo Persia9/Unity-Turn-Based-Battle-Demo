@@ -1,300 +1,120 @@
 # Unity Turn-Based Battle Demo
 
-## 概要
+Unity 6000.3.12f1 による、全3戦の1vs1ターン制バトルです。既存プロジェクトをベースに、戦闘の選択肢、周回フロー、責務分離、異常系テストを整備しました。小規模なゲームで、依存管理・非同期処理・状態通知・データロードの扱いを示すことを目的にしています。
 
-本プロジェクトは、Unity を用いた 1vs1 のターン制バトルデモです。
-Zenject / UniTask / R3 / MessagePipe / MasterMemory / Addressables を組み合わせ、
-実務を意識したクライアントアーキテクチャで構成しています。
+## 遊べる内容
 
-本デモでは、ゲームフロー自体はシンプルに保ちつつ、
-以下のような**商用案件を意識した設計方針**を取り入れています。
+タイトル → 第1戦 → 強化を1つ選択 → 第2戦 → 強化を1つ選択 → ボス → 最終結果 → 再挑戦／タイトル。
 
-* 依存関係を Zenject で管理
-* 業務フローを UseCase 単位で分離
-* UI を定義駆動で生成・配置
-* マスターデータを MasterMemory で管理
-* モジュール間通知を MessagePipe で疎結合化
-* データ配布と更新を Addressables で分割管理
+- 通常攻撃・防御・強攻撃を選択。強攻撃には次の2プレイヤーターンのクールダウンがあります。
+- 敵の行動予告を見て防御を判断。3種類の敵で攻撃パターンが変わります。
+- 戦闘間はHPを最大20回復して持ち越し、攻撃・最大HP・防御性能から強化を選びます。
+- 最終結果に勝利数、到達戦数、総ターン数、累計被ダメージを表示します。
+- 音声は使用しません。
 
----
+操作は [PLAY_GUIDE.ja.md](PLAY_GUIDE.ja.md)、行動ボタンの設定は [ACTION_CONFIGURATION.ja.md](ACTION_CONFIGURATION.ja.md) を参照してください。
 
-## アーキテクチャ図
+## 起動
 
-```text
-┌──────────────────────────────────────────────────────────────┐
-│                        Presentation                          │
-│  View / ViewModel(R3) / UI Components                        │
-└──────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────┐
-│                        Application                           │
-│  UseCase / GameFlow / Message Handlers                       │
-│  - StartBattleUseCase                                        │
-│  - AttackUseCase                                             │
-│  - UI Open/Close orchestration                               │
-└──────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────┐
-│                          Domain                              │
-│  BattleSystem / Entities / Rules                             │
-│  ※ Unity 非依存の純ロジック                                   │
-└──────────────────────────────────────────────────────────────┘
-                              │
-               ┌──────────────┴──────────────┐
-               ▼                             ▼
-┌──────────────────────────────┐  ┌──────────────────────────────┐
-│        Infrastructure        │  │          Installers          │
-│  Asset / UI / Data           │  │  Zenject Composition Root    │
-│  Message / Save / Scene      │  │  ProjectInstaller            │
-│                              │  │  SceneInstaller              │
-│  - Addressables              │  │  UIInstaller                 │
-│  - MasterMemory              │  └──────────────────────────────┘
-│  - MessagePipe               │
-└──────────────────────────────┘
-```
+1. Windows のパス長制限を避け、`C:\Dev\BattleDemo` など短いパスへ展開します。
+2. Unity Hub で Assets / Packages / ProjectSettings のあるフォルダーを追加し、6000.3.12f1 で開きます。
+3. 依存パッケージの取得とコンパイル後、`Assets/Scenes/Title.unity` を開いて Play → Start Expedition。
+4. Addressables の Editor Play Mode は Use Asset Database で確認できます。プレイヤービルドでは Addressables のコンテンツもビルドしてください。
 
----
+マスターの生成メニューは Tools > MasterData > Build Demo MasterData。詳細は [SETUP.ja.md](SETUP.ja.md) にあります。
 
-## レイヤー構成
-
-### 1. Core
-
-共通ユーティリティや補助クラスを配置する層です。
-ログ、拡張メソッド、共通 Result 型など、
-**どの層からも利用されるが業務知識を持たないコード**を置きます。
-
-### 2. Domain
-
-ゲームルールの中心となる層です。
-例えば BattleSystem、ダメージ計算、勝敗判定などをここに置きます。
-
-この層は以下に依存しません。
-
-* Unity API
-* Zenject
-* Addressables
-* MessagePipe
-
-つまり、**もっとも純度の高いロジック層**です。
-
-### 3. Application
-
-ユースケース単位で処理の流れを管理する層です。
-Domain を直接 UI から呼ばず、UseCase を経由することで、
-「何を」「どの順番で」「どの通知と組み合わせて」実行するかを整理しています。
-
-例:
-
-* StartBattleUseCase
-* AttackUseCase
-* PlayPlayerTurnUseCase（プレイヤー行動から敵行動までの進行）
-
-### 4. Infrastructure
-
-外部システムや基盤機能をまとめる層です。
-いわゆる従来の GameFramework が持っていた役割を、
-**小さなサービスに分割して再構成したレイヤー**です。
-
-主な担当:
-
-* AssetService（Addressables）
-* UIService / PopupService
-* MasterDataRepository（MasterMemory）
-* Messaging（MessagePipe）
-* Save / Scene
-
-### 5. Presentation
-
-画面表示と入力を担当する層です。
-View は MonoBehaviour、ViewModel は R3 を用いて状態を保持します。
-
-方針としては、
-
-* View: 表示と入力のみ
-* ViewModel: 表示用状態の保持
-* UseCase: 処理の実行
-
-という責務分離を行っています。
-
-### 6. Installers
-
-Zenject による依存関係の登録を行う Composition Root です。
-プロジェクト全体やシーン単位の依存関係を一か所に集め、
-インスタンス生成の責務を分離しています。
-
----
-
-## 依存方向
-
-本プロジェクトでは、依存方向を意識して層を分割しています。
+## 責務と依存方向
 
 ```text
-Presentation -> Application -> Domain
-        ↓
-Infrastructure
+Presentation → Application → Domain
+      │             │
+      └──────┬──────┘
+             ↓
+       Infrastructure
+
+Installers：各実装の生成と依存関係を登録
+Core：共通知識のみ
 ```
 
-* Presentation は Application を利用する
-* Application は Domain と Infrastructure を利用する
-* Domain は外部層に依存しない
+| 層 | 主な責務 | 代表コード |
+|---|---|---|
+| Domain | 戦闘・周回のルールと状態遷移。Unity API非依存 | BattleSystem、BattleState、RunState |
+| Application | 入力要求の処理、敵ターン待機、周回進行、通知 | AttackUseCase、PlayPlayerTurnUseCase、RunFlowUseCase |
+| Presentation | ボタン入力、表示用状態、結果画面 | BattleActionButton、BattleViewModel、BattleEventPresenter |
+| Infrastructure | UI生成、アセット・マスターデータのロード、シーン操作 | UIService、UIViewFactory、AddressableMasterDatabaseLoader |
+| Installers | Project／Scene単位の依存登録 | ProjectInstaller、BattleSceneInstaller、SceneInstaller |
 
-この構成により、
+Domain は専用の `BattleDemo.Domain` アセンブリで Unity 参照を無効にしています。それ以外の製品コードは主に `BattleDemo.Runtime` にまとまっています。全層を個別アセンブリで隔離する構成ではなく、Application → Presentation の参照禁止などはソース検査テストで補っています。
 
-* テストしやすい
-* 差し替えしやすい
-* 責務が明確になる
+## 設計判断
 
-という利点があります。
+### 1. 1戦と周回の状態を分ける
 
----
+BattleSession はその戦闘のHP、ターン、クールダウン、防御状態、勝敗を保持します。RunSession / RunState は戦闘をまたぐHP、強化、現在の戦数、戦績を保持します。
 
-## UI アーキテクチャ
+同じ場所に保持すると「次の戦闘へ残す値」と「初期化する値」が混ざります。戦闘開始時に RunFlowUseCase が周回状態から新しい戦闘状態を作ることで、クールダウンだけ残る等の不具合を避けています。これらはメモリー上の状態で、周回の途中保存は実装していません。
 
-本プロジェクトでは、従来の単一 UIManager ではなく、
-UI の責務を分割しています。
+### 2. 入力、進行、ルールを分ける
 
-### 構成
+ボタンは行動IDを渡し、PlayPlayerTurnUseCase がプレイヤー行動→待機→敵行動を進めます。AttackUseCase はリポジトリからデータを取得し、Domain を実行して結果を通知します。ダメージ倍率、防御、クールダウン、敵の予告は Domain が判定します。
 
-* UIService: UI の開閉制御
-* PopupService: Popup 専用制御
-* UIViewFactory: Prefab 生成
-* UILayerService: 配置先レイヤー管理
-* UIRegistry: 開いている UI の管理
-* UIMaster: UI 定義データ
+敵の予告と実行は同じ EnemyIntent を参照するため、別々の判定式を持ちません。結果画面は通知を受けた Presenter が開き、Application が View 型を参照しない構成です。
 
-### 設計意図
+### 3. 定義で変えられる範囲を明確にする
 
-各 UI はコードに直書きせず、UIMaster によって以下を定義します。
+BattleActionDefinition は既存の行動ID、表示名、説明文を持つ ScriptableObject です。共通の BattleActionButton に割り当てると、同じ View コードで行動を変更できます。
 
-* PrefabKey
-* Layer
-* Type
-* Cache 方針
-* Singleton 制御
-* BlockInput
+新しい表示名、配置、既存行動の割り当てはデータ／Prefabで変更できます。一方、回復や毒など新しいルールを追加する場合は Domain / UseCase とテストの変更が必要です。効果を自由に組み立てる汎用スキルシステムではありません。
 
-これにより、UIService 自体を変更せずに
-**画面追加やレイヤー変更が可能**になります。
+敵・スキル・ステージ・UI定義は MasterMemory、アセット配布単位は Addressables を利用しています。攻撃倍率や強化の効果量など、コードで定義したルールもあります。
 
----
+### 4. ライブラリの役割を分ける
 
-## マスターデータ構成
+| ライブラリ | このデモで担当させた役割 |
+|---|---|
+| Zenject | Project／Sceneスコープで生成・依存を管理。シーン内のUIはシーン側のコンテナーで生成 |
+| UniTask | シーン／アセットロードと敵の待機。キャンセルと例外を扱う |
+| R3 | ViewModelの現在値とUIの同期、購読の寿命管理 |
+| MessagePipe | ダメージ、行動、ターン、決着など発生したイベントの通知 |
+| MasterMemory | 型付きのマスターデータ参照とバイナリ生成 |
+| Addressables | Prefab・マスターの非同期ロードと参照の解放 |
 
-MasterMemory を利用し、マスターデータを分割して管理しています。
+R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」の通知に使い分けています。同期呼び出しや状態参照も残しており、全てをイベントで接続しているわけではありません。
 
-### 分割例
+小規模ゲームとしては依存が多めです。今回は各基盤の責務と連携を示すため採用しています。実案件ではチーム標準と要件に応じて簡略化・差し替えを判断します。
 
-* master_core.bytes
+### 5. 中断・失敗を通常の処理経路として扱う
 
-  * CharacterMaster
-  * SkillMaster
-  * StageMaster
+- HUD閉鎖とシーン終了で敵待機をキャンセル。待機後にもキャンセルを確認します。
+- BattleSession の Revision を確認し、古い戦闘の遅延処理を再戦へ適用しません。
+- UIの無効化に加え、UseCaseでも連打・通知中の再入・終了後の攻撃を拒否します。これらの実行ガードはUnityのメインスレッド利用を前提とします。
+- マスターロードは成功分を保持し、再呼び出しで失敗箇所から再試行。失敗したキーと原因を例外に残します。
+- 次のシーンのロードに失敗しても、再試行で強化を二重適用しません。
+- アセットの成功ロードは所有側の破棄時、失敗ロードはロード処理内で解放します。
 
-* master_ui.bytes
+## 検証範囲
 
-  * UIMaster
+| 確認項目 | 状況 |
+|---|---|
+| 戦闘・周回・コマンド状態等の自動テスト | .NET環境で78ケース成功 |
+| 使用した外部アセンブリ | NUnit 3.14.0、UniTask 2.5.11、MessagePipe 1.8.2、プロジェクト同梱のR3等 |
+| 全9通りの強化による攻略 | 予告に応じる戦略で3戦クリアを自動検証 |
+| Unity上の手動動作確認 | 利用者による確認済み |
+| Unity Test Runnerでの78ケース実行 | この作業では未確認 |
+| 自動化されたPrefab操作・PlayModeテスト | 未実装 |
+| プレイヤービルド、性能計測、リモート配布 | この作業では未確認 |
 
+テストは `Assets/Tests/EditMode` と `Assets/Tests/Application` にあります。.NETでの成功をUnity用パッケージ・ソースジェネレーター・実シーンの全自動検証と同一視していません。Unity上では Test Runner > EditMode > Run All から確認できます。
 
-### 分割理由
+## 次に改善するなら
 
-* 更新粒度を細かくするため
-* 起動時ロードを最適化するため
-* モジュール単位で責務を分けるため
+まずPlayModeでタイトル→戦闘→強化→決着→再挑戦を自動化し、シーン・Prefab・DIの結合を検証します。その後、必要に応じてデータ検証とビルド手順をCIへ組み込みます。機能追加より、再現可能な確認手順と観測性の改善を優先します。
 
-Addressables により必要なタイミングでロードし、
-MasterMemory の `MemoryDatabase` として利用します。
+## 面接・レビュー用資料
 
----
+- [3分のデモ台本](INTERVIEW_DEMO.ja.md)
+- [主要コードの読み方・練習問題](CODE_READING_PRACTICE.ja.md)
+- [操作と攻略例](PLAY_GUIDE.ja.md)
+- [行動ボタンの設定](ACTION_CONFIGURATION.ja.md)
 
-## メッセージング方針
-
-モジュール間の通知には MessagePipe を使用しています。
-
-例:
-
-* BattleStarted
-* DamageApplied
-* BattleFinished
-* OpenPopupRequested
-
-これにより、
-UI、Log などの機能を直接参照せずに連携でき、
-**疎結合な構成**を維持できます。
-
----
-
-## フォルダ構成
-
-```text
-Assets/
-├─ Core
-├─ Domain
-├─ Application
-├─ Infrastructure
-│  ├─ Asset
-│  ├─ MasterData
-│  ├─ Messaging
-│  ├─ Scene
-│  ├─ Save
-│  └─ UI
-├─ Presentation
-│  ├─ Battle
-│  ├─ Common
-│  └─ Title
-├─ Installers
-└─ Scenes
-```
-
----
-
-## 代表的な処理フロー
-
-### 攻撃処理
-
-```text
-BattleHudView
-  ↓ ボタン入力
-PlayPlayerTurnUseCase
-  ↓
-AttackUseCase
-  ↓
-BattleSystem
-  ↓
-DamageApplied を Publish
-  ↓
-- BattleViewModel が HP を更新
-- LogHandler がログを追加
-- BattleFinished を受けた Presenter が ResultPopup を開く
-```
-
-このように、入力、業務フロー、純ロジック、通知、表示更新を分離しています。
-
----
-
-## この構成を採用した理由
-
-本プロジェクトでは、単に動作するデモを作るのではなく、
-以下の観点を重視しました。
-
-* 拡張しやすいこと
-* 依存関係が明確であること
-* 実案件に近い説明ができること
-* UI / Data / Logic が混ざらないこと
-
-そのため、従来の「巨大な Manager を中心にした構成」ではなく、
-責務ごとにサービスと層を分けた構成を採用しています。
-
----
-
-## 今後の拡張案
-
-* Popup BackStack 管理
-* 画面遷移アニメーション
-* MasterData のビルドパイプライン自動化
-* Addressables のリモート更新対応強化
-* 戦闘スキル演出の追加
-* セーブデータと進行状態の統合管理
-
-
+第三者ライブラリのライセンスと元プロジェクトの LICENSE は保持しています。

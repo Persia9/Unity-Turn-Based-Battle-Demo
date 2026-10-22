@@ -19,7 +19,9 @@ namespace Application.UseCases
         public PlayPlayerTurnUseCase(AttackUseCase attack, IBattleSession session, ITurnDelay delay)
         { _attack = attack; _session = session; _delay = delay; }
 
-        public async UniTask Execute(CancellationToken cancellationToken)
+        public UniTask Execute(CancellationToken cancellationToken) => Execute(BattleAction.Attack, cancellationToken);
+
+        public async UniTask Execute(BattleAction action, CancellationToken cancellationToken)
         {
             if (_disposed || _busy || cancellationToken.IsCancellationRequested) return;
             _busy = true;
@@ -28,7 +30,7 @@ namespace Application.UseCases
             var revision = _session.Revision;
             try
             {
-                if (!_attack.ExecutePlayerAttack()) return;
+                if (!_attack.ExecutePlayerAction(action)) return;
                 if (_session.State.IsFinished) return;
                 await _delay.Wait(token);
                 token.ThrowIfCancellationRequested();

@@ -38,9 +38,10 @@ namespace Installers
 
             Container.Bind<IBattleSession>().To<BattleSession>().AsSingle();
             Container.Bind<BattleSystem>().AsSingle();
+            Container.Bind<RunSession>().AsSingle();
+            Container.Bind<RunFlowUseCase>().AsSingle();
 
             Container.Bind<InitializeMasterDataUseCase>().AsSingle();
-            Container.Bind<StartBattleUseCase>().AsSingle();
             Container.Bind<AttackUseCase>().AsSingle();
             Container.Bind<ReturnToTitleUseCase>().AsSingle();
 
@@ -48,6 +49,7 @@ namespace Installers
             var options = Container.BindMessagePipe();
             Container.BindMessageBroker<BattleStartedMessage>(options);
             Container.BindMessageBroker<DamageAppliedMessage>(options);
+            Container.BindMessageBroker<BattleActionResolvedMessage>(options);
             Container.BindMessageBroker<TurnChangedMessage>(options);
             Container.BindMessageBroker<BattleFinishedMessage>(options);
 

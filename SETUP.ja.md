@@ -5,7 +5,7 @@
 1. Windows のパス長制限を避けるため、ZIP を `C:\Dev\BattleDemo` など短いパスに展開してください。
 2. Unity Hub から Assets / Packages / ProjectSettings があるフォルダーを追加します。
 3. **Unity 6000.3.12f1** で開き、初回の Package Manager の依存関係取得とコンパイルを待ちます。Git のインストールとネット接続が必要です。
-4. `Assets/Scenes/Title.unity` を開いて Play。Start → Attack → Victory → 結果ボタンでタイトルに戻る → 再度 Start の順に確認できます。
+4. `Assets/Scenes/Title.unity` を開いて Play。Start Expedition → 第1戦 → 強化選択 → 第2戦 → 強化選択 → ボス → 最終結果 → Retry またはタイトル の順に確認できます。
 5. プレイヤービルド前は Addressables Groups の Build > New Build > Default Build Script を実行します。Title がビルドの先頭シーンです。
 
 Editor の Addressables Play Mode Script は Use Asset Database を選択すると、ローカルアセットで確認できます。
@@ -62,3 +62,33 @@ Unity では Test Runner > EditMode > Run All を実行してください。追�
 ## Addressables のコンパイル修正
 
 BattleDemo.Runtime.asmdef に UniTask.Addressables の参照を追加しました。AssetService とマスターローダーは型付き ToUniTask<T>() でロード結果を取得し、AssetService のロード失敗時にもハンドルを解放します。既存プロジェクトへ適用する場合は、この asmdef と両ローダーの3ファイルをまとめて更新してください。Unity 上でのコンパイルは未確認です。
+
+## 3つの行動と敵の予告（最新の追加）
+
+操作とルールは PLAY_GUIDE.ja.md を参照してください。HUD Prefab に防御・強攻撃ボタン、敵の予告、ガード状態、クールダウン表示を追加しました。Canvas は 1280×720 を基準に画面サイズへ追従します。追加の Inspector 設定は不要です。
+
+通常攻撃20、強攻撃40、防御は次の敵攻撃を半減（端数切り上げ）。強攻撃は使用したターンの3ターン後に再使用可能です。敵の通常攻撃10、3ターンごとの強攻撃30、HP140に調整し、同梱の core マスターも再生成しました。バイナリマスターとエディターの生成コードは同じ値です。
+
+今回の追加後は合計 **42ケース成功**（従来26ケース＋行動・バランスの16ケース）です。製品の C# ソースと実ライブラリを用いた .NET 上の検証で、Unity は起動していません。Prefab の参照整合性と C# 構文も確認しました。新しいボタンの見た目・シーン注入・実際の画面操作は Unity 側でご確認ください。
+
+既存プロジェクトへ反映する場合は Assets/Scripts、Assets/Tests、HUD/UIRoot の Prefab、master_core.bytes を含む一式を更新してください。Addressables をビルド済みの場合は再ビルドが必要です。
+
+## 行動定義の割り当て（最新）
+
+ACTION_CONFIGURATION.ja.md に Inspector の設定手順をまとめました。Assets/Settings/BattleActions の定義を各 BattleActionButton に割り当てます。HUD には3ボタンを設定済みで、行動ごとの専用クリック処理は削除しました。既存の Domain のルールは維持しています。
+
+今回追加した共通状態の7ケースを含め、最新のテスト結果は49ケース成功です。Unity は起動していません。Assets/Scripts、Assets/Tests、Assets/Settings/BattleActions、BattleHudView.prefab を .meta とともに更新してください。
+
+## 全3戦の周回フロー（最新）
+
+PLAY_GUIDE.ja.md を現在のルールに更新しました。タイトルから3戦に挑戦し、第1・2戦後に3択の強化を選びます。HPは最大20回復して持ち越し、最後に戦績を表示します。途中敗北・最終勝利の両方から再挑戦できます。
+
+- Domain.Run.RunState：周回フェーズ、HP、強化、勝利数・総ターン数・累計被ダメージ。
+- Application.Services.RunSession：周回状態を保持。BattleSession は1戦ごとの防御・クールダウン・勝敗を保持。
+- RunFlowUseCase：新規周回、強化、次の戦闘の準備とロード、決着の記録を担当。旧 StartBattleUseCase は削除しました。
+- ResultPopupView：中間結果では強化3択、最終結果では Retry expedition / Return to title を表示。次の戦闘のロード失敗時は選択済みの強化を再度押して再試行できます。強化は重複適用しません。
+- StageMaster：行動パターンと表示名を追加。3ステージ・4キャラクター・4スキルを同梱バイナリへ反映。
+
+従来49ケースに29ケース追加し、最新の結果は **78ケース成功**です。3戦クリア・途中敗北と再挑戦・HP持ち越し・回復上限・強化全9通り・戦績・決着通知重複・ロード失敗後の再試行・敵予告を検証しました。Unity は起動していません。
+
+既存プロジェクトへ適用するときは Scripts / Tests と .meta、BattleHudView / ResultPopupView / TitleScreenView の Prefab、Defend の行動定義、master_core.bytes を含む一式を更新してください。古い StartBattleUseCase.cs と .meta は削除してください。スキーマとバイナリの両方が変わるため、Addressables は必ず再ビルドしてください。
