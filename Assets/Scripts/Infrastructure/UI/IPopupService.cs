@@ -2,11 +2,11 @@ using Cysharp.Threading.Tasks;
 
 namespace Infrastructure.UI
 {
-    public interface IScreenService
+    public interface IPopupService
     {
-        UniTask<TView> OpenScreen<TView, TContext>(string uiId, TContext context)
+        UniTask<TView> OpenPopup<TView, TContext>(string uiId, TContext context)
             where TView : UIView, IUIContextReceiver<TContext>;
 
-        UniTask CloseScreen(string uiId);
+        UniTask ClosePopup(string uiId);
     }
 }
