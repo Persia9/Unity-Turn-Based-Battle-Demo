@@ -6,6 +6,10 @@ namespace Infrastructure.MasterData.Repositories
     {
         private readonly IMasterDatabaseProvider _provider;
         public UIMasterRepository(IMasterDatabaseProvider provider) => _provider = provider;
-        public UIMaster Get(string id) => _provider.UiDb.UIMasterTable.FindById(id);
+        public UIMaster Get(string id)
+        {
+            if (_provider.UiDb.UIMasterTable.TryFindById(id, out var value)) return value;
+            throw new MasterDataNotFoundException("UIMaster", id);
+        }
     }
 }

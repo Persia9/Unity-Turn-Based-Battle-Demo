@@ -6,6 +6,10 @@ namespace Infrastructure.MasterData.Repositories
     {
         private readonly IMasterDatabaseProvider _provider;
         public StageRepository(IMasterDatabaseProvider provider) => _provider = provider;
-        public StageMaster Get(int id) => _provider.CoreDb.StageMasterTable.FindById(id);
+        public StageMaster Get(int id)
+        {
+            if (_provider.CoreDb.StageMasterTable.TryFindById(id, out var value)) return value;
+            throw new MasterDataNotFoundException("StageMaster", id);
+        }
     }
 }
