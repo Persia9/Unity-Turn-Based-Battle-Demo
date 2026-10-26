@@ -6,7 +6,6 @@ using Domain.Battle;
 using Infrastructure.Asset;
 using Infrastructure.MasterData;
 using Infrastructure.MasterData.Repositories;
-using Infrastructure.Save;
 using Infrastructure.Scene;
 using Infrastructure.UI;
 using MessagePipe;
@@ -23,7 +22,6 @@ namespace Installers
 
             Container.Bind<IAssetService>().To<AddressableAssetService>().AsSingle();
             Container.Bind<ISceneService>().To<UnitySceneService>().AsSingle();
-            Container.Bind<ISaveService>().To<PlayerPrefsSaveService>().AsSingle();
 
             Container.Bind<IMasterDatabaseLoader>().To<AddressableMasterDatabaseLoader>().AsSingle();
             Container.BindInterfacesAndSelfTo<AddressableMasterDatabaseProvider>().AsSingle();
