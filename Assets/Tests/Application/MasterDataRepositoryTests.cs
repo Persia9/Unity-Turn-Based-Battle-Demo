@@ -3,7 +3,6 @@ using Infrastructure.MasterData;
 using Infrastructure.MasterData.Repositories;
 using MasterMemory;
 using NUnit.Framework;
-using UnityEngine;
 
 public sealed class MasterDataRepositoryTests
 {
@@ -21,7 +20,7 @@ public sealed class MasterDataRepositoryTests
         }
 
         private static MemoryDatabase Load(string relativePath)
-            => new(File.ReadAllBytes(Path.Combine(Application.dataPath, relativePath)));
+            => new(File.ReadAllBytes(Path.Combine(UnityEngine.Application.dataPath, relativePath)));
     }
 
     private Provider _provider;

@@ -11,5 +11,10 @@
   ],
   "optionalUnityReferences": [
     "TestAssemblies"
+  ],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "MasterMemory.dll",
+    "MessagePack.dll"
   ]
 }
