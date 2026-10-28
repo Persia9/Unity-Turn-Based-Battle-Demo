@@ -17,10 +17,10 @@ namespace Infrastructure.MasterData.Editor
             var coreBuilder = new DatabaseBuilder();
             coreBuilder.Append(new[]
             {
-                new CharacterMaster { Id = 1, Name = "Hero", MaxHp = 100, Attack = 20, DefaultSkillId = 1 },
-                new CharacterMaster { Id = 2, Name = "Slime", MaxHp = 80, Attack = 8, DefaultSkillId = 2 },
-                new CharacterMaster { Id = 3, Name = "Sentinel", MaxHp = 130, Attack = 10, DefaultSkillId = 3 },
-                new CharacterMaster { Id = 4, Name = "Iron Warden", MaxHp = 150, Attack = 10, DefaultSkillId = 4 },
+                new CharacterMaster { Id = 1, Name = "Hero", MaxHp = 100, DefaultSkillId = 1 },
+                new CharacterMaster { Id = 2, Name = "Slime", MaxHp = 80, DefaultSkillId = 2 },
+                new CharacterMaster { Id = 3, Name = "Sentinel", MaxHp = 130, DefaultSkillId = 3 },
+                new CharacterMaster { Id = 4, Name = "Iron Warden", MaxHp = 150, DefaultSkillId = 4 },
             });
             coreBuilder.Append(new[]
             {

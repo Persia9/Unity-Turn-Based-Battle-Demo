@@ -10,7 +10,6 @@ namespace Infrastructure.MasterData.Masters
         [PrimaryKey] public int Id { get; set; }
         public string Name { get; set; }
         public int MaxHp { get; set; }
-        public int Attack { get; set; }
         public int DefaultSkillId { get; set; }
     }
 }

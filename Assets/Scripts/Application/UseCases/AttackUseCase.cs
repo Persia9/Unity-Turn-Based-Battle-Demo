@@ -1,7 +1,6 @@
 using Application.Messages;
 using Application.Services;
 using Domain.Battle;
-using Infrastructure.MasterData.Repositories;
 using MessagePipe;
 
 namespace Application.UseCases
@@ -10,8 +9,6 @@ namespace Application.UseCases
     {
         private readonly IBattleSession _session;
         private readonly BattleSystem _rules;
-        private readonly ISkillRepository _skills;
-        private readonly ICharacterRepository _characters;
         private readonly IPublisher<DamageAppliedMessage> _damage;
         private readonly IPublisher<TurnChangedMessage> _turn;
         private readonly IPublisher<BattleFinishedMessage> _finish;
@@ -19,13 +16,11 @@ namespace Application.UseCases
         private readonly IPublisher<BattleActionResolvedMessage> _action;
 
         public AttackUseCase(IBattleSession battleSession, BattleSystem battleSystem,
-            ISkillRepository skillRepository, ICharacterRepository characterRepository,
             IPublisher<DamageAppliedMessage> damagePublisher, IPublisher<TurnChangedMessage> turnPublisher,
             IPublisher<BattleFinishedMessage> finishPublisher,
             IPublisher<BattleActionResolvedMessage> actionPublisher)
         {
-            _session = battleSession; _rules = battleSystem; _skills = skillRepository;
-            _characters = characterRepository; _damage = damagePublisher;
+            _session = battleSession; _rules = battleSystem; _damage = damagePublisher;
             _turn = turnPublisher; _finish = finishPublisher; _action = actionPublisher;
         }
 
@@ -42,11 +37,9 @@ namespace Application.UseCases
             try
             {
                 var attacker = actor == TurnOwner.Player ? state.Player : state.Enemy;
-                var character = _characters.Get(attacker.CharacterId);
-                var skill = _skills.Get(character.DefaultSkillId);
                 var result = actor == TurnOwner.Player
-                    ? _rules.ApplyPlayerAction(state, action, skill.Power)
-                    : _rules.ApplyEnemyAction(state, skill.Power);
+                    ? _rules.ApplyPlayerAction(state, action, attacker.BasePower)
+                    : _rules.ApplyEnemyAction(state, attacker.BasePower);
                 if (result.Action != BattleAction.Defend)
                     _damage.Publish(new DamageAppliedMessage(target, result.Damage, result.RemainingHp));
                 _action.Publish(new BattleActionResolvedMessage(result));

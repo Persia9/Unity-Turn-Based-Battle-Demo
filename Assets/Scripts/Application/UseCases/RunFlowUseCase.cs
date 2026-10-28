@@ -15,13 +15,14 @@ namespace Application.UseCases
         private readonly IBattleSession _battle;
         private readonly IStageRepository _stages;
         private readonly ICharacterRepository _characters;
+        private readonly ISkillRepository _skills;
         private readonly ISceneService _scenes;
         private bool _loading;
         private bool _advancePending;
         private int _completedRevision = -1;
         public RunFlowUseCase(RunSession run, IBattleSession battle, IStageRepository stages,
-            ICharacterRepository characters, ISceneService scenes)
-        { _run = run; _battle = battle; _stages = stages; _characters = characters; _scenes = scenes; }
+            ICharacterRepository characters, ISkillRepository skills, ISceneService scenes)
+        { _run = run; _battle = battle; _stages = stages; _characters = characters; _skills = skills; _scenes = scenes; }
 
         public async UniTask StartNewRun()
         {
@@ -59,8 +60,10 @@ namespace Application.UseCases
             var stage = _stages.Get(_run.State.Round);
             var player = _characters.Get(stage.PlayerCharacterId);
             var enemy = _characters.Get(stage.EnemyCharacterId);
-            _battle.Initialize(new BattleUnitSnapshot(player.Id, player.Name, _run.State.MaxHp, _run.State.Hp, player.Attack),
-                new BattleUnitSnapshot(enemy.Id, enemy.Name, enemy.MaxHp, enemy.MaxHp, enemy.Attack),
+            var playerSkill = _skills.Get(player.DefaultSkillId);
+            var enemySkill = _skills.Get(enemy.DefaultSkillId);
+            _battle.Initialize(new BattleUnitSnapshot(player.Id, player.Name, _run.State.MaxHp, _run.State.Hp, playerSkill.Power),
+                new BattleUnitSnapshot(enemy.Id, enemy.Name, enemy.MaxHp, enemy.MaxHp, enemySkill.Power),
                 (EnemyAttackPattern)stage.EnemyPattern, _run.State.DamageBonus, _run.State.GuardDamagePercent);
         }
         public bool CompleteBattle()

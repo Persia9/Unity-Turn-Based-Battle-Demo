@@ -6,16 +6,16 @@ namespace Domain.Battle
         public string Name { get; }
         public int MaxHp { get; }
         public int Hp { get; }
-        public int Attack { get; }
+        public int BasePower { get; }
         public bool IsDead => Hp <= 0;
 
-        public BattleUnitSnapshot(int characterId, string name, int maxHp, int hp, int attack)
+        public BattleUnitSnapshot(int characterId, string name, int maxHp, int hp, int basePower)
         {
             CharacterId = characterId;
             Name = name;
             MaxHp = maxHp;
             Hp = hp;
-            Attack = attack;
+            BasePower = basePower;
         }
     }
 }

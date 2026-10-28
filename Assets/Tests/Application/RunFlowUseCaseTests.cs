@@ -27,7 +27,7 @@ public sealed class RunFlowUseCaseTests
     private sealed class Characters : ICharacterRepository
     {
         public CharacterMaster Get(int id) => new CharacterMaster { Id = id, Name = "Unit" + id,
-            MaxHp = id == 1 ? 100 : id == 2 ? 80 : id == 3 ? 130 : 150, Attack = id == 1 ? 20 : id == 2 ? 8 : 10, DefaultSkillId = id };
+            MaxHp = id == 1 ? 100 : id == 2 ? 80 : id == 3 ? 130 : 150, DefaultSkillId = id };
     }
     private sealed class Skills : ISkillRepository
     {
@@ -51,8 +51,8 @@ public sealed class RunFlowUseCaseTests
         public readonly RunFlowUseCase Flow; public readonly AttackUseCase Attack;
         public Fixture()
         {
-            Flow = new RunFlowUseCase(Run, Battle, new Stages(), new Characters(), Scenes);
-            Attack = new AttackUseCase(Battle, new BattleSystem(), new Skills(), new Characters(),
+            Flow = new RunFlowUseCase(Run, Battle, new Stages(), new Characters(), new Skills(), Scenes);
+            Attack = new AttackUseCase(Battle, new BattleSystem(),
                 new Publisher<DamageAppliedMessage>(), new Publisher<TurnChangedMessage>(),
                 new Publisher<BattleFinishedMessage>(), new Publisher<BattleActionResolvedMessage>());
         }
@@ -71,6 +71,8 @@ public sealed class RunFlowUseCaseTests
     {
         var f = new Fixture(); await f.Flow.StartNewRun();
         Assert.That(f.Battle.State.Enemy.MaxHp, Is.EqualTo(80));
+        Assert.That(f.Battle.State.Player.BasePower, Is.EqualTo(20));
+        Assert.That(f.Battle.State.Enemy.BasePower, Is.EqualTo(8));
         Assert.That(f.Battle.State.EnemyPattern, Is.EqualTo(EnemyAttackPattern.NormalOnly));
         Assert.That(f.Scenes.Calls, Is.EqualTo(1)); Assert.That(f.Run.State.Round, Is.EqualTo(1));
     }

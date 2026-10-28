@@ -7,8 +7,6 @@ using Application.Services;
 using Application.UseCases;
 using Cysharp.Threading.Tasks;
 using Domain.Battle;
-using Infrastructure.MasterData.Masters;
-using Infrastructure.MasterData.Repositories;
 using NUnit.Framework;
 using MessagePipe;
 
@@ -20,20 +18,6 @@ public sealed class BattleUseCaseTests
         public Action<T> OnPublish;
         public void Publish(T message) { Messages.Add(message); OnPublish?.Invoke(message); }
     }
-    private sealed class Characters : ICharacterRepository
-    {
-        public CharacterMaster Get(int id) => new CharacterMaster { Id = id, DefaultSkillId = id };
-    }
-    private sealed class Skills : ISkillRepository
-    {
-        public bool Fail;
-        public int EnemyPower = 15;
-        public SkillMaster Get(int id)
-        {
-            if (Fail) throw new InvalidOperationException("Missing skill");
-            return new SkillMaster { Id = id, Power = id == 1 ? 20 : EnemyPower };
-        }
-    }
     private sealed class ControlledDelay : ITurnDelay
     {
         public int Calls;
@@ -44,24 +28,23 @@ public sealed class BattleUseCaseTests
     private sealed class Fixture
     {
         public readonly BattleSession Session = new();
-        public readonly Skills Skills = new();
         public readonly Recorder<DamageAppliedMessage> Damage = new();
         public readonly Recorder<TurnChangedMessage> Turns = new();
         public readonly Recorder<BattleFinishedMessage> Finish = new();
         public readonly Recorder<BattleActionResolvedMessage> Actions = new();
         public readonly List<string> Order = new();
         public readonly AttackUseCase Attack;
-        public Fixture(int enemyHp = 80, int playerHp = 100)
+        public Fixture(int enemyHp = 80, int playerHp = 100, int enemyPower = 15)
         {
-            Restart(enemyHp, playerHp);
+            Restart(enemyHp, playerHp, enemyPower);
             Damage.OnPublish = _ => Order.Add("damage");
             Turns.OnPublish = _ => Order.Add("turn");
             Finish.OnPublish = _ => Order.Add("finish");
-            Attack = new AttackUseCase(Session, new BattleSystem(), Skills, new Characters(), Damage, Turns, Finish, Actions);
+            Attack = new AttackUseCase(Session, new BattleSystem(), Damage, Turns, Finish, Actions);
         }
-        public void Restart(int enemyHp = 80, int playerHp = 100) => Session.Initialize(
+        public void Restart(int enemyHp = 80, int playerHp = 100, int enemyPower = 15) => Session.Initialize(
             new BattleUnitSnapshot(1, "Hero", 100, playerHp, 20),
-            new BattleUnitSnapshot(2, "Slime", Math.Max(80, enemyHp), enemyHp, 15));
+            new BattleUnitSnapshot(2, "Slime", Math.Max(80, enemyHp), enemyHp, enemyPower));
     }
 
     [Test] public void NormalAttackPublishesDamageThenTurn()
@@ -112,20 +95,17 @@ public sealed class BattleUseCaseTests
         Assert.That(f.Damage.Messages.Count, Is.EqualTo(1));
         Assert.That(f.Session.State.Player.Hp, Is.EqualTo(100));
     }
-    [Test] public void MissingSkillDoesNotDamageAndAllowsRetry()
+    [Test] public void DamageUsesPowerCapturedInBattleSnapshot()
     {
-        var f = new Fixture(); f.Skills.Fail = true;
-        Assert.Throws<InvalidOperationException>(() => f.Attack.ExecutePlayerAttack());
-        Assert.That(f.Damage.Messages, Is.Empty);
-        Assert.That(f.Session.State.CurrentTurn, Is.EqualTo(TurnOwner.Player));
-        f.Skills.Fail = false;
+        var f = new Fixture();
         Assert.That(f.Attack.ExecutePlayerAttack(), Is.True);
+        Assert.That(f.Damage.Messages[0].Damage, Is.EqualTo(20));
     }
     [Test] public void UninitializedBattleIgnoresInput()
     {
         var f = new Fixture();
-        var attack = new AttackUseCase(new BattleSession(), new BattleSystem(), f.Skills,
-            new Characters(), f.Damage, f.Turns, f.Finish, f.Actions);
+        var attack = new AttackUseCase(new BattleSession(), new BattleSystem(),
+            f.Damage, f.Turns, f.Finish, f.Actions);
         Assert.That(attack.ExecutePlayerAttack(), Is.False);
         Assert.That(f.Damage.Messages, Is.Empty);
     }
@@ -265,7 +245,7 @@ public sealed class BattleUseCaseTests
     }
     [Test] public void DemoCanBeWonByUsingForecastDefenseAndStrongAttack()
     {
-        var f = new Fixture(enemyHp: 140); f.Skills.EnemyPower = 10;
+        var f = new Fixture(enemyHp: 140, enemyPower: 10);
         foreach (var action in new[] { BattleAction.StrongAttack, BattleAction.Attack, BattleAction.Defend,
             BattleAction.StrongAttack, BattleAction.Attack, BattleAction.Attack })
         {
@@ -277,7 +257,7 @@ public sealed class BattleUseCaseTests
     }
     [Test] public void DemoRepeatedNormalAttacksLose()
     {
-        var f = new Fixture(enemyHp: 140); f.Skills.EnemyPower = 10;
+        var f = new Fixture(enemyHp: 140, enemyPower: 10);
         for (int i = 0; i < 10 && !f.Session.State.IsFinished; i++)
         { f.Attack.ExecutePlayerAttack(); f.Attack.ExecuteEnemyAttack(); }
         Assert.That(f.Session.State.Winner, Is.EqualTo(BattleSide.Enemy));

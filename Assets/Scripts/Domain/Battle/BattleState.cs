@@ -84,13 +84,13 @@ namespace Domain.Battle
             if (targetSide == BattleSide.Player)
             {
                 var hp = Math.Max(0, Player.Hp - damage);
-                Player = new BattleUnitSnapshot(Player.CharacterId, Player.Name, Player.MaxHp, hp, Player.Attack);
+                Player = new BattleUnitSnapshot(Player.CharacterId, Player.Name, Player.MaxHp, hp, Player.BasePower);
                 if (hp <= 0) Finish(BattleSide.Enemy);
             }
             else
             {
                 var hp = Math.Max(0, Enemy.Hp - damage);
-                Enemy = new BattleUnitSnapshot(Enemy.CharacterId, Enemy.Name, Enemy.MaxHp, hp, Enemy.Attack);
+                Enemy = new BattleUnitSnapshot(Enemy.CharacterId, Enemy.Name, Enemy.MaxHp, hp, Enemy.BasePower);
                 if (hp <= 0) Finish(BattleSide.Player);
             }
         }
