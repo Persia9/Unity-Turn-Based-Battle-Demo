@@ -259,6 +259,10 @@ BattleActionButton.OnClicked
 → BattleEventPresenter
 → BattleViewModel
 → R3購読でHUDとButtonへ反映
+
+BattleActionResolved
+→ CubeBattleCharacterPresenter
+→ Cube人物のAttack／Defend／Hit／Death演出
 ```
 
 決着していなければ：
@@ -493,6 +497,9 @@ DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の�
 | `BattleHudView` | 初期表示、R3購読、Action送信 |
 | `BattleViewModel` | 表示値とCommandState |
 | `BattleEventPresenter` | Message購読、表示更新、ResultPopup |
+| `CubeBattleCharacterPresenter` | 解決済み行動をCube人物の3D演出へ変換 |
+| `CubeBattleCharacterView` | Cube部品の生成、突進、防御、被弾、倒れる動き |
+| `BattleCharacterAnchors` | Battle SceneのPlayerRoot／EnemyRoot参照 |
 | `BattleActionButton` | Definition駆動の共通Button |
 | `BattleActionDefinition` | Action ID・表示名・説明 |
 | `BattleCommandState` | 実行可否とCooldown |
