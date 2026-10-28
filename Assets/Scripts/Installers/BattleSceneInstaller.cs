@@ -1,6 +1,7 @@
 using Application.UseCases;
 using Presentation.Battle;
 using Presentation.Battle.Characters;
+using Presentation.Battle.Performance;
 using SceneFlow.Battle;
 using UnityEngine;
 
@@ -22,6 +23,8 @@ namespace Installers
             Container.BindInterfacesAndSelfTo<BattleSceneEntryPoint>().AsSingle();
             Container.BindInterfacesAndSelfTo<BattleEventPresenter>().AsSingle();
             Container.BindInterfacesAndSelfTo<CubeBattleCharacterPresenter>().AsSingle();
+            Container.Bind<PerformanceView>().FromNewComponentOnNewGameObject()
+                .WithGameObjectName("Performance View").AsSingle().NonLazy();
         }
     }
 }

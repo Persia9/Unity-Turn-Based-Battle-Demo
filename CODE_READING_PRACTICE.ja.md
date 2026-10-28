@@ -500,6 +500,7 @@ DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の�
 | `CubeBattleCharacterPresenter` | 解決済み行動をCube人物の3D演出へ変換 |
 | `CubeBattleCharacterView` | Cube部品の生成、突進、防御、被弾、倒れる動き |
 | `BattleCharacterAnchors` | Battle SceneのPlayerRoot／EnemyRoot参照 |
+| `PerformanceView` | Battle SceneのFPS、フレーム時間、メモリを低頻度更新で表示 |
 | `BattleActionButton` | Definition駆動の共通Button |
 | `BattleActionDefinition` | Action ID・表示名・説明 |
 | `BattleCommandState` | 実行可否とCooldown |
