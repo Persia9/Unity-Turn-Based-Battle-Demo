@@ -1,141 +1,690 @@
-# 主要コードを読む練習
+# Unity Turn-Based Battle Demo 完全コードリーディングガイド
 
-目標は全クラスを暗記することではなく、「入口・状態・ルール・通知・後始末」を指し示しながら説明できることです。まず60〜90分で一巡し、答えを隠して口頭説明してください。
+この資料は現在のリポジトリを実際に読み直して作成したガイドです。クラス名の暗記ではなく、次をコードで説明できる状態を目指します。
 
-## 1. 最初に読む順番
+1. 状態を誰が所有しているか。
+2. 入力がDomainへ届き、表示へ戻る順番。
+3. Project、Scene、Prefabの寿命。
+4. 非同期、キャンセル、再入、失敗の扱い。
+5. テストが保証する範囲と、まだ保証しない範囲。
 
-| 順番 | ファイル | 探すもの |
+この文書でいう「現在」はUnity `6000.3.12f1`、`BattleUnitSnapshot.BasePower`方式、PlayMode smoke test 4本が存在する構成を指します。
+
+---
+
+## 1. ゲーム仕様を先に理解する
+
+このデモは3連戦の1対1ターン制バトルです。
+
+```text
+Title
+  ↓ Start Expedition
+Battle 1: Slime / 通常攻撃のみ
+  ↓ 勝利・最大20HP回復・強化選択
+Battle 2: Sentinel / 3ターンごとに強攻撃
+  ↓ 勝利・最大20HP回復・強化選択
+Battle 3: Iron Warden / 強攻撃を連続する周期
+  ↓
+Cleared または Defeated
+  ↓
+Retry または Title
+```
+
+プレイヤーの行動：
+
+| 行動 | 効果 | 制限 |
 |---|---|---|
-| 1 | [RunState](Assets/Scripts/Domain/Run/RunState.cs) | 周回フェーズ、持ち越す値、強化、戦績 |
-| 2 | [BattleState](Assets/Scripts/Domain/Battle/BattleState.cs) | 1戦の状態、入力可否、予告、クールダウン |
-| 3 | [BattleSystem](Assets/Scripts/Domain/Battle/BattleSystem.cs) | 倍率、軽減、端数処理、効果の適用 |
-| 4 | [RunFlowUseCase](Assets/Scripts/Application/UseCases/RunFlowUseCase.cs) | 新規周回、戦闘の準備、次の戦闘への遷移 |
-| 5 | [PlayPlayerTurnUseCase](Assets/Scripts/Application/UseCases/PlayPlayerTurnUseCase.cs) | プレイヤー行動から敵行動への進行、キャンセル |
-| 6 | [AttackUseCase](Assets/Scripts/Application/UseCases/AttackUseCase.cs) | データ取得、Domain呼び出し、通知順序 |
-| 7 | [BattleActionButton](Assets/Scripts/Presentation/Battle/Commands/BattleActionButton.cs) | 定義の参照、共通入力、購読解除 |
-| 8 | [BattleEventPresenter](Assets/Scripts/Presentation/Battle/BattleEventPresenter.cs) | 通知から表示更新、結果画面を開く場所 |
-| 9 | [BattleViewModel](Assets/Scripts/Presentation/Battle/BattleViewModel.cs) | 表示用状態と行動ごとの使用可否 |
-| 10 | [ProjectInstaller](Assets/Scripts/Installers/ProjectInstaller.cs)、[BattleSceneInstaller](Assets/Scripts/Installers/BattleSceneInstaller.cs) | 生成と破棄の単位 |
+| Attack | `BasePower + DamageBonus` | 毎プレイヤーターン使用可能 |
+| Defend | その場のダメージ0。次の敵攻撃を軽減 | 次の1hitで消費 |
+| StrongAttack | `(BasePower + DamageBonus) × 2` | 次の2プレイヤーターンは使用不可 |
 
-各ファイルで「入力は何か」「何を書き換えるか」「何を呼ぶか」「何に依存するか」を1行ずつメモします。
+敵のStrongAttackは基本威力の3倍です。防御時は最終威力に`GuardDamagePercent`を掛けて切り上げます。
 
-## 2. 紙に描く4つの処理
+```text
+通常ガード: 15 × 50% = 7.5 → 8
+Guard強化後: 30 × 35% = 10.5 → 11
+```
 
-### A. 強攻撃ボタンを押してから敵が行動するまで
+強化：
 
-まず答えを見ず、クラス名を矢印でつないでください。
+| 強化 | RunStateへの効果 |
+|---|---|
+| Attack | `DamageBonus += 5` |
+| Vitality | `MaxHp += 25`、現在HPも最大25回復 |
+| Guard | `GuardDamagePercent -= 15`、下限20% |
 
-答えの目安：
+---
+
+## 2. アーキテクチャ
+
+```text
+Unity Scene / Prefab
+        ↓
+Presentation: View・ViewModel・Presenter
+        ↓
+Application: UseCase・Session・Message
+        ↓
+Domain: 状態・ルール
+
+Infrastructure: Addressables・MasterMemory・UI生成・Scene操作
+Installers: 上記をZenjectで接続
+```
+
+これは厳密なClean Architectureの同心円ではありません。Applicationの一部はRepositoryやSceneのInfrastructure interfaceを参照し、製品コードの大部分は1つの`BattleDemo.Runtime` Assemblyです。Domainだけが独立しています。
+
+| Assembly | 内容 | 特徴 |
+|---|---|---|
+| `BattleDemo.Domain` | BattleとRunのルール | `noEngineReferences: true` |
+| `BattleDemo.Runtime` | Application、Presentation、Infrastructure、Installer | Unityと外部ライブラリを利用 |
+| `BattleDemo.Editor` | MasterData生成 | Editor限定 |
+| `BattleDemo.Domain.Tests` | Domain tests | EditMode |
+| `BattleDemo.Application.Tests` | UseCase、Repository、構造tests | EditMode |
+| `BattleDemo.PlayMode.Tests` | AddressablesとTitle Scene | PlayMode |
+
+`ArchitectureTests`はソースを走査し、Domainが外側やUnityを参照しないこと、ApplicationがPresentationを参照しないことを補助的に検査します。コンパイラーによる完全な層分離ではありません。
+
+---
+
+## 3. 最重要：BattleStateとRunState
+
+### BattleState：1戦だけの状態
+
+- Player／EnemyのSnapshot
+- 現在の手番、ターン数
+- 勝敗
+- StrongAttackの再使用ターン
+- EnemyAttackPattern
+- 今回持ち込んだ攻撃ボーナス、防御率
+- 次の敵攻撃に対する防御状態
+
+初期化すると手番、勝敗、Cooldown、防御状態がリセットされます。
+
+### RunState：3連戦をまたぐ状態
+
+- `RunPhase`
+- Round、Wins
+- 現在HP、最大HP
+- 攻撃・防御強化
+- 総ターン、累計被ダメージ
+- `_battleStartingHp`
+
+累計被ダメージは各hitを加算せず、`戦闘開始HP - 戦闘終了HP`で記録します。現在は戦闘中回復がないため実質同じですが、将来回復を追加すると「受けた総ダメージ」と意味がずれます。
+
+### SessionとRevision
+
+`BattleSession`と`RunSession`はProjectスコープのSingletonです。Sceneをロードしても周回状態が残ります。
+
+`BattleSession.Revision`はInitializeごとに増える世代番号です。
+
+```text
+Battle A: Revision 1 → 敵待機中
+Battle BをInitialize: Revision 2
+古い待機が完了
+Revision 1 != 2 → 古い敵攻撃を中止
+```
+
+---
+
+## 4. MasterDataからSnapshotまで
+
+現在の攻撃力の正は`SkillMaster.Power`です。`CharacterMaster.Attack`はありません。
+
+```text
+StageMaster
+├─ PlayerCharacterId
+├─ EnemyCharacterId
+└─ EnemyPattern
+       ↓
+CharacterMaster
+├─ Name
+├─ MaxHp
+└─ DefaultSkillId
+       ↓
+SkillMaster.Power
+       ↓
+BattleUnitSnapshot.BasePower
+```
+
+`RunFlowUseCase.PrepareCurrentBattle()`がStage、Character、Skillを解決し、その戦闘の値をSnapshotへ固定します。
+
+- 攻撃ごとのMasterData再検索を避ける。
+- 戦闘開始後は確定値だけで動く。
+- Master定義と実行中の戦闘状態を分ける。
+
+`SkillMaster.Power`は定義値、`BattleUnitSnapshot.BasePower`は戦闘開始時に解決した実行値です。HP変更時はSnapshotを作り直しますが、ID、Name、MaxHp、BasePowerを維持してHPだけ変えます。
+
+---
+
+## 5. 起動からTitle表示まで
+
+```text
+Resources/ProjectContext.prefab
+  └─ ProjectInstaller
+       ├─ Addressables service
+       ├─ MasterData provider / repositories
+       ├─ BattleSession / RunSession
+       ├─ RunFlowUseCase / AttackUseCase
+       └─ MessagePipe brokers
+
+Assets/Scenes/Title.unity
+  └─ SceneContext
+       └─ TitleSceneInstaller
+            ├─ Scene共通UIサービス
+            └─ TitleSceneEntryPoint
+```
+
+実行順：
+
+```text
+TitleSceneEntryPoint.Initialize
+→ InitializeMasterDataUseCase.Execute
+→ Master/CoreとMaster/UIをAddressablesからロード
+→ IUIService.Open<TitleScreenView>("TitleScreen")
+→ UIMasterからPrefabKeyとLayerを取得
+→ UI/Title/TitleScreenをロード
+→ DiContainer.InstantiatePrefab
+→ TitleScreenView.OnOpened
+```
+
+TitleのPlayMode testは、この経路でTitleScreenがScene上にactiveで生成されたことまで確認します。
+
+EntryPointの`Run().Forget()`自体には明示的な`try/catch`がありません。初期化失敗時の画面内リトライUIはありません。
+
+---
+
+## 6. StartからBattle Sceneまで
+
+```text
+TitleScreenView.OnStartClicked
+→ Startボタンを無効化
+→ RunFlowUseCase.StartNewRun
+   ├─ _loadingで二重開始を拒否
+   ├─ Stage 1とPlayer Characterを取得
+   ├─ RunState.Start(MaxHp)
+   ├─ PrepareCurrentBattle
+   │    ├─ Stage / Character / Skillを解決
+   │    └─ BattleSession.Initialize → Revision増加
+   └─ Battle Sceneをロード
+```
+
+`_loading`はUnityメインスレッド利用を前提としたboolガードです。2回目の要求はキューへ入らずreturnします。
+
+---
+
+## 7. Battle Sceneの構築
+
+`BattleSceneInstaller`がSceneスコープを構築します。
+
+| 登録 | 役割 |
+|---|---|
+| `BattleViewModel` | 表示用の現在値 |
+| `UniTaskTurnDelay` | 敵行動まで700ms待機 |
+| `PlayPlayerTurnUseCase` | PlayerからEnemyまでの進行 |
+| `BattleSceneEntryPoint` | BattleHudを開く |
+| `BattleEventPresenter` | Messageを購読し表示更新 |
+| `UIService`一式 | View生成、Layer、Cache、Popup |
+
+`BattleSceneEntryPoint`はMasterDataを初期化し、BattleSessionが未初期化なら`PrepareCurrentBattle()`を呼びます。Battle Sceneから直接Playしても最初のRunを準備できます。Title経由では既に初期化済みなので二重初期化しません。
+
+`BattleHudView.OnOpened()`：
+
+1. View破棄と連動するCancellationTokenSourceを作る。
+2. 子の`BattleActionButton`をBindする。
+3. ViewModelのReactivePropertyをTextへ購読する。
+4. BattleSession／RunSessionから初期値を入れる。
+5. Command、予告、ログを初期化する。
+
+---
+
+## 8. 1ターンの完全な流れ
 
 ```text
 BattleActionButton.OnClicked
 → BattleHudView.ExecuteAction
 → PlayPlayerTurnUseCase.Execute
+   ├─ _disposed / _busy / cancel確認
+   └─ Revision保存
 → AttackUseCase.ExecutePlayerAction
-→ リポジトリからスキル取得
-→ BattleSystem.ApplyPlayerAction / BattleState
-→ DamageApplied・BattleActionResolved・TurnChangedなどを通知
-→ Presenter → ViewModel → R3購読でViewへ反映
-→ ITurnDelay.Wait
-→ キャンセル・Revision確認
-→ AttackUseCase.ExecuteEnemyAttack
+   ├─ 手番・終了・再入・行動可否確認
+   └─ attacker.BasePowerを使う
+→ BattleSystem.ApplyPlayerAction
+   ├─ DamageBonus加算
+   ├─ Strongなら2倍
+   ├─ Defend／Cooldown状態設定
+   └─ BattleState.ApplyDamage
+→ MessagePipe
+   ├─ DamageApplied（Defend以外）
+   ├─ BattleActionResolved
+   └─ BattleFinished または TurnChanged
+→ BattleEventPresenter
+→ BattleViewModel
+→ R3購読でHUDとButtonへ反映
 ```
 
-決着した場合はTurnChangedではなくBattleFinishedを通知します。プレイヤーが先に倒した場合、敵の待機は開始しません。
-
-### B. 勝利してから次の戦闘が始まるまで
+決着していなければ：
 
 ```text
-BattleFinished
-→ BattleEventPresenter.OnBattleFinished
-→ RunFlowUseCase.CompleteBattle
-→ RunState.CompleteBattle（戦績・回復・強化待ちへ遷移）
-→ ResultPopupView
-→ 強化選択
-→ RunFlowUseCase.ChooseUpgrade
-→ RunState.ChooseUpgrade
-→ PrepareCurrentBattle（周回の値から新しい戦闘を初期化）
-→ Battleシーンをロード → BattleStarted
+700ms待機
+→ CancellationToken再確認
+→ Revision再確認
+→ AttackUseCase.ExecuteEnemyAttack
+→ EnemyIntentを採用
+→ Strongなら3倍
+→ 防御中ならGuardDamagePercentを掛けて切り上げ
+→ 防御を1回で消費
+→ Playerへダメージ
 ```
 
-問い：強化後のシーンロードだけ失敗したら、周回状態はどこまで進んでいますか？
+### `_busy`と`_executing`
 
-答え：強化は既に適用済みで、次の戦数へ進んでいます。`_advancePending` により再試行では強化を再適用せず、同じ戦闘を準備・ロードし直します。永続的なトランザクションや保存からの復旧を実装したわけではありません。
-
-### C. 敵の待機中に画面を閉じた場合
-
-答え：HUDのOnClosedが呼び出し側のトークンをキャンセルし、シーン破棄ではUseCaseのDisposeも寿命トークンをキャンセルします。待機後のThrowIfCancellationRequestedでも確認します。トークンとは別にRevisionを比較し、セッションが再初期化されていたら古い処理を適用しません。
-
-`ITurnDelay` をテスト用実装に差し替え、キャンセルを無視して完了するケースも検証しています。破棄の時点までの実行済み処理を巻き戻す仕組みではありません。
-
-### D. ボタンを攻撃から防御へ変更する場合
-
-答え：InspectorでDefinitionをDefendの定義アセットへ差し替えます。共通コンポーネントが表示名と行動IDを読み、ViewModelの共通コマンド状態から使用可否を取得します。Viewコードの分岐追加は不要です。
-
-ただし、新しい「毒」行動の効果そのものを定義アセットだけで追加することはできません。
-
-## 3. 面接の想定質問と答えの要点
-
-| 質問 | 答える要点 | 見せるコード |
+| ガード | 場所 | 防ぐもの |
 |---|---|---|
-| BattleSessionとRunSessionを分けた理由は？ | リセットする値と戦闘間で残す値を分けるため | RunState、PrepareCurrentBattle |
-| BattleSessionはシーンごとに生成される？ | いいえ。Projectスコープで保持し、Initializeで1戦の内容を作り直す | ProjectInstaller、BattleSession |
-| なぜボタンを無効化するだけでは不十分？ | 見た目の制御だけに頼らず、不正なタイミングや重複呼び出しを処理側でも拒否する | AttackUseCase、PlayPlayerTurnUseCase |
-| `_busy`と`_executing`の違いは？ | 前者は敵の待機を含む進行全体の重複防止、後者は同期通知中の再入防止 | 両UseCase |
-| キャンセルだけでなくRevisionを使う理由は？ | 古い待機が完了しても、新しい戦闘に適用しないため | BattleSession、PlayPlayerTurnUseCase |
-| R3とMessagePipeの使い分けは？ | 現在の表示値と、発生したイベントを分ける。どちらも寿命に応じて購読解除 | ViewModel、Presenter、Button |
-| DomainをUnity非依存にする理由は？ | ルールを画面・シーン・外部ライブラリから独立させて検証するため | Domain asmdef、Domainテスト |
-| 予告と敵の行動がずれない理由は？ | 同じEnemyIntentの規則を参照する | BattleState、BattleSystem |
-| データでどこまで変えられる？ | 既存行動の割り当て・表示、敵の値・パターンなど。新しい効果はコードが必要 | Definition、StageMaster、BattleSystem |
-| この構成の弱点は？ | 規模に比べ依存が多い。Domain以外は単一Runtimeアセンブリが中心。画面結合の自動テストは未実装 | README、asmdef |
-| 次に何を改善する？ | PlayModeで一連の遷移を自動検証し、ビルド・データ検証の再現性を上げる | テストの現在の範囲と比較 |
+| `_busy` | PlayPlayerTurnUseCase | 待機を含む一連の非同期進行の重複 |
+| `_executing` | AttackUseCase | 同期Message publish中の再入 |
 
-文章を暗記するより、回答した直後に該当メソッドを開く練習をしてください。
+Buttonの`interactable`だけに頼らず、Button、UseCase、Domainで可否を再確認します。
 
-## 4. テストから仕様を逆に読む
+---
 
-1. [BattleActionRulesTests](Assets/Tests/EditMode/BattleActionRulesTests.cs) のクールダウンテストを読み、使用ターン1／不可2・3／再使用4を説明する。
-2. [BattleUseCaseTests](Assets/Tests/Application/BattleUseCaseTests.cs) の通知順序と再入テストを読み、UIの連打防止と何が違うか説明する。
-3. [RunFlowUseCaseTests](Assets/Tests/Application/RunFlowUseCaseTests.cs) のシーンロード失敗テストを読み、2回呼んでも強化が1回分で済む理由を説明する。
-4. [RunStateTests](Assets/Tests/EditMode/RunStateTests.cs) の最終勝利を読み、3戦目では回復も次の強化も発生しないことを説明する。
-5. [MasterDatabaseInitializationTests](Assets/Tests/Application/MasterDatabaseInitializationTests.cs) を読み、Core成功・UI失敗時に次回何をロードするか説明する。
+## 9. Domainルールの読み方
 
-「78件あるから十分」とは答えず、何を確認し、何を確認していないかを説明します。Prefabの表示・実際のDI・Addressables通信・性能は、このロジックテストだけでは保証しません。
+### TurnCount
 
-## 5. 小さな変更課題
+個別行動数ではなくプレイヤーターンのRound番号です。
 
-提出用の版を保存し、練習用のコピーで取り組んでください。
+```text
+Player / Turn 1
+Enemy  / Turn 1
+Player / Turn 2
+```
 
-### 課題1：表示だけを変更
+### StrongAttack cooldown
 
-Attackの表示名をNormal attackに変更し、同じ定義を別のボタンにも割り当てます。
+Turn 1で使うと`_strongReadyOnTurn = 4`です。
 
-合格条件：C#を変更せず、両ボタンの表示と同じ行動の実行を確認できる。コードのルールまで変更できたとは説明しない。
+```text
+Turn 1: 使用
+Turn 2: CD 2
+Turn 3: CD 1
+Turn 4: 再使用可能
+```
 
-### 課題2：強攻撃倍率を2倍から3倍へ変更
+### EnemyIntent
 
-変更箇所を探す前に、影響するテストと表示を3つ以上挙げてください。
+予告と実攻撃が同じpropertyを参照します。
 
-答えの目安：BattleSystemの倍率、ダメージ期待値、戦闘終了タイミングや攻略例、StrongAttack定義の表示名、予想されるゲームバランス。Domainだけ変更して「x2」表示を残さないこと。
+| Pattern | StrongAttack |
+|---|---|
+| NormalOnly | なし |
+| EveryThirdTurn | 3、6、9… |
+| BossCycle | 2・3、6・7… |
 
-### 課題3：回復量を20から15へ変更
+### 防御と例外安全性
 
-RunState.RecoveryHpを変更した場合、どのテスト・結果文言・攻略例が変わるか調べます。
+防御は次の敵行動で`ConsumePlayerDefense()`により1回だけ消費されます。不正Powerやoverflowは状態変更前に例外になるよう順序付けされ、テストされています。
 
-合格条件：回復上限とHP持ち越しを区別し、戦績の累計被ダメージが回復で減らない理由を説明できる。
+---
 
-### 課題4：ロード失敗の確認
+## 10. MessagePipeとR3
 
-実運用のデータを壊す代わりに、RunFlowUseCaseTestsの偽SceneServiceが失敗するケースを読みます。失敗時の周回フェーズ・Round・MaxHp・シーン呼び出し回数を、実行前に予想してください。
+MessagePipeは「起きた事実」、R3は「現在表示する値」です。
 
-## 6. 最後に60秒で説明する
+| Message | 意味 |
+|---|---|
+| `DamageAppliedMessage` | ダメージと残HPが確定 |
+| `BattleActionResolvedMessage` | 行動が解決済み |
+| `TurnChangedMessage` | 次の手番へ移行 |
+| `BattleFinishedMessage` | 勝者確定 |
 
-コードを閉じて、次の5点を各1文で説明します。
+Publish順：
 
-1. このゲームでプレイヤーが判断すること。
-2. Domain / Application / Presentationの役割。
-3. 戦闘と周回の状態を分けた理由。
-4. 中断・重複入力・ロード失敗への対処。
-5. 自動テストと手動確認の範囲、次に検証する点。
+```text
+非致死Attack:
+DamageApplied → BattleActionResolved → NextTurn → TurnChanged
 
-詰まった項目だけコードへ戻ります。分からない質問を受けたときは推測で断定せず、「その点は未検証なので、この経路を確認します」と調べる場所を示してください。
+致死Attack:
+DamageApplied → BattleActionResolved → BattleFinished
+
+Defend:
+BattleActionResolved → NextTurn → TurnChanged
+```
+
+`BattleViewModel`はHP、ターン、ログ、予告、Command可否をReactivePropertyで保持します。`CommandsVersion`はDictionary内のCommandState更新を全Buttonへ通知するversion counterです。
+
+---
+
+## 11. 勝敗からResultPopupまで
+
+```text
+BattleFinishedMessage
+→ BattleEventPresenter
+   ├─ ViewModelを終了状態へ更新
+   ├─ RunFlowUseCase.CompleteBattle
+   │    └─ RunState.CompleteBattle
+   └─ ResultPopupを開く
+```
+
+`CompleteBattle()`はRevisionを記録し、同じ戦闘結果の二重反映を防ぎます。
+
+```text
+敗北: InBattle → Defeated
+1・2戦目勝利: InBattle → 最大20HP回復 → ChoosingUpgrade
+3戦目勝利: InBattle → Cleared
+```
+
+Popup openは`Forget()`ですが、`OpenResultPopup()`内部で例外を捕捉し、Unity LogとBattle logへ記録します。
+
+---
+
+## 12. 強化、ロード失敗、再試行
+
+```text
+ResultPopupView.Continue
+→ RunFlowUseCase.ChooseUpgrade
+   ├─ RunState.ChooseUpgrade
+   │    ├─ 強化適用
+   │    ├─ Round++
+   │    └─ Phase = InBattle
+   ├─ _advancePending = true
+   ├─ 次のBattleを準備
+   └─ Battle Sceneロード
+```
+
+Sceneロード失敗時には強化とRound進行が完了済みです。同じUpgradeを再度押すと、`_advancePending`により強化を二重適用せず、Battle準備とSceneロードだけを再試行します。
+
+これは同一プロセスのメモリー上の再試行であり、アプリ終了後の復旧や保存ではありません。
+
+---
+
+## 13. UI基盤
+
+### UIMaster
+
+| ID | Address | Layer | Type | Cache | Singleton | Block |
+|---|---|---|---|---:|---:|---:|
+| TitleScreen | UI/Title/TitleScreen | Screen | Screen | true | true | false |
+| BattleHud | UI/Battle/BattleHud | Hud | Hud | true | true | false |
+| ResultPopup | UI/Battle/ResultPopup | Popup | Popup | false | false | true |
+
+### UIViewFactory
+
+1. AddressablesからPrefabをLoad。
+2. Scene側の`DiContainer.InstantiatePrefab()`で生成。
+3. rootに期待するView componentがあるか確認。
+4. `UIViewAssetLease`を追加。
+
+Scene側Containerで生成するため、BattleHudの`[Inject]`はBattle SceneのViewModelやUseCaseを解決できます。Leaseはinstanceの`OnDestroy`でPrefab assetをReleaseします。
+
+### UIService
+
+`SemaphoreSlim`でOpen／Closeを直列化し、opened、cache、input blockerを管理します。
+
+Open：定義取得 → Singleton確認 → Cacheまたは生成 → Layer配置 → blocker → Context → active → `OnOpened` → Registry。
+
+Close：最後の同ID View取得 → `OnClosed` → blocker削除 → Cacheへ戻すかDestroy。
+
+`Dispose()`はScene内のViewとblockerを破棄します。SemaphoreSlimをDisposeしないのは、await中の処理がfinallyで`Release()`する可能性があるためです。
+
+`PopupService`と`ScreenService`はUIMasterの`UIType`を検査してUIServiceへ委譲します。
+
+---
+
+## 14. MasterData基盤
+
+`Master/Core`：Character、Skill、Stage。`Master/UI`：UI定義。
+
+Editorメニュー`Tools > MasterData > Build Demo MasterData`が`.bytes`を生成し、Addressablesの`Master/Core`と`Master/UI`で配信します。
+
+`MasterDatabaseInitialization<T>`はSemaphoreSlimで同時初期化を直列化します。Core成功後にUIだけ失敗するとCoreを保持し、次回はUIだけ再試行します。失敗はkeyとinner exceptionを持つ`MasterDataLoadException`へ変換します。
+
+各Repositoryは`TryFindById`を使い、見つからなければ`MasterDataNotFoundException(table, key)`へ変換します。
+
+現在、`SkillMaster.Name`と`StageMaster.DisplayName`はRepository testでは読みますが、ゲーム画面や戦闘進行では未使用です。
+
+---
+
+## 15. Action Definitionの境界
+
+BattleHudのButtonには次が割り当てられます。
+
+- `Assets/Settings/BattleActions/Attack.asset`
+- `Assets/Settings/BattleActions/Defend.asset`
+- `Assets/Settings/BattleActions/StrongAttack.asset`
+
+DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の差し替えで既存Actionの割当と表示を変えられます。
+
+ただし効果は実装しません。毒、回復など新ルールにはDomain、Application、表示、testの変更が必要です。汎用Ability systemではありません。
+
+---
+
+## 16. 全コードの役割
+
+### Domain
+
+| ファイル | 役割 |
+|---|---|
+| `BattleAction` / `BattleSide` / `TurnOwner` | 行動・対象・手番のID |
+| `EnemyAttackPattern` | 敵行動周期 |
+| `BattleUnitSnapshot` | 戦闘開始時に確定したUnit情報 |
+| `BattleActionResult` | 解決済み行動の値 |
+| `BattleState` | 1戦の状態遷移 |
+| `BattleSystem` | ダメージ・防御・倍率 |
+| `RunState` | 3連戦のPhase、HP、強化、戦績 |
+
+### Application
+
+| ファイル | 役割 |
+|---|---|
+| `BattleSession` / `IBattleSession` | BattleStateとRevisionを保持 |
+| `RunSession` | RunStateを保持 |
+| `AttackUseCase` | 1actorの行動を検証・解決・通知 |
+| `PlayPlayerTurnUseCase` | PlayerからEnemyまで非同期進行 |
+| `RunFlowUseCase` | 新規Run、戦闘準備、完了、強化、Scene遷移 |
+| `InitializeMasterDataUseCase` | MasterData初期化入口 |
+| `ReturnToTitleUseCase` | Titleへ戻る |
+| `ITurnDelay` / `UniTaskTurnDelay` | 待機の差し替え点 |
+| 4種のMessage | Domain結果をPresentationへ通知 |
+
+### Presentation
+
+| ファイル | 役割 |
+|---|---|
+| `TitleScreenView` | Start入力と多重押下抑止 |
+| `BattleHudView` | 初期表示、R3購読、Action送信 |
+| `BattleViewModel` | 表示値とCommandState |
+| `BattleEventPresenter` | Message購読、表示更新、ResultPopup |
+| `BattleActionButton` | Definition駆動の共通Button |
+| `BattleActionDefinition` | Action ID・表示名・説明 |
+| `BattleCommandState` | 実行可否とCooldown |
+| `ResultPopupContext` | 勝敗Context |
+| `ResultPopupView` | 戦績、強化、Retry、Title |
+
+### Infrastructure / Installer / SceneFlow
+
+| 領域 | 役割 |
+|---|---|
+| Asset | Addressables Load／Release |
+| MasterData | バイナリ、初期化、Repository、例外 |
+| Scene | SceneManagerの抽象化 |
+| UI | 定義、生成、Layer、Cache、所有権 |
+| `ProjectInstaller` | Sceneをまたぐ依存とMessage broker |
+| `SceneInstaller` | Scene単位UI基盤 |
+| `TitleSceneInstaller` | Title EntryPoint |
+| `BattleSceneInstaller` | Battle固有依存 |
+| 2つのEntryPoint | 各Sceneの開始処理 |
+| `GameConstants` | Scene名とMaster key |
+| `ILogger` / `UnityLogger` | 初期化ログ |
+
+---
+
+## 17. Testから仕様を読む
+
+### EditMode
+
+| Suite | 保証 |
+|---|---|
+| `BattleStateTests` | 手番、致死、HP clamp、再初期化 |
+| `BattleActionRulesTests` | 倍率、Cooldown、防御、予告、overflow |
+| `EncounterRulesTests` | 敵Pattern、強化順、切り上げ |
+| `RunStateTests` | 回復、強化、最終勝利、敗北、再開 |
+| `BattleUseCaseTests` | Message順、再入、連打、cancel、Revision、攻略 |
+| `RunFlowUseCaseTests` | 3連戦、全強化組合せ、Scene再試行 |
+| `BattleCommandStateTests` | Button可否とCooldown |
+| MasterData系tests | 同時初期化、部分再試行、Repository例外 |
+| `ArchitectureTests` | 依存方向 |
+
+### PlayMode 4本
+
+1. TitleScreen Addressとroot component。
+2. BattleHud Addressとroot component。
+3. ResultPopup Addressとroot component。
+4. Title Sceneを実ロードし、実DI・MasterData・Addressables経由でTitleScreen表示。
+
+### 未保証
+
+- Battle Sceneの全`[Inject]`とInspector参照。
+- Button操作によるTitle → Battle → Upgrade → ResultのE2E。
+- ResultPopupの全Button／UpgradeSlot参照。
+- `Use Existing Build`のAssetBundle／Catalog。
+- Player build、性能、長時間反復。
+- 保存とアプリ終了後の復旧。保存機能自体がない。
+
+Prefab smoke testはAddressとroot componentを確認しますが、private SerializeFieldすべては検証しません。Title Scene testはTitle側の統合保証であり、Battle側ではありません。
+
+---
+
+## 18. 現在の注意点・改善余地
+
+1. `RunState.BattleCount = 3`と`RecoveryHp = 20`に対し、Viewにも`/3`と`20 HP`が直書きされています。
+2. PresenterのDefendログは`damage is halved`固定ですが、Guard強化後は35%や20%を受けます。計算とDefenseTextは正しく、ログだけ一般化されていません。
+3. MasterDataの`EnemyPattern`、UIの`Layer`／`Type`はintからenumへcastします。UI側は変換時の範囲検証がありません。
+4. UI IDは文字列で複数箇所を接続します。MasterData、Addressables、呼び出し側の一致が必要です。
+5. 小規模デモに対してZenject、UniTask、R3、MessagePipe、MasterMemory、Addressablesと基盤が多めです。教材としての意図と簡略化案の両方を説明すべきです。
+6. Applicationは具象Unity APIを避けていますが、Infrastructure namespaceのinterfaceを参照します。厳密にするならportをApplicationへ移す余地があります。
+7. SessionはProjectスコープなのでTitleへ戻るだけではRunStateは消えません。StartNewRunで明示的に初期化します。
+
+---
+
+## 19. 推奨の読む順番
+
+### 30分
+
+1. `RunState`
+2. `BattleState`
+3. `BattleSystem`
+4. `RunFlowUseCase`
+5. `PlayPlayerTurnUseCase`
+6. `AttackUseCase`
+7. `BattleEventPresenter`
+8. `BattleHudView`
+
+各ファイルで「入力」「読む状態」「書く状態」「通知」「失敗」を1行ずつ書きます。
+
+### 2時間
+
+上記に加えます。
+
+1. ProjectInstallerとSceneInstaller。
+2. 2つのSceneEntryPoint。
+3. UIService、UIViewFactory、UIViewAssetLease。
+4. MasterData初期化とRepository。
+5. BattleUseCaseTestsとRunFlowUseCaseTests。
+6. PlayMode 4本。
+
+### 完全コース
+
+1. Scene YAML／InspectorでSceneContext、Installer、UIRoot参照。
+2. PrefabのSerializeField。
+3. 3つのBattleActionDefinition。
+4. Addressables Groupの5 Address。
+5. MasterData生成と`.bytes`。
+6. Test RunnerでEditMode／PlayMode。
+7. Titleから3戦を手動で通す。
+
+---
+
+## 20. 自分で描く5シーケンス
+
+答えを見ずに描きます。
+
+1. Unity起動 → TitleScreen。
+2. Start → BattleHud。
+3. StrongAttack → 敵行動完了。
+4. 勝利 → Upgrade → 次Battle。
+5. Sceneロード失敗 → 同じUpgradeで再試行。
+
+次の語が入っているか確認します。
+
+```text
+ProjectContext / SceneContext / EntryPoint / Addressables / MasterData
+RunState / BattleState / Revision / MessagePipe / BattleViewModel / CancellationToken
+```
+
+---
+
+## 21. 面接の質問と答え
+
+### なぜBattleStateとRunStateを分ける？
+
+戦闘ごとに消す手番・防御・Cooldownと、持ち越すHP・強化・戦績を分けるためです。境界は`PrepareCurrentBattle()`です。
+
+### なぜSkill.PowerをSnapshotへコピーする？
+
+戦闘開始時に定義を解決し、戦闘中は確定値だけで動かすためです。攻撃ごとのRepository参照も避けます。
+
+### なぜCancellationTokenとRevisionの両方？
+
+待機がcancelを無視して完了しても、古い処理を新Battleへ適用しないためです。
+
+### R3とMessagePipeをなぜ両方？
+
+MessagePipeはDamageやTurnChangedという事実、R3はHPやButton可否という現在値です。
+
+### SemaphoreSlimの目的は？
+
+Master初期化やUI Open／Closeが共有状態を同時変更しないよう、非同期処理を直列化します。
+
+### PlayMode testの保証範囲は？
+
+3 UI Addressとroot View、Title Sceneの実接続です。Battle Sceneの完全操作は未保証です。
+
+### 弱点は？
+
+規模に対して基盤が多い、Runtime Assemblyが大きい、文字列と表示定数が重複、Battle統合testが浅い点です。
+
+---
+
+## 22. 変更課題
+
+### StrongAttackを3倍にする
+
+`BattleSystem`、Domain／UseCase tests、攻略、`StrongAttack.asset`の表示名と説明を確認します。
+
+### 4戦にする
+
+`BattleCount`、StageMaster、Viewの`/3`、Result文言、Stage ID、攻略testを確認します。
+
+### 戦闘中回復を追加する
+
+BattleAction、BattleSystem、Snapshot HP更新、Definition、Message、`TotalDamageTaken`の意味を確認します。
+
+### UIを追加する
+
+UIMaster、Addressables、Prefab root、UIType／Layer、呼び出し元、Prefab smoke testを確認します。
+
+---
+
+## 23. 最後に60秒で説明する
+
+コードを閉じ、各1〜2文で説明します。
+
+1. プレイヤーが何を判断するゲームか。
+2. BattleStateとRunStateを分けた理由。
+3. ButtonからDomain、表示へ戻る経路。
+4. ProjectとSceneスコープの違い。
+5. Cancellation、Revision、再入ガード。
+6. Skill.PowerとSnapshot.BasePower。
+7. EditModeとPlayModeの保証範囲。
+8. 現在の改善余地。
+
+詰まったら「所有者」を探します。状態はState／Session、進行はUseCase、表示はViewModel／View、外部I/OはInfrastructure、生成と寿命はInstallerです。

@@ -49,4 +49,4 @@ Enemy next はそのターンの敵行動の予告です。敵を倒せる場合
 敵のHP・スキル威力・行動パターンは MasterDataBuildMenu と生成済み master_core.bytes に反映しています。データを変更したらマスターと Addressables を再ビルドしてください。
 行動ボタンの割り当て方法は ACTION_CONFIGURATION.ja.md を参照してください。
 
-今回の変更後は .NET 上で78ケースが成功しています。Unity 上でのシーン遷移・表示・操作確認は未実施です。
+現在はロジックを確認するEditMode testに加え、3つのUI AddressableとTitle Scene表示を確認する4本のPlayMode smoke testがあります。Battleを最後まで操作するE2E、プレイヤービルド、性能は別途確認が必要です。

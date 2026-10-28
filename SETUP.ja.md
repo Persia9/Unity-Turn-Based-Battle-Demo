@@ -89,6 +89,6 @@ PLAY_GUIDE.ja.md を現在のルールに更新しました。タイトルから
 - ResultPopupView：中間結果では強化3択、最終結果では Retry expedition / Return to title を表示。次の戦闘のロード失敗時は選択済みの強化を再度押して再試行できます。強化は重複適用しません。
 - StageMaster：行動パターンと表示名を追加。3ステージ・4キャラクター・4スキルを同梱バイナリへ反映。
 
-従来49ケースに29ケース追加し、最新の結果は **78ケース成功**です。3戦クリア・途中敗北と再挑戦・HP持ち越し・回復上限・強化全9通り・戦績・決着通知重複・ロード失敗後の再試行・敵予告を検証しました。Unity は起動していません。
+現在はEditModeで戦闘・周回・強化全9通り・戦績・再入・キャンセル・ロード失敗後の再試行・MasterDataを検証し、PlayModeで3つのUI AddressableとTitle Scene表示を確認する4本のsmoke testを用意しています。実際の成功件数は、使用するUnity環境の Test Runner でEditModeとPlayModeをそれぞれ実行して確認してください。
 
 既存プロジェクトへ適用するときは Scripts / Tests と .meta、BattleHudView / ResultPopupView / TitleScreenView の Prefab、Defend の行動定義、master_core.bytes を含む一式を更新してください。古い StartBattleUseCase.cs と .meta は削除してください。スキーマとバイナリの両方が変わるため、Addressables は必ず再ビルドしてください。

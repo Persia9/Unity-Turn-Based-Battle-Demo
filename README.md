@@ -56,7 +56,7 @@ BattleSession はその戦闘のHP、ターン、クールダウン、防御状�
 
 ### 2. 入力、進行、ルールを分ける
 
-ボタンは行動IDを渡し、PlayPlayerTurnUseCase がプレイヤー行動→待機→敵行動を進めます。AttackUseCase はリポジトリからデータを取得し、Domain を実行して結果を通知します。ダメージ倍率、防御、クールダウン、敵の予告は Domain が判定します。
+ボタンは行動IDを渡し、PlayPlayerTurnUseCase がプレイヤー行動→待機→敵行動を進めます。戦闘開始時に RunFlowUseCase が SkillMaster.Power を BattleUnitSnapshot.BasePower へ確定し、AttackUseCase はそのSnapshotで Domain を実行して結果を通知します。ダメージ倍率、防御、クールダウン、敵の予告は Domain が判定します。
 
 敵の予告と実行は同じ EnemyIntent を参照するため、別々の判定式を持ちません。結果画面は通知を受けた Presenter が開き、Application が View 型を参照しない構成です。
 
@@ -96,19 +96,19 @@ R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」�
 
 | 確認項目 | 状況 |
 |---|---|
-| 戦闘・周回・コマンド状態等の自動テスト | .NET環境で78ケース成功 |
+| 戦闘・周回・コマンド状態等のEditModeテスト | Domain、UseCase、Repository、初期化、依存方向を検証 |
 | 使用した外部アセンブリ | NUnit 3.14.0、UniTask 2.5.11、MessagePipe 1.8.2、プロジェクト同梱のR3等 |
 | 全9通りの強化による攻略 | 予告に応じる戦略で3戦クリアを自動検証 |
 | Unity上の手動動作確認 | 利用者による確認済み |
-| Unity Test Runnerでの78ケース実行 | この作業では未確認 |
-| 自動化されたPrefab操作・PlayModeテスト | 未実装 |
+| Unity Test RunnerでのEditModeテスト実行 | 利用環境で要確認 |
+| PlayMode smoke test | UI Addressable 3件とTitle Scene表示の4本を追加。実行は利用環境で要確認 |
 | プレイヤービルド、性能計測、リモート配布 | この作業では未確認 |
 
-テストは `Assets/Tests/EditMode` と `Assets/Tests/Application` にあります。.NETでの成功をUnity用パッケージ・ソースジェネレーター・実シーンの全自動検証と同一視していません。Unity上では Test Runner > EditMode > Run All から確認できます。
+テストは `Assets/Tests/EditMode`、`Assets/Tests/Application`、`Assets/Tests/PlayMode` にあります。ロジックテストをUnity用パッケージ・ソースジェネレーター・実シーンの全自動検証と同一視していません。Unity上では Test Runner からEditModeとPlayModeをそれぞれ実行します。
 
 ## 次に改善するなら
 
-まずPlayModeでタイトル→戦闘→強化→決着→再挑戦を自動化し、シーン・Prefab・DIの結合を検証します。その後、必要に応じてデータ検証とビルド手順をCIへ組み込みます。機能追加より、再現可能な確認手順と観測性の改善を優先します。
+次はPlayModeでBattle Sceneの実DIとInspector参照を検証し、タイトル→戦闘→強化→決着→再挑戦を自動化します。その後、必要に応じてデータ検証とビルド手順をCIへ組み込みます。機能追加より、再現可能な確認手順と観測性の改善を優先します。
 
 ## 面接・レビュー用資料
 
