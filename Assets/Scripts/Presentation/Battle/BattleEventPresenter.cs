@@ -93,8 +93,22 @@ namespace Presentation.Battle
             _viewModel.CanPlayerAct.Value = false;
             _viewModel.AppendLog($"Battle finished. Winner: {message.Winner}");
             if (!_runFlow.CompleteBattle()) return;
-            _popupService.OpenPopup<ResultPopupView, ResultPopupContext>(
-                "ResultPopup", new ResultPopupContext(message.Winner == BattleSide.Player)).Forget();
+            OpenResultPopup(message.Winner).Forget();
+        }
+
+        private async UniTask OpenResultPopup(BattleSide winner)
+        {
+            try
+            {
+                await _popupService.OpenPopup<ResultPopupView, ResultPopupContext>(
+                    "ResultPopup", new ResultPopupContext(winner == BattleSide.Player));
+            }
+            catch (Exception error)
+            {
+                Debug.LogError("Failed to open ResultPopup after battle completion.");
+                Debug.LogException(error);
+                _viewModel.AppendLog("Failed to open the result screen.");
+            }
         }
 
         public void Dispose()
