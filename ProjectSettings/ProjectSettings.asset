@@ -167,9 +167,9 @@ PlayerSettings:
   androidMaxAspectRatio: 2.4
   androidMinAspectRatio: 1
   applicationIdentifier:
-    Android: com.persia9.cubebattle
-    Standalone: com.persia9.cubebattle
-    iPhone: com.persia9.cubebattle
+    Android: com.wzq.turnbattle
+    Standalone: com.wzq.turnbattle
+    iPhone: com.wzq.turnbattle
   buildNumber:
     Standalone: 0
     VisionOS: 0

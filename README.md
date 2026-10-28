@@ -18,7 +18,7 @@ Unity 6000.3.12f1 による、全3戦の1vs1ターン制バトルです。既存
 ## Mobile build policy
 
 - Unity 6のBuild ProfilesからiOSまたはAndroidを選択してください。
-- Product Nameは`Cube Battle`、Bundle Identifierは`com.persia9.cubebattle`、初期Versionは`1.0.0`に設定済みです。ストア公開前に所有する識別子へ変更しても構いません。
+- Product Nameは`Cube Battle`、Android Application ID／iOS Bundle Identifierは`com.wzq.turnbattle`、初期Versionは`1.0.0`に設定済みです。
 - 実機ではノッチ、Dynamic Island、パンチホールの内側へ操作UIが自動配置されます。背景だけは画面全体に表示できます。
 - Android/iOSのRelease buildではPerformance Viewを表示しません。計測する場合はDevelopment Buildを使用してください。
 - 最低限、16:9、19.5:9、20:9の横画面と、左右両方の端末回転でTitle → Battle → Result → 次戦/Retryを確認してください。
