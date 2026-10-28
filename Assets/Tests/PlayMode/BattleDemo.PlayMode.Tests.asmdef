@@ -1,0 +1,11 @@
+{
+  "name": "BattleDemo.PlayMode.Tests",
+  "references": [
+    "BattleDemo.Runtime",
+    "Unity.Addressables",
+    "Unity.ResourceManager"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
