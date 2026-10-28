@@ -493,7 +493,7 @@ DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の�
 
 | ファイル | 役割 |
 |---|---|
-| `TitleScreenView` | Start入力と多重押下抑止 |
+| `TitleScreenView` | Start入力、多重押下抑止、Safe Area対応のモバイルレイアウト |
 | `BattleHudView` | 初期表示、R3購読、Action送信 |
 | `BattleViewModel` | 表示値とCommandState |
 | `BattleEventPresenter` | Message購読、表示更新、ResultPopup |

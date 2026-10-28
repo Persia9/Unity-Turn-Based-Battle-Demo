@@ -31,5 +31,7 @@ public sealed class SceneSmokeTests
             "TitleScreenView was not opened. Check ProjectContext, Title SceneContext, master data, and Addressables.");
         Assert.That(titleScreen.gameObject.activeInHierarchy, Is.True);
         Assert.That(titleScreen.gameObject.scene, Is.EqualTo(scene));
+        Assert.That(titleScreen.transform.Find("Safe Area Content"), Is.Not.Null,
+            "TitleScreenView did not create its mobile safe-area layout.");
     }
 }
