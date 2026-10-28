@@ -47,11 +47,11 @@ public sealed class RunFlowUseCaseTests
     private sealed class Fixture
     {
         public readonly RunSession Run = new(); public readonly BattleSession Battle = new();
-        public readonly Scenes Scenes = new(); public readonly Publisher<BattleStartedMessage> Started = new();
+        public readonly Scenes Scenes = new();
         public readonly RunFlowUseCase Flow; public readonly AttackUseCase Attack;
         public Fixture()
         {
-            Flow = new RunFlowUseCase(Run, Battle, new Stages(), new Characters(), Scenes, Started);
+            Flow = new RunFlowUseCase(Run, Battle, new Stages(), new Characters(), Scenes);
             Attack = new AttackUseCase(Battle, new BattleSystem(), new Skills(), new Characters(),
                 new Publisher<DamageAppliedMessage>(), new Publisher<TurnChangedMessage>(),
                 new Publisher<BattleFinishedMessage>(), new Publisher<BattleActionResolvedMessage>());
@@ -67,12 +67,12 @@ public sealed class RunFlowUseCaseTests
             Assert.That(Flow.CompleteBattle(), Is.True);
         }
     }
-    [Test] public async Task NewRunInitializesFirstEncounterAndPublishesStart()
+    [Test] public async Task NewRunInitializesAndLoadsFirstEncounter()
     {
         var f = new Fixture(); await f.Flow.StartNewRun();
         Assert.That(f.Battle.State.Enemy.MaxHp, Is.EqualTo(80));
         Assert.That(f.Battle.State.EnemyPattern, Is.EqualTo(EnemyAttackPattern.NormalOnly));
-        Assert.That(f.Started.Messages.Count, Is.EqualTo(1)); Assert.That(f.Run.State.Round, Is.EqualTo(1));
+        Assert.That(f.Scenes.Calls, Is.EqualTo(1)); Assert.That(f.Run.State.Round, Is.EqualTo(1));
     }
     [Test] public async Task DuplicateFinishIsIgnoredAndUpgradeCarriesHp()
     {
@@ -95,14 +95,14 @@ public sealed class RunFlowUseCaseTests
         Assert.That(f.Run.State.Round, Is.EqualTo(2)); Assert.That(f.Run.State.MaxHp, Is.EqualTo(125));
         f.Scenes.Fail = false; await f.Flow.ChooseUpgrade(RunUpgrade.Vitality);
         Assert.That(f.Run.State.Round, Is.EqualTo(2)); Assert.That(f.Run.State.MaxHp, Is.EqualTo(125));
-        Assert.That(f.Battle.State.Player.MaxHp, Is.EqualTo(125)); Assert.That(f.Started.Messages.Count, Is.EqualTo(2));
+        Assert.That(f.Battle.State.Player.MaxHp, Is.EqualTo(125)); Assert.That(f.Scenes.Calls, Is.EqualTo(3));
     }
     [Test] public async Task ConcurrentStartDoesNotLoadTwice()
     {
         var f = new Fixture(); f.Scenes.Pending = new UniTaskCompletionSource();
         var pending = f.Flow.StartNewRun(); await f.Flow.StartNewRun();
         Assert.That(f.Scenes.Calls, Is.EqualTo(1)); f.Scenes.Pending.TrySetResult(); await pending;
-        Assert.That(f.Started.Messages.Count, Is.EqualTo(1));
+        Assert.That(f.Battle.State.Enemy.MaxHp, Is.EqualTo(80));
     }
     [Test] public async Task UpgradeCannotSkipAnUnfinishedBattle()
     {

@@ -14,16 +14,14 @@ namespace Presentation.Battle
 {
     public sealed class BattleEventPresenter : IInitializable, IDisposable
     {
-        private readonly ISubscriber<BattleStartedMessage> _battleStarted;
         private readonly ISubscriber<DamageAppliedMessage> _damageApplied;
         private readonly ISubscriber<TurnChangedMessage> _turnChanged;
         private readonly ISubscriber<BattleFinishedMessage> _battleFinished;
 
-        private IDisposable _d1;
-        private IDisposable _d2;
-        private IDisposable _d3;
-        private IDisposable _d4;
-        private IDisposable _d5;
+        private IDisposable _damageSubscription;
+        private IDisposable _turnSubscription;
+        private IDisposable _finishSubscription;
+        private IDisposable _actionSubscription;
         private readonly ISubscriber<BattleActionResolvedMessage> _actionResolved;
         private readonly IBattleSession _session;
         private readonly RunFlowUseCase _runFlow;
@@ -32,7 +30,6 @@ namespace Presentation.Battle
         private readonly IPopupService _popupService;
 
         public BattleEventPresenter(
-            ISubscriber<BattleStartedMessage> battleStarted,
             ISubscriber<DamageAppliedMessage> damageApplied,
             ISubscriber<TurnChangedMessage> turnChanged,
             ISubscriber<BattleFinishedMessage> battleFinished,
@@ -41,7 +38,6 @@ namespace Presentation.Battle
             ISubscriber<BattleActionResolvedMessage> actionResolved,
             IBattleSession session, RunFlowUseCase runFlow)
         {
-            _battleStarted = battleStarted;
             _damageApplied = damageApplied;
             _turnChanged = turnChanged;
             _battleFinished = battleFinished;
@@ -53,16 +49,10 @@ namespace Presentation.Battle
         public void Initialize()
         {
             Debug.Log("BattleEventPresenter Initialize");
-            _d1 = _battleStarted.Subscribe(OnBattleStarted);
-            _d2 = _damageApplied.Subscribe(OnDamageApplied);
-            _d3 = _turnChanged.Subscribe(OnTurnChanged);
-            _d4 = _battleFinished.Subscribe(OnBattleFinished);
-            _d5 = _actionResolved.Subscribe(OnActionResolved);
-        }
-
-        private void OnBattleStarted(BattleStartedMessage message)
-        {
-            _viewModel.AppendLog("Battle started.");
+            _damageSubscription = _damageApplied.Subscribe(OnDamageApplied);
+            _turnSubscription = _turnChanged.Subscribe(OnTurnChanged);
+            _finishSubscription = _battleFinished.Subscribe(OnBattleFinished);
+            _actionSubscription = _actionResolved.Subscribe(OnActionResolved);
         }
 
         private void OnDamageApplied(DamageAppliedMessage message)
@@ -109,11 +99,10 @@ namespace Presentation.Battle
 
         public void Dispose()
         {
-            _d1?.Dispose();
-            _d2?.Dispose();
-            _d3?.Dispose();
-            _d4?.Dispose();
-            _d5?.Dispose();
+            _damageSubscription?.Dispose();
+            _turnSubscription?.Dispose();
+            _finishSubscription?.Dispose();
+            _actionSubscription?.Dispose();
         }
     }
 }

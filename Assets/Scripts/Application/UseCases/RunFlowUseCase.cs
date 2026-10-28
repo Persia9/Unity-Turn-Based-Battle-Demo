@@ -1,5 +1,4 @@
 using System;
-using Application.Messages;
 using Application.Services;
 using Core.Common;
 using Cysharp.Threading.Tasks;
@@ -7,7 +6,6 @@ using Domain.Battle;
 using Domain.Run;
 using Infrastructure.MasterData.Repositories;
 using Infrastructure.Scene;
-using MessagePipe;
 
 namespace Application.UseCases
 {
@@ -18,13 +16,12 @@ namespace Application.UseCases
         private readonly IStageRepository _stages;
         private readonly ICharacterRepository _characters;
         private readonly ISceneService _scenes;
-        private readonly IPublisher<BattleStartedMessage> _started;
         private bool _loading;
         private bool _advancePending;
         private int _completedRevision = -1;
         public RunFlowUseCase(RunSession run, IBattleSession battle, IStageRepository stages,
-            ICharacterRepository characters, ISceneService scenes, IPublisher<BattleStartedMessage> started)
-        { _run = run; _battle = battle; _stages = stages; _characters = characters; _scenes = scenes; _started = started; }
+            ICharacterRepository characters, ISceneService scenes)
+        { _run = run; _battle = battle; _stages = stages; _characters = characters; _scenes = scenes; }
 
         public async UniTask StartNewRun()
         {
@@ -79,7 +76,6 @@ namespace Application.UseCases
         {
             PrepareCurrentBattle();
             await _scenes.LoadScene(GameConstants.BattleSceneName);
-            _started.Publish(new BattleStartedMessage(_battle.State.Player.CharacterId, _battle.State.Enemy.CharacterId));
         }
     }
 }

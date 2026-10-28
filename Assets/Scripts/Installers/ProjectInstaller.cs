@@ -45,7 +45,6 @@ namespace Installers
 
             // MessagePipe
             var options = Container.BindMessagePipe();
-            Container.BindMessageBroker<BattleStartedMessage>(options);
             Container.BindMessageBroker<DamageAppliedMessage>(options);
             Container.BindMessageBroker<BattleActionResolvedMessage>(options);
             Container.BindMessageBroker<TurnChangedMessage>(options);
