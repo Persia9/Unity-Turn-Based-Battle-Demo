@@ -26,8 +26,24 @@ namespace Presentation.Battle.Commands
             if (_label == null) _label = GetComponentInChildren<TMP_Text>(true);
             _viewModel = viewModel;
             _execute = execute;
+            ConfigureForTouch();
             _button.onClick.AddListener(OnClicked);
             _subscription = viewModel.CommandsVersion.Subscribe(_ => Refresh());
+        }
+
+        private void ConfigureForTouch()
+        {
+            ConfigureLabel(_label, 17f, 30f);
+            ConfigureLabel(_description, 12f, 20f);
+        }
+
+        private static void ConfigureLabel(TMP_Text label, float minimum, float maximum)
+        {
+            if (label == null) return;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = minimum;
+            label.fontSizeMax = maximum;
+            label.raycastTarget = false;
         }
         public void Unbind()
         {

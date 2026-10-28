@@ -17,6 +17,13 @@ namespace Presentation.Battle.Performance
         private GUIStyle _labelStyle;
         private GUIStyle _boxStyle;
 
+        private void Awake()
+        {
+#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+            gameObject.SetActive(false);
+#endif
+        }
+
         private void Update()
         {
             _elapsed += Time.unscaledDeltaTime;
@@ -47,10 +54,18 @@ namespace Presentation.Battle.Performance
         {
             EnsureStyles();
             GUI.depth = -1000;
-            var rect = new Rect(Mathf.Max(8f, Screen.width - Width - 12f), 12f, Width, Height);
+            var previousMatrix = GUI.matrix;
+            var scale = Mathf.Clamp(Screen.height / 720f, 1f, 2f);
+            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+            var safeArea = Screen.safeArea;
+            var safeXMin = safeArea.xMin / scale;
+            var safeXMax = safeArea.xMax / scale;
+            var safeY = (Screen.height - safeArea.yMax) / scale;
+            var rect = new Rect(Mathf.Max(safeXMin + 8f, safeXMax - Width - 12f), safeY + 12f, Width, Height);
             GUI.Box(rect, GUIContent.none, _boxStyle);
             GUI.Label(new Rect(rect.x + 12f, rect.y + 8f, rect.width - 24f, rect.height - 16f),
                 _displayText, _labelStyle);
+            GUI.matrix = previousMatrix;
         }
 
         private void EnsureStyles()

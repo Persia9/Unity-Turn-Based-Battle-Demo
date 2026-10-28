@@ -4,6 +4,7 @@ using Presentation.Title;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 public sealed class SceneSmokeTests
 {
@@ -33,5 +34,9 @@ public sealed class SceneSmokeTests
         Assert.That(titleScreen.gameObject.scene, Is.EqualTo(scene));
         Assert.That(titleScreen.transform.Find("Safe Area Content"), Is.Not.Null,
             "TitleScreenView did not create its mobile safe-area layout.");
+        var startButton = titleScreen.GetComponentInChildren<Button>(true);
+        Assert.That(startButton, Is.Not.Null);
+        Assert.That(((RectTransform)startButton.transform).rect.height, Is.GreaterThanOrEqualTo(100f),
+            "The primary mobile action should retain a large touch target.");
     }
 }

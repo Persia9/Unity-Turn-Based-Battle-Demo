@@ -8,11 +8,20 @@ Unity 6000.3.12f1 による、全3戦の1vs1ターン制バトルです。既存
 
 - 通常攻撃・防御・強攻撃を選択。強攻撃には次の2プレイヤーターンのクールダウンがあります。
 - Battle SceneではCubeを組み合わせた簡易3D人物が、攻撃・防御・被弾・戦闘不能を表示します。
-- Battle Scene右上のPerformance ViewでFPS、フレーム時間、使用メモリを確認できます。
-- Title画面はスマートフォンのSafe Areaと画面比率へ追従し、大きなタップ領域を確保します。
+- EditorまたはDevelopment Buildでは、Battle Scene右上のPerformance ViewでFPS、フレーム時間、使用メモリを確認できます。本番ビルドでは自動的に無効になります。
+- Title、Battle HUD、Result PopupはスマートフォンのSafe Areaと横長画面へ追従し、大きなタップ領域と自動文字縮小を使います。
+- モバイル版は左右両方向の横画面を正式対応とし、60fpsを上限に動作します。AndroidではSwappy frame pacingを有効化しています。
 - 敵の行動予告を見て防御を判断。3種類の敵で攻撃パターンが変わります。
 - 戦闘間はHPを最大20回復して持ち越し、攻撃・最大HP・防御性能から強化を選びます。
 - 最終結果に勝利数、到達戦数、総ターン数、累計被ダメージを表示します。
+
+## Mobile build policy
+
+- Unity 6のBuild ProfilesからiOSまたはAndroidを選択してください。
+- Product Nameは`Cube Battle`、Bundle Identifierは`com.persia9.cubebattle`、初期Versionは`1.0.0`に設定済みです。ストア公開前に所有する識別子へ変更しても構いません。
+- 実機ではノッチ、Dynamic Island、パンチホールの内側へ操作UIが自動配置されます。背景だけは画面全体に表示できます。
+- Android/iOSのRelease buildではPerformance Viewを表示しません。計測する場合はDevelopment Buildを使用してください。
+- 最低限、16:9、19.5:9、20:9の横画面と、左右両方の端末回転でTitle → Battle → Result → 次戦/Retryを確認してください。
 - 音声は使用しません。
 
 操作は [PLAY_GUIDE.ja.md](PLAY_GUIDE.ja.md)、行動ボタンの設定は [ACTION_CONFIGURATION.ja.md](ACTION_CONFIGURATION.ja.md) を参照してください。

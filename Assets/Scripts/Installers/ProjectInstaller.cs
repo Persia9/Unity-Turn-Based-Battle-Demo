@@ -6,6 +6,7 @@ using Domain.Battle;
 using Infrastructure.Asset;
 using Infrastructure.MasterData;
 using Infrastructure.MasterData.Repositories;
+using Infrastructure.Platform;
 using Infrastructure.Scene;
 using Infrastructure.UI;
 using MessagePipe;
@@ -19,6 +20,7 @@ namespace Installers
         public override void InstallBindings()
         {
             Container.Bind<ILogger>().To<UnityLogger>().AsSingle();
+            Container.BindInterfacesTo<MobileRuntimeSettings>().AsSingle();
 
             Container.Bind<IAssetService>().To<AddressableAssetService>().AsSingle();
             Container.Bind<ISceneService>().To<UnitySceneService>().AsSingle();

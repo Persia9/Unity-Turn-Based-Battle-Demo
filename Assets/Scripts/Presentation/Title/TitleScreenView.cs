@@ -89,10 +89,7 @@ namespace Presentation.Title
             _lastScreenSize = new Vector2Int(Screen.width, Screen.height);
             var width = Mathf.Max(1f, Screen.width);
             var height = Mathf.Max(1f, Screen.height);
-            _safeAreaContent.anchorMin = new Vector2(_lastSafeArea.xMin / width, _lastSafeArea.yMin / height);
-            _safeAreaContent.anchorMax = new Vector2(_lastSafeArea.xMax / width, _lastSafeArea.yMax / height);
-            _safeAreaContent.offsetMin = Vector2.zero;
-            _safeAreaContent.offsetMax = Vector2.zero;
+            SafeAreaUtility.Apply(_safeAreaContent);
 
             var portrait = height > width;
             _title.anchorMin = _title.anchorMax = new Vector2(0.5f, portrait ? 0.72f : 0.7f);

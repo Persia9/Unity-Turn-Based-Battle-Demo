@@ -32,9 +32,14 @@ namespace Presentation.Battle.Result
         private bool _upgradeScreen;
         private RunUpgrade? _selectedUpgrade;
         private string _summary;
+        private RectTransform _root;
+        private RectTransform _panel;
+        private Rect _lastSafeArea;
+        private Vector2Int _lastScreenSize;
         public void SetContext(ResultPopupContext context) => _context = context;
         public override void OnOpened()
         {
+            ConfigureMobileLayout();
             _selectedUpgrade = null;
             var state = _run.State;
             _upgradeScreen = state.Phase == RunPhase.ChoosingUpgrade;
@@ -56,6 +61,49 @@ namespace Presentation.Battle.Result
                 slot.Button.onClick.AddListener(slot.Handler);
             }
             SetBusy(false);
+        }
+
+        private void Update()
+        {
+            if (_root == null) return;
+            if (_lastSafeArea != Screen.safeArea || _lastScreenSize.x != Screen.width || _lastScreenSize.y != Screen.height)
+                ApplyMobileLayout();
+        }
+
+        private void ConfigureMobileLayout()
+        {
+            _root = (RectTransform)transform;
+            _panel = transform.Find("background") as RectTransform;
+            ConfigureText(_resultText, 17f, 28f);
+            foreach (var button in GetComponentsInChildren<Button>(true))
+            {
+                var label = button.GetComponentInChildren<TMP_Text>(true);
+                ConfigureText(label, 16f, 28f);
+                var rect = (RectTransform)button.transform;
+                if (rect.sizeDelta.y < 84f) rect.sizeDelta = new Vector2(rect.sizeDelta.x, 84f);
+            }
+            ApplyMobileLayout();
+        }
+
+        private void ApplyMobileLayout()
+        {
+            _lastSafeArea = Screen.safeArea;
+            _lastScreenSize = new Vector2Int(Screen.width, Screen.height);
+            SafeAreaUtility.Apply(_root);
+            if (_panel == null) return;
+            _panel.anchorMin = new Vector2(0.025f, 0.04f);
+            _panel.anchorMax = new Vector2(0.975f, 0.96f);
+            _panel.offsetMin = Vector2.zero;
+            _panel.offsetMax = Vector2.zero;
+        }
+
+        private static void ConfigureText(TMP_Text text, float minimum, float maximum)
+        {
+            if (text == null) return;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = minimum;
+            text.fontSizeMax = maximum;
+            text.raycastTarget = false;
         }
         public override void OnClosed()
         {
