@@ -116,6 +116,11 @@ namespace Infrastructure.UI
                 foreach (var view in views) if (view != null) Object.Destroy(view.gameObject);
             foreach (var blocker in _blockers.Values) if (blocker != null) Object.Destroy(blocker);
             _opened.Clear(); _cache.Clear(); _blockers.Clear();
+
+            // Keep the scene-scoped gate alive intentionally. An Open/Close operation may still
+            // resume after an await and call Release() from its finally block. Disposing the gate
+            // here would turn that normal shutdown path into an ObjectDisposedException. Once
+            // in-flight operations finish, the UIService and its private gate are collected together.
         }
     }
 }
