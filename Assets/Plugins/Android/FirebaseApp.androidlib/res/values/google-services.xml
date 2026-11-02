@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id">
+  <string name="gcm_defaultSenderId" translatable="false">138499372743</string>
+  <string name="google_storage_bucket" translatable="false">turn-based-battle.firebasestorage.app</string>
+  <string name="project_id" translatable="false">turn-based-battle</string>
+  <string name="google_api_key" translatable="false">AIzaSyCm-7sNg2x0XQG5iddQJPAopPjizvzOZ-0</string>
+  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCm-7sNg2x0XQG5iddQJPAopPjizvzOZ-0</string>
+  <string name="google_app_id" translatable="false">1:138499372743:android:e4b9c4d0fdbfccfef270e2</string>
+</resources>

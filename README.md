@@ -24,6 +24,17 @@ Unity 6000.3.12f1 による、全3戦の1vs1ターン制バトルです。既存
 - 最低限、16:9、19.5:9、20:9の横画面と、左右両方の端末回転でTitle → Battle → Result → 次戦/Retryを確認してください。
 - 音声は使用しません。
 
+## Firebase
+
+Firebase Unity SDK 14.1.0のAnalyticsとCrashlyticsをAndroid/iOS向けに導入しています。FirebaseのApplication ID／Bundle IDは`com.wzq.turnbattle`です。
+
+- `run_started`、`battle_started`、`battle_action_selected`、`battle_finished`、`upgrade_selected`、`run_finished`を記録します。
+- Scene loadやPopup処理で捕捉した例外は、文脈を付けてCrashlyticsへ送信します。
+- Firebaseの初期化が完了する前のイベントは最大64件まで保持し、初期化成功後に送信します。
+- EditorとStandaloneではFirebase通信を行わず、Android/iOSビルドだけで初期化します。
+- Firebase Console側でGoogle Analyticsを有効化してください。設定を変更した場合は、`google-services.json`と`GoogleService-Info.plist`を再取得して`Assets`直下のファイルを置き換えます。
+- API keyを含むFirebase設定ファイルはFirebase Projectの識別情報であり、サービスアカウント秘密鍵ではありません。サービスアカウントJSON、Android keystore、Apple証明書はコミットしないでください。
+
 操作は [PLAY_GUIDE.ja.md](PLAY_GUIDE.ja.md)、行動ボタンの設定は [ACTION_CONFIGURATION.ja.md](ACTION_CONFIGURATION.ja.md) を参照してください。
 
 ## 起動

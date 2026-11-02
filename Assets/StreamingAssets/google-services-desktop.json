@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "138499372743",
+    "project_id": "turn-based-battle",
+    "storage_bucket": "turn-based-battle.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:138499372743:android:e4b9c4d0fdbfccfef270e2",
+        "android_client_info": {
+          "package_name": "com.wzq.turnbattle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCm-7sNg2x0XQG5iddQJPAopPjizvzOZ-0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

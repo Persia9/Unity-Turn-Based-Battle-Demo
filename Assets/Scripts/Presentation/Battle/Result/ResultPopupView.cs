@@ -28,6 +28,7 @@ namespace Presentation.Battle.Result
         [Inject] private ReturnToTitleUseCase _returnToTitle;
         [Inject] private RunFlowUseCase _flow;
         [Inject] private RunSession _run;
+        [Inject] private IGameTelemetry _telemetry;
         private ResultPopupContext _context;
         private bool _upgradeScreen;
         private RunUpgrade? _selectedUpgrade;
@@ -126,7 +127,7 @@ namespace Presentation.Battle.Result
             try { await _flow.ChooseUpgrade(upgrade); }
             catch (Exception error)
             {
-                Debug.LogException(error);
+                _telemetry.RecordException(error, "Failed to continue after selecting an upgrade.");
                 if (this != null) _resultText.text = _summary + "\nLoad failed. Press your chosen upgrade again to retry.";
             }
             finally { if (this != null) SetBusy(false); }
@@ -136,7 +137,11 @@ namespace Presentation.Battle.Result
         {
             SetBusy(true);
             try { await _flow.StartNewRun(); }
-            catch (Exception error) { Debug.LogException(error); if (this != null) _resultText.text = _summary + "\nLoad failed. Retry or return to title."; }
+            catch (Exception error)
+            {
+                _telemetry.RecordException(error, "Failed to start a new run from the result popup.");
+                if (this != null) _resultText.text = _summary + "\nLoad failed. Retry or return to title.";
+            }
             finally { if (this != null) SetBusy(false); }
         }
         private void OnTitleClicked() => ReturnToTitle().Forget();
@@ -144,7 +149,7 @@ namespace Presentation.Battle.Result
         {
             SetBusy(true);
             try { await _returnToTitle.Execute(); }
-            catch (Exception error) { Debug.LogException(error); }
+            catch (Exception error) { _telemetry.RecordException(error, "Failed to return to the title scene."); }
             finally { if (this != null) SetBusy(false); }
         }
     }

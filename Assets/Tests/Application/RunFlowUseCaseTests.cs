@@ -44,14 +44,35 @@ public sealed class RunFlowUseCaseTests
             return Pending != null ? Pending.Task : UniTask.CompletedTask;
         }
     }
+    private sealed class Telemetry : IGameTelemetry
+    {
+        public int RunsStarted;
+        public int BattlesStarted;
+        public int BattlesFinished;
+        public int UpgradesSelected;
+        public int RunsFinished;
+        public bool LastRunCleared;
+
+        public void TrackRunStarted() => RunsStarted++;
+        public void TrackBattleStarted(int round, int enemyId) => BattlesStarted++;
+        public void TrackBattleFinished(int round, bool won, int turns) => BattlesFinished++;
+        public void TrackUpgradeSelected(RunUpgrade upgrade) => UpgradesSelected++;
+        public void TrackRunFinished(bool cleared, int wins, int totalTurns, int totalDamageTaken)
+        {
+            RunsFinished++;
+            LastRunCleared = cleared;
+        }
+        public void RecordException(Exception exception, string context) { }
+    }
     private sealed class Fixture
     {
         public readonly RunSession Run = new(); public readonly BattleSession Battle = new();
         public readonly Scenes Scenes = new();
+        public readonly Telemetry Telemetry = new();
         public readonly RunFlowUseCase Flow; public readonly AttackUseCase Attack;
         public Fixture()
         {
-            Flow = new RunFlowUseCase(Run, Battle, new Stages(), new Characters(), new Skills(), Scenes);
+            Flow = new RunFlowUseCase(Run, Battle, new Stages(), new Characters(), new Skills(), Scenes, Telemetry);
             Attack = new AttackUseCase(Battle, new BattleSystem(),
                 new Publisher<DamageAppliedMessage>(), new Publisher<TurnChangedMessage>(),
                 new Publisher<BattleFinishedMessage>(), new Publisher<BattleActionResolvedMessage>());
@@ -66,6 +87,19 @@ public sealed class RunFlowUseCaseTests
             Assert.That(Battle.State.Winner, Is.EqualTo(BattleSide.Player));
             Assert.That(Flow.CompleteBattle(), Is.True);
         }
+    }
+    [Test] public async Task LifecycleIsReportedToTelemetry()
+    {
+        var f = new Fixture();
+        await f.Flow.StartNewRun();
+        Assert.That(f.Telemetry.RunsStarted, Is.EqualTo(1));
+        Assert.That(f.Telemetry.BattlesStarted, Is.EqualTo(1));
+
+        f.Battle.State.ApplyDamage(BattleSide.Player, int.MaxValue);
+        Assert.That(f.Flow.CompleteBattle(), Is.True);
+        Assert.That(f.Telemetry.BattlesFinished, Is.EqualTo(1));
+        Assert.That(f.Telemetry.RunsFinished, Is.EqualTo(1));
+        Assert.That(f.Telemetry.LastRunCleared, Is.False);
     }
     [Test] public async Task NewRunInitializesAndLoadsFirstEncounter()
     {
