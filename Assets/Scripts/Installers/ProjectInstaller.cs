@@ -8,7 +8,6 @@ using Infrastructure.MasterData;
 using Infrastructure.MasterData.Repositories;
 using Infrastructure.Platform;
 using Infrastructure.Scene;
-using Infrastructure.Telemetry;
 using Infrastructure.UI;
 using MessagePipe;
 using Zenject;
@@ -22,7 +21,6 @@ namespace Installers
         {
             Container.Bind<ILogger>().To<UnityLogger>().AsSingle();
             Container.BindInterfacesTo<MobileRuntimeSettings>().AsSingle();
-            Container.BindInterfacesTo<FirebaseGameTelemetry>().AsSingle();
 
             Container.Bind<IAssetService>().To<AddressableAssetService>().AsSingle();
             Container.Bind<ISceneService>().To<UnitySceneService>().AsSingle();

@@ -28,7 +28,6 @@ namespace Presentation.Battle
 
         private readonly BattleViewModel _viewModel;
         private readonly IPopupService _popupService;
-        private readonly IGameTelemetry _telemetry;
 
         public BattleEventPresenter(
             ISubscriber<DamageAppliedMessage> damageApplied,
@@ -37,14 +36,14 @@ namespace Presentation.Battle
             BattleViewModel viewModel,
             IPopupService popupService,
             ISubscriber<BattleActionResolvedMessage> actionResolved,
-            IBattleSession session, RunFlowUseCase runFlow, IGameTelemetry telemetry)
+            IBattleSession session, RunFlowUseCase runFlow)
         {
             _damageApplied = damageApplied;
             _turnChanged = turnChanged;
             _battleFinished = battleFinished;
             _viewModel = viewModel;
             _popupService = popupService;
-            _actionResolved = actionResolved; _session = session; _runFlow = runFlow; _telemetry = telemetry;
+            _actionResolved = actionResolved; _session = session; _runFlow = runFlow;
         }
 
         public void Initialize()
@@ -107,7 +106,7 @@ namespace Presentation.Battle
             catch (Exception error)
             {
                 Debug.LogError("Failed to open ResultPopup after battle completion.");
-                _telemetry.RecordException(error, "Failed to open ResultPopup after battle completion.");
+                Debug.LogException(error);
                 _viewModel.AppendLog("Failed to open the result screen.");
             }
         }

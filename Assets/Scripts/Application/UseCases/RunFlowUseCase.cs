@@ -17,17 +17,12 @@ namespace Application.UseCases
         private readonly ICharacterRepository _characters;
         private readonly ISkillRepository _skills;
         private readonly ISceneService _scenes;
-        private readonly IGameTelemetry _telemetry;
         private bool _loading;
         private bool _advancePending;
         private int _completedRevision = -1;
         public RunFlowUseCase(RunSession run, IBattleSession battle, IStageRepository stages,
-            ICharacterRepository characters, ISkillRepository skills, ISceneService scenes,
-            IGameTelemetry telemetry = null)
-        {
-            _run = run; _battle = battle; _stages = stages; _characters = characters; _skills = skills;
-            _scenes = scenes; _telemetry = telemetry;
-        }
+            ICharacterRepository characters, ISkillRepository skills, ISceneService scenes)
+        { _run = run; _battle = battle; _stages = stages; _characters = characters; _skills = skills; _scenes = scenes; }
 
         public async UniTask StartNewRun()
         {
@@ -37,7 +32,6 @@ namespace Application.UseCases
             {
                 var first = _stages.Get(1);
                 _run.State.Start(_characters.Get(first.PlayerCharacterId).MaxHp);
-                _telemetry?.TrackRunStarted();
                 _advancePending = false;
                 await LoadCurrentBattle();
             }
@@ -50,11 +44,7 @@ namespace Application.UseCases
             try
             {
                 if (_run.State.Phase == RunPhase.ChoosingUpgrade)
-                {
-                    _run.State.ChooseUpgrade(upgrade);
-                    _telemetry?.TrackUpgradeSelected(upgrade);
-                    _advancePending = true;
-                }
+                { _run.State.ChooseUpgrade(upgrade); _advancePending = true; }
                 else if (!_advancePending) throw new InvalidOperationException("No upgrade is pending.");
                 // On scene-load failure, retry without applying the upgrade twice.
                 await LoadCurrentBattle();
@@ -80,13 +70,8 @@ namespace Application.UseCases
         {
             if (!_battle.State.IsFinished || _completedRevision == _battle.Revision) return false;
             if (_run.State.Phase != RunPhase.InBattle) return false;
-            var won = _battle.State.Winner == BattleSide.Player;
-            var completedRound = _run.State.Round;
-            _run.State.CompleteBattle(won, _battle.State.Player.Hp, _battle.State.TurnCount);
-            _telemetry?.TrackBattleFinished(completedRound, won, _battle.State.TurnCount);
-            if (_run.State.Phase is RunPhase.Cleared or RunPhase.Defeated)
-                _telemetry?.TrackRunFinished(_run.State.Phase == RunPhase.Cleared, _run.State.Wins,
-                    _run.State.TotalTurns, _run.State.TotalDamageTaken);
+            _run.State.CompleteBattle(_battle.State.Winner == BattleSide.Player,
+                _battle.State.Player.Hp, _battle.State.TurnCount);
             _completedRevision = _battle.Revision;
             return true;
         }
@@ -94,7 +79,6 @@ namespace Application.UseCases
         {
             PrepareCurrentBattle();
             await _scenes.LoadScene(GameConstants.BattleSceneName);
-            _telemetry?.TrackBattleStarted(_run.State.Round, _battle.State.Enemy.CharacterId);
         }
     }
 }
