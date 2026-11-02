@@ -47,10 +47,13 @@ namespace Presentation.Battle.Result
             _selectedUpgrade = null;
             var state = _run.State;
             _upgradeScreen = state.Phase == RunPhase.ChoosingUpgrade;
-            var heading = _upgradeScreen ? _localization.Get("result.round_clear", state.Round)
+            if (_titleText != null)
+                _titleText.text = _localization.Get(state.Mode == RunMode.Endless ? "result.title.endless" : "result.title");
+            var roundClearKey = state.Mode == RunMode.Endless ? "result.round_clear.endless" : "result.round_clear";
+            var heading = _upgradeScreen ? _localization.Get(roundClearKey, state.Round)
                 : state.Phase == RunPhase.Cleared && _context.IsWin
                     ? _localization.Get("result.cleared")
-                    : _localization.Get("result.failed");
+                    : _localization.Get(state.Mode == RunMode.Endless ? "result.failed.endless" : "result.failed");
             _summary = BuildSummary(heading, state);
             _resultText.text = _summary;
             _closeButton.onClick.AddListener(OnTitleClicked);
@@ -93,10 +96,14 @@ namespace Presentation.Battle.Result
 
         private string BuildSummary(string heading, RunState state)
         {
-            var guidance = _localization.Get(_upgradeScreen ? "result.guidance.upgrade" : "result.guidance.retry");
+            var guidanceKey = _upgradeScreen ? "result.guidance.upgrade"
+                : state.Mode == RunMode.Endless ? "result.guidance.retry.endless" : "result.guidance.retry";
+            var guidance = _localization.Get(guidanceKey);
+            var winsKey = state.Mode == RunMode.Endless ? "result.wins.endless" : "result.wins";
+            var reachedKey = state.Mode == RunMode.Endless ? "result.reached.endless" : "result.reached";
             return $"<size=34><b><color=#FFD36A>{heading.ToUpperInvariant()}</color></b></size>\n\n" +
                    $"<size=23><color=#9FB3CA>{_localization.Get("result.progress")}</color>   " +
-                   $"<b>{_localization.Get("result.wins", state.Wins)}</b>   •   {_localization.Get("result.reached", state.Round)}</size>\n" +
+                   $"<b>{_localization.Get(winsKey, state.Wins)}</b>   •   {_localization.Get(reachedKey, state.Round)}</size>\n" +
                    $"<size=21>{_localization.Get("result.turns")}  <b>{state.TotalTurns}</b>      " +
                    $"{_localization.Get("result.damage")}  <b>{state.TotalDamageTaken}</b></size>\n" +
                    $"<size=22><color=#77B7FF>HP  <b>{state.Hp} / {state.MaxHp}</b></color>      " +
@@ -156,7 +163,8 @@ namespace Presentation.Battle.Result
                 if (label != null) label.text = _localization.Get(keys[Mathf.Min(index, keys.Length - 1)]);
             }
             var retryLabel = _retryButton.GetComponentInChildren<TMP_Text>(true);
-            if (retryLabel != null) retryLabel.text = _localization.Get("result.retry");
+            if (retryLabel != null) retryLabel.text = _localization.Get(
+                _run.State.Mode == RunMode.Endless ? "result.retry.endless" : "result.retry");
             var closeLabel = _closeButton.GetComponentInChildren<TMP_Text>(true);
             if (closeLabel != null) closeLabel.text = _localization.Get("result.return");
         }
@@ -266,7 +274,7 @@ namespace Presentation.Battle.Result
         private async UniTask Retry()
         {
             SetBusy(true);
-            try { await _flow.StartNewRun(); }
+            try { await _flow.StartNewRun(_run.State.Mode); }
             catch (Exception error) { Debug.LogException(error); if (this != null) _resultText.text = _summary + "\n" + _localization.Get("result.load_retry_failed"); }
             finally { if (this != null) SetBusy(false); }
         }

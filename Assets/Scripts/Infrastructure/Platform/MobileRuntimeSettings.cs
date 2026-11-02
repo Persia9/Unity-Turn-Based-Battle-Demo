@@ -5,13 +5,15 @@ namespace Infrastructure.Platform
 {
     public sealed class MobileRuntimeSettings : IInitializable
     {
+        public const int TargetFrameRate = 60;
+
         public void Initialize()
         {
-            if (!UnityEngine.Application.isMobilePlatform) return;
-
             QualitySettings.vSyncCount = 0;
-            UnityEngine.Application.targetFrameRate = 60;
-            Screen.sleepTimeout = SleepTimeout.SystemSetting;
+            UnityEngine.Application.targetFrameRate = TargetFrameRate;
+
+            if (UnityEngine.Application.isMobilePlatform)
+                Screen.sleepTimeout = SleepTimeout.SystemSetting;
         }
     }
 }

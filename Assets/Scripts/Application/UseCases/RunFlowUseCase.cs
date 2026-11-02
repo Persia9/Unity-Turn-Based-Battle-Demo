@@ -24,14 +24,14 @@ namespace Application.UseCases
             ICharacterRepository characters, ISkillRepository skills, ISceneService scenes)
         { _run = run; _battle = battle; _stages = stages; _characters = characters; _skills = skills; _scenes = scenes; }
 
-        public async UniTask StartNewRun()
+        public async UniTask StartNewRun(RunMode mode = RunMode.Expedition)
         {
             if (_loading) return;
             _loading = true;
             try
             {
                 var first = _stages.Get(1);
-                _run.State.Start(_characters.Get(first.PlayerCharacterId).MaxHp);
+                _run.State.Start(_characters.Get(first.PlayerCharacterId).MaxHp, mode);
                 _advancePending = false;
                 await LoadCurrentBattle();
             }
@@ -57,13 +57,19 @@ namespace Application.UseCases
             if (_run.State.Phase == RunPhase.NotStarted)
                 _run.State.Start(_characters.Get(_stages.Get(1).PlayerCharacterId).MaxHp);
             if (_run.State.Phase != RunPhase.InBattle) throw new InvalidOperationException("Run cannot enter a battle now.");
-            var stage = _stages.Get(_run.State.Round);
+            var stage = _stages.Get(CurrentStageId());
             var player = _characters.Get(stage.PlayerCharacterId);
             var enemy = _characters.Get(stage.EnemyCharacterId);
             var playerSkill = _skills.Get(player.DefaultSkillId);
             var enemySkill = _skills.Get(enemy.DefaultSkillId);
+            var enemyHp = _run.State.Mode == RunMode.Endless
+                ? EndlessDifficulty.ScaleHp(enemy.MaxHp, _run.State.Round)
+                : enemy.MaxHp;
+            var enemyPower = _run.State.Mode == RunMode.Endless
+                ? EndlessDifficulty.ScalePower(enemySkill.Power, _run.State.Round)
+                : enemySkill.Power;
             _battle.Initialize(new BattleUnitSnapshot(player.Id, player.Name, _run.State.MaxHp, _run.State.Hp, playerSkill.Power),
-                new BattleUnitSnapshot(enemy.Id, enemy.Name, enemy.MaxHp, enemy.MaxHp, enemySkill.Power),
+                new BattleUnitSnapshot(enemy.Id, enemy.Name, enemyHp, enemyHp, enemyPower),
                 (EnemyAttackPattern)stage.EnemyPattern, _run.State.DamageBonus, _run.State.GuardDamagePercent);
         }
         public bool CompleteBattle()
@@ -79,6 +85,13 @@ namespace Application.UseCases
         {
             PrepareCurrentBattle();
             await _scenes.LoadScene(GameConstants.BattleSceneName);
+        }
+
+        private int CurrentStageId()
+        {
+            if (_run.State.Mode == RunMode.Expedition) return _run.State.Round;
+            if (EndlessDifficulty.IsBossRound(_run.State.Round)) return RunState.BattleCount;
+            return ((_run.State.Round - 1) % (RunState.BattleCount - 1)) + 1;
         }
     }
 }

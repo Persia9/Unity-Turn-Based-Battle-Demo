@@ -4,12 +4,14 @@ namespace Domain.Run
 {
     public enum RunPhase { NotStarted, InBattle, ChoosingUpgrade, Cleared, Defeated }
     public enum RunUpgrade { Attack, Vitality, Guard }
+    public enum RunMode { Expedition, Endless }
 
     public sealed class RunState
     {
         public const int BattleCount = 3;
         public const int RecoveryHp = 20;
         public RunPhase Phase { get; private set; }
+        public RunMode Mode { get; private set; }
         public int Round { get; private set; }
         public int Wins { get; private set; }
         public int MaxHp { get; private set; }
@@ -20,9 +22,11 @@ namespace Domain.Run
         public int TotalDamageTaken { get; private set; }
         private int _battleStartingHp;
 
-        public void Start(int maxHp = 100)
+        public void Start(int maxHp = 100, RunMode mode = RunMode.Expedition)
         {
             if (maxHp <= 0) throw new ArgumentOutOfRangeException(nameof(maxHp));
+            if (!Enum.IsDefined(typeof(RunMode), mode)) throw new ArgumentOutOfRangeException(nameof(mode));
+            Mode = mode;
             Phase = RunPhase.InBattle; Round = 1; Wins = 0;
             MaxHp = Hp = _battleStartingHp = maxHp;
             DamageBonus = 0; GuardDamagePercent = 50; TotalTurns = TotalDamageTaken = 0;
@@ -35,7 +39,7 @@ namespace Domain.Run
             TotalTurns += turns; TotalDamageTaken += _battleStartingHp - remainingHp; Hp = remainingHp;
             if (!won) { Phase = RunPhase.Defeated; return; }
             Wins++;
-            if (Round == BattleCount) { Phase = RunPhase.Cleared; return; }
+            if (Mode == RunMode.Expedition && Round == BattleCount) { Phase = RunPhase.Cleared; return; }
             Hp = Math.Min(MaxHp, Hp + RecoveryHp);
             Phase = RunPhase.ChoosingUpgrade;
         }

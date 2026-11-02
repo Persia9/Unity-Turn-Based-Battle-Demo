@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using Infrastructure.UI;
 using Application.Services;
 using Presentation.Localization;
+using Domain.Run;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,6 +22,7 @@ namespace Presentation.Title
         private TMP_Text _tagline;
         private TMP_Text _progress;
         private Button _languageButton;
+        private Button _endlessButton;
         private TMP_Text _languageLabel;
         private Rect _lastSafeArea;
         private Vector2Int _lastScreenSize;
@@ -29,7 +31,8 @@ namespace Presentation.Title
         public override void OnOpened()
         {
             EnsureMobileLayout();
-            _startButton.onClick.AddListener(OnStartClicked);
+            _startButton.onClick.AddListener(OnExpeditionClicked);
+            _endlessButton.onClick.AddListener(OnEndlessClicked);
             _languageButton.onClick.AddListener(OnLanguageClicked);
             _localization.LanguageChanged += RefreshLocalization;
             RefreshLocalization();
@@ -37,22 +40,29 @@ namespace Presentation.Title
 
         public override void OnClosed()
         {
-            _startButton.onClick.RemoveListener(OnStartClicked);
+            _startButton.onClick.RemoveListener(OnExpeditionClicked);
+            if (_endlessButton != null) _endlessButton.onClick.RemoveListener(OnEndlessClicked);
             if (_languageButton != null) _languageButton.onClick.RemoveListener(OnLanguageClicked);
             _localization.LanguageChanged -= RefreshLocalization;
         }
 
-        private void OnStartClicked()
-        {
-            Run().Forget();
-        }
+        private void OnExpeditionClicked() => Run(RunMode.Expedition).Forget();
+        private void OnEndlessClicked() => Run(RunMode.Endless).Forget();
 
-        private async UniTask Run()
+        private async UniTask Run(RunMode mode)
         {
-            if (!_startButton.interactable) return;
+            if (!_startButton.interactable || !_endlessButton.interactable) return;
             _startButton.interactable = false;
-            try { await _runFlow.StartNewRun(); }
-            finally { if (this != null) _startButton.interactable = true; }
+            _endlessButton.interactable = false;
+            try { await _runFlow.StartNewRun(mode); }
+            finally
+            {
+                if (this != null)
+                {
+                    _startButton.interactable = true;
+                    _endlessButton.interactable = true;
+                }
+            }
         }
 
         private void Update()
@@ -103,6 +113,11 @@ namespace Presentation.Title
             if (_visualStyleConfigured) return;
             _visualStyleConfigured = true;
 
+            // The original prefab used a single-button vertical layout. Mode selection is
+            // positioned explicitly so landscape can use two columns without being overridden.
+            if (_menu.TryGetComponent<LayoutGroup>(out var layoutGroup)) layoutGroup.enabled = false;
+            if (_menu.TryGetComponent<ContentSizeFitter>(out var sizeFitter)) sizeFitter.enabled = false;
+
             _tagline = CreateText("Expedition Rules", titleText,
                 "READ THE ENEMY   •   CHOOSE YOUR ACTION   •   SURVIVE", 22f,
                 new Color(0.72f, 0.8f, 0.9f));
@@ -129,6 +144,11 @@ namespace Presentation.Title
             colors.disabledColor = new Color(0.35f, 0.4f, 0.5f, 0.65f);
             _startButton.colors = colors;
 
+            _endlessButton = Instantiate(_startButton, _menu);
+            _endlessButton.name = "Endless Mode Button";
+            if (_endlessButton.TryGetComponent<Image>(out var endlessImage))
+                endlessImage.color = new Color(0.68f, 0.22f, 0.08f, 1f);
+
             var label = _startButton.GetComponentInChildren<TMP_Text>(true);
             if (label != null)
             {
@@ -136,6 +156,14 @@ namespace Presentation.Title
                 label.characterSpacing = 2f;
                 label.outlineColor = new Color(0f, 0f, 0f, 0.7f);
                 label.outlineWidth = 0.12f;
+            }
+            var endlessLabel = _endlessButton.GetComponentInChildren<TMP_Text>(true);
+            if (endlessLabel != null)
+            {
+                endlessLabel.fontStyle = FontStyles.Bold;
+                endlessLabel.characterSpacing = 2f;
+                endlessLabel.outlineColor = new Color(0f, 0f, 0f, 0.7f);
+                endlessLabel.outlineWidth = 0.12f;
             }
         }
 
@@ -175,7 +203,9 @@ namespace Presentation.Title
             if (_tagline != null) _tagline.text = _localization.Get("title.tagline");
             if (_progress != null) _progress.text = "01    •    02    •    03";
             var startLabel = _startButton.GetComponentInChildren<TMP_Text>(true);
-            if (startLabel != null) startLabel.text = _localization.Get("title.start");
+            if (startLabel != null) startLabel.text = _localization.Get("title.start.expedition");
+            var endlessLabel = _endlessButton != null ? _endlessButton.GetComponentInChildren<TMP_Text>(true) : null;
+            if (endlessLabel != null) endlessLabel.text = _localization.Get("title.start.endless");
             if (_languageLabel != null) _languageLabel.text = _localization.Get("language.toggle");
             foreach (var text in GetComponentsInChildren<TMP_Text>(true))
                 LocalizedFontProvider.Apply(text, _localization);
@@ -225,15 +255,30 @@ namespace Presentation.Title
             _title.anchoredPosition = Vector2.zero;
             _title.sizeDelta = new Vector2(portrait ? 650f : 920f, portrait ? 220f : 210f);
 
-            LayoutText(_tagline, new Vector2(0.5f, portrait ? 0.49f : 0.47f),
+            LayoutText(_tagline, new Vector2(0.5f, portrait ? 0.5f : 0.48f),
                 new Vector2(portrait ? 620f : 980f, 48f));
-            LayoutText(_progress, new Vector2(0.5f, portrait ? 0.41f : 0.39f),
+            LayoutText(_progress, new Vector2(0.5f, portrait ? 0.43f : 0.37f),
                 new Vector2(520f, 48f));
 
-            _menu.anchorMin = _menu.anchorMax = new Vector2(0.5f, portrait ? 0.27f : 0.23f);
+            _menu.anchorMin = _menu.anchorMax = new Vector2(0.5f, portrait ? 0.25f : 0.2f);
             _menu.anchoredPosition = Vector2.zero;
+            _menu.sizeDelta = portrait ? new Vector2(560f, 252f) : new Vector2(1160f, 120f);
             var startRect = (RectTransform)_startButton.transform;
-            startRect.sizeDelta = new Vector2(portrait ? 520f : 560f, portrait ? 120f : 112f);
+            var endlessRect = (RectTransform)_endlessButton.transform;
+            startRect.anchorMin = startRect.anchorMax = new Vector2(0.5f, 0.5f);
+            endlessRect.anchorMin = endlessRect.anchorMax = new Vector2(0.5f, 0.5f);
+            if (portrait)
+            {
+                startRect.anchoredPosition = new Vector2(0f, 64f);
+                endlessRect.anchoredPosition = new Vector2(0f, -64f);
+                startRect.sizeDelta = endlessRect.sizeDelta = new Vector2(520f, 104f);
+            }
+            else
+            {
+                startRect.anchoredPosition = new Vector2(-290f, 0f);
+                endlessRect.anchoredPosition = new Vector2(290f, 0f);
+                startRect.sizeDelta = endlessRect.sizeDelta = new Vector2(540f, 104f);
+            }
         }
 
         private static void LayoutText(TMP_Text text, Vector2 anchor, Vector2 size)

@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Infrastructure.Platform;
 
 namespace Presentation.Battle.Performance
 {
@@ -42,7 +43,8 @@ namespace Presentation.Battle.Performance
         {
             _builder.Clear();
             _builder.AppendLine("PERFORMANCE");
-            _builder.Append("FPS          ").Append(fps.ToString("F1")).AppendLine();
+            _builder.Append("FPS          ").Append(fps.ToString("F1"))
+                .Append(" / ").Append(MobileRuntimeSettings.TargetFrameRate).AppendLine();
             _builder.Append("Frame        ").Append(frameMilliseconds.ToString("F2")).AppendLine(" ms");
             _builder.Append("Unity alloc  ").AppendLine(FormatBytes(Profiler.GetTotalAllocatedMemoryLong()));
             _builder.Append("Unity reserve ").AppendLine(FormatBytes(Profiler.GetTotalReservedMemoryLong()));

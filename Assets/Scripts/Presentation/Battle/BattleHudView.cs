@@ -3,6 +3,7 @@ using Application.UseCases;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Domain.Battle;
+using Domain.Run;
 using Infrastructure.UI;
 using R3;
 using TMPro;
@@ -73,7 +74,8 @@ namespace Presentation.Battle
 
             var state = _battleSession.State;
             var run = _runSession.State;
-            _runText.text = _localization.Get("battle.run", run.Round, EnemyName(state.Enemy.CharacterId, state.Enemy.Name),
+            var runKey = run.Mode == RunMode.Endless ? "battle.run.endless" : "battle.run";
+            _runText.text = _localization.Get(runKey, run.Round, EnemyName(state.Enemy.CharacterId, state.Enemy.Name),
                 run.DamageBonus, 100 - run.GuardDamagePercent);
             _viewModel.PlayerMaxHp.Value = state.Player.MaxHp;
             _viewModel.PlayerHp.Value = state.Player.Hp;
@@ -299,12 +301,17 @@ namespace Presentation.Battle
 
         private void RefreshPlayerHp()
         {
-            _playerHpText.text = _localization.Get("battle.hero_hp", _viewModel.PlayerHp.Value, _viewModel.PlayerMaxHp.Value);
+            var state = _battleSession.State;
+            var attack = state.Player.BasePower + state.PlayerDamageBonus;
+            _playerHpText.text = _localization.Get("battle.hero_hp",
+                _viewModel.PlayerHp.Value, _viewModel.PlayerMaxHp.Value, attack);
         }
 
         private void RefreshEnemyHp()
         {
-            _enemyHpText.text = _localization.Get("battle.enemy_hp", _viewModel.EnemyHp.Value, _viewModel.EnemyMaxHp.Value);
+            var state = _battleSession.State;
+            _enemyHpText.text = _localization.Get("battle.enemy_hp",
+                _viewModel.EnemyHp.Value, _viewModel.EnemyMaxHp.Value, state.Enemy.BasePower);
         }
 
         private void RefreshLog(string value)

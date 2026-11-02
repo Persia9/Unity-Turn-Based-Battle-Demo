@@ -149,6 +149,31 @@ public sealed class RunFlowUseCaseTests
         Assert.That(f.Battle.State.Player.Hp, Is.EqualTo(96));
     }
 
+    [Test] public async Task EndlessModeScalesEnemiesAndUsesBossEveryTenRounds()
+    {
+        var f = new Fixture(); await f.Flow.StartNewRun(RunMode.Endless);
+        Assert.That(f.Run.State.Mode, Is.EqualTo(RunMode.Endless));
+        Assert.That(f.Battle.State.Enemy.CharacterId, Is.EqualTo(2));
+
+        while (f.Run.State.Round < 10)
+        {
+            f.Battle.State.ApplyDamage(BattleSide.Enemy, int.MaxValue);
+            Assert.That(f.Flow.CompleteBattle(), Is.True);
+            await f.Flow.ChooseUpgrade(RunUpgrade.Attack);
+            if (f.Run.State.Round == 4)
+            {
+                Assert.That(f.Battle.State.Enemy.CharacterId, Is.EqualTo(3));
+                Assert.That(f.Battle.State.Enemy.MaxHp, Is.EqualTo(162));
+                Assert.That(f.Battle.State.Enemy.BasePower, Is.EqualTo(11));
+            }
+        }
+
+        Assert.That(f.Battle.State.Enemy.CharacterId, Is.EqualTo(4));
+        Assert.That(f.Battle.State.Enemy.MaxHp, Is.EqualTo(262));
+        Assert.That(f.Battle.State.Enemy.BasePower, Is.EqualTo(14));
+        Assert.That(f.Run.State.Phase, Is.EqualTo(RunPhase.InBattle));
+    }
+
     [TestCase(RunUpgrade.Attack, RunUpgrade.Attack)]
     [TestCase(RunUpgrade.Attack, RunUpgrade.Vitality)]
     [TestCase(RunUpgrade.Attack, RunUpgrade.Guard)]

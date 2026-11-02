@@ -62,4 +62,29 @@ public sealed class RunStateTests
         Assert.Throws<ArgumentOutOfRangeException>(() => run.CompleteBattle(true, 101, 1));
         Assert.That(run.TotalTurns, Is.Zero); Assert.That(run.Phase, Is.EqualTo(RunPhase.InBattle));
     }
+
+    [Test] public void EndlessModeContinuesAfterThirdVictory()
+    {
+        var run = new RunState(); run.Start(mode: RunMode.Endless);
+        for (var round = 1; round <= 3; round++)
+        {
+            run.CompleteBattle(true, run.Hp, 1);
+            Assert.That(run.Phase, Is.EqualTo(RunPhase.ChoosingUpgrade));
+            run.ChooseUpgrade(RunUpgrade.Attack);
+        }
+        Assert.That(run.Mode, Is.EqualTo(RunMode.Endless));
+        Assert.That(run.Round, Is.EqualTo(4));
+        Assert.That(run.Wins, Is.EqualTo(3));
+        Assert.That(run.Phase, Is.EqualTo(RunPhase.InBattle));
+    }
+
+    [Test] public void EndlessDifficultyUsesThreeRoundTiersAndTenRoundBosses()
+    {
+        Assert.That(EndlessDifficulty.Tier(3), Is.Zero);
+        Assert.That(EndlessDifficulty.Tier(4), Is.EqualTo(1));
+        Assert.That(EndlessDifficulty.ScaleHp(100, 4), Is.EqualTo(125));
+        Assert.That(EndlessDifficulty.ScalePower(20, 4), Is.EqualTo(23));
+        Assert.That(EndlessDifficulty.IsBossRound(9), Is.False);
+        Assert.That(EndlessDifficulty.IsBossRound(10), Is.True);
+    }
 }
