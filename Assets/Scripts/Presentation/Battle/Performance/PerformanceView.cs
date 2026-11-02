@@ -16,6 +16,7 @@ namespace Presentation.Battle.Performance
         private string _displayText = "Collecting performance data...";
         private GUIStyle _labelStyle;
         private GUIStyle _boxStyle;
+        private bool _visible;
 
         private void Awake()
         {
@@ -61,7 +62,16 @@ namespace Presentation.Battle.Performance
             var safeXMin = safeArea.xMin / scale;
             var safeXMax = safeArea.xMax / scale;
             var safeY = (Screen.height - safeArea.yMax) / scale;
-            var rect = new Rect(Mathf.Max(safeXMin + 8f, safeXMax - Width - 12f), safeY + 12f, Width, Height);
+            var right = Mathf.Max(safeXMin + 8f, safeXMax - 12f);
+            var toggleRect = new Rect(right - 72f, safeY + 12f, 72f, 30f);
+            if (GUI.Button(toggleRect, _visible ? "CLOSE" : "PERF")) _visible = !_visible;
+            if (!_visible)
+            {
+                GUI.matrix = previousMatrix;
+                return;
+            }
+
+            var rect = new Rect(right - Width, toggleRect.yMax + 6f, Width, Height);
             GUI.Box(rect, GUIContent.none, _boxStyle);
             GUI.Label(new Rect(rect.x + 12f, rect.y + 8f, rect.width - 24f, rect.height - 16f),
                 _displayText, _labelStyle);

@@ -42,7 +42,7 @@ namespace Presentation.Battle.Characters
             var result = message.Result;
             var actor = result.Actor == BattleSide.Player ? _player : _enemy;
             var target = result.Target == BattleSide.Player ? _player : _enemy;
-            var direction = result.Actor == BattleSide.Player ? 1f : -1f;
+            var direction = target.transform.position - actor.transform.position;
 
             if (result.Action == BattleAction.Defend)
             {
@@ -60,7 +60,7 @@ namespace Presentation.Battle.Characters
             _platform.name = "Cube Battle Platform";
             _platform.transform.SetParent(_anchors.PlayerRoot.parent, false);
             _platform.transform.localPosition = new Vector3(0f, -0.15f, 0f);
-            _platform.transform.localScale = new Vector3(8f, 0.3f, 3f);
+            _platform.transform.localScale = new Vector3(8.5f, 0.3f, 4.5f);
             var collider = _platform.GetComponent<Collider>();
             if (collider != null) UnityEngine.Object.Destroy(collider);
             _platform.GetComponent<Renderer>().material.color = new Color(0.18f, 0.2f, 0.24f);

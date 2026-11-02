@@ -22,6 +22,7 @@ namespace Installers
 
             Container.BindInterfacesAndSelfTo<BattleSceneEntryPoint>().AsSingle();
             Container.BindInterfacesAndSelfTo<BattleEventPresenter>().AsSingle();
+            Container.BindInterfacesTo<JrpgBattleCameraPresenter>().AsSingle();
             Container.BindInterfacesAndSelfTo<CubeBattleCharacterPresenter>().AsSingle();
             Container.Bind<PerformanceView>().FromNewComponentOnNewGameObject()
                 .WithGameObjectName("Performance View").AsSingle().NonLazy();

@@ -31,9 +31,10 @@ namespace Presentation.Battle.Characters
             return view;
         }
 
-        public void PlayAttack(bool strong, float direction)
+        public void PlayAttack(bool strong, Vector3 worldDirection)
         {
-            StartMotion(Lunge(strong ? 1.2f : 0.75f, direction, strong ? 0.34f : 0.24f));
+            StartMotion(Lunge(strong ? 1.2f : 0.75f, ToLocalDirection(worldDirection),
+                strong ? 0.34f : 0.24f));
         }
 
         public void PlayDefend()
@@ -41,9 +42,9 @@ namespace Presentation.Battle.Characters
             StartMotion(Defend());
         }
 
-        public void PlayHit(bool lethal, float direction)
+        public void PlayHit(bool lethal, Vector3 worldDirection)
         {
-            StartMotion(Hit(lethal, direction));
+            StartMotion(Hit(lethal, ToLocalDirection(worldDirection)));
         }
 
         private void AddPart(string partName, Vector3 localPosition, Vector3 localScale)
@@ -69,9 +70,9 @@ namespace Presentation.Battle.Characters
             _motion = StartCoroutine(routine);
         }
 
-        private IEnumerator Lunge(float distance, float direction, float duration)
+        private IEnumerator Lunge(float distance, Vector3 direction, float duration)
         {
-            var target = _homePosition + Vector3.right * (distance * direction);
+            var target = _homePosition + direction * distance;
             yield return Move(_homePosition, target, duration * 0.45f);
             yield return Move(target, _homePosition, duration * 0.55f);
             _motion = null;
@@ -88,11 +89,11 @@ namespace Presentation.Battle.Characters
             _motion = null;
         }
 
-        private IEnumerator Hit(bool lethal, float direction)
+        private IEnumerator Hit(bool lethal, Vector3 direction)
         {
             SetColor(Color.white);
             var start = _homePosition;
-            var knockback = start + Vector3.right * (0.18f * direction);
+            var knockback = start + direction * 0.18f;
             yield return Move(start, knockback, 0.08f);
             if (lethal)
             {
@@ -112,6 +113,15 @@ namespace Presentation.Battle.Characters
                 SetColor(_baseColor);
             }
             _motion = null;
+        }
+
+        private Vector3 ToLocalDirection(Vector3 worldDirection)
+        {
+            var direction = transform.parent != null
+                ? transform.parent.InverseTransformDirection(worldDirection)
+                : worldDirection;
+            direction.y = 0f;
+            return direction.sqrMagnitude > 0.001f ? direction.normalized : Vector3.right;
         }
 
         private IEnumerator Move(Vector3 from, Vector3 to, float duration)
