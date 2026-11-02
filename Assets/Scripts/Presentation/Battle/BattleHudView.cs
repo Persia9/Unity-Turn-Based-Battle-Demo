@@ -67,7 +67,7 @@ namespace Presentation.Battle
             _viewModel.PlayerMaxHp.Subscribe(_ => RefreshPlayerHp()).AddTo(_disposables);
             _viewModel.EnemyHp.Subscribe(_ => RefreshEnemyHp()).AddTo(_disposables);
             _viewModel.EnemyMaxHp.Subscribe(_ => RefreshEnemyHp()).AddTo(_disposables);
-            _viewModel.LogText.Subscribe(x => _logText.text = x).AddTo(_disposables);
+            _viewModel.LogText.Subscribe(RefreshLog).AddTo(_disposables);
             _viewModel.EnemyIntentText.Subscribe(x => _enemyIntentText.text = x).AddTo(_disposables);
             _viewModel.DefenseText.Subscribe(x => _defenseText.text = x).AddTo(_disposables);
 
@@ -305,6 +305,22 @@ namespace Presentation.Battle
         private void RefreshEnemyHp()
         {
             _enemyHpText.text = _localization.Get("battle.enemy_hp", _viewModel.EnemyHp.Value, _viewModel.EnemyMaxHp.Value);
+        }
+
+        private void RefreshLog(string value)
+        {
+            _logText.text = value;
+            ScrollLogToLatest().Forget();
+        }
+
+        private async UniTaskVoid ScrollLogToLatest()
+        {
+            if (await UniTask.NextFrame(cancellationToken: destroyCancellationToken).SuppressCancellationThrow()) return;
+            if (_logScroll == null || _logScroll.content == null) return;
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_logScroll.content);
+            _logScroll.StopMovement();
+            _logScroll.verticalNormalizedPosition = 0f;
         }
 
         private void ExecuteAction(BattleAction action)
