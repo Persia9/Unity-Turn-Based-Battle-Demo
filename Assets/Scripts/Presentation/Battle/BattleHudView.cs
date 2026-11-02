@@ -9,6 +9,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Presentation.Battle.Commands;
+using Presentation.Localization;
 using Zenject;
 
 namespace Presentation.Battle
@@ -27,6 +28,7 @@ namespace Presentation.Battle
         [Inject] private PlayPlayerTurnUseCase _playTurn;
         [Inject] private IBattleSession _battleSession;
         [Inject] private RunSession _runSession;
+        [Inject] private ILocalizationService _localization;
 
         private BattleActionButton[] _actionButtons;
         private CompositeDisposable _disposables;
@@ -60,7 +62,7 @@ namespace Presentation.Battle
             foreach (var button in _actionButtons) button.Bind(_viewModel, ExecuteAction);
             ConfigureMobileLayout();
 
-            _viewModel.TurnText.Subscribe(x => _turnText.text = FormatTurnText(x)).AddTo(_disposables);
+            _viewModel.TurnText.Subscribe(x => _turnText.text = x).AddTo(_disposables);
             _viewModel.PlayerHp.Subscribe(_ => RefreshPlayerHp()).AddTo(_disposables);
             _viewModel.PlayerMaxHp.Subscribe(_ => RefreshPlayerHp()).AddTo(_disposables);
             _viewModel.EnemyHp.Subscribe(_ => RefreshEnemyHp()).AddTo(_disposables);
@@ -71,17 +73,18 @@ namespace Presentation.Battle
 
             var state = _battleSession.State;
             var run = _runSession.State;
-            _runText.text = $"BATTLE {run.Round:00} / 03   {state.Enemy.Name.ToUpperInvariant()}\n" +
-                            $"ATK +{run.DamageBonus}    GUARD {100 - run.GuardDamagePercent}%";
+            _runText.text = _localization.Get("battle.run", run.Round, EnemyName(state.Enemy.CharacterId, state.Enemy.Name),
+                run.DamageBonus, 100 - run.GuardDamagePercent);
             _viewModel.PlayerMaxHp.Value = state.Player.MaxHp;
             _viewModel.PlayerHp.Value = state.Player.Hp;
             _viewModel.EnemyMaxHp.Value = state.Enemy.MaxHp;
             _viewModel.EnemyHp.Value = state.Enemy.Hp;
             _viewModel.TurnCount.Value = state.TurnCount;
             _viewModel.CanPlayerAct.Value = !state.IsFinished && state.CurrentTurn == TurnOwner.Player;
-            _viewModel.TurnText.Value = $"Turn {state.TurnCount} / {state.CurrentTurn}";
+            _viewModel.TurnText.Value = _localization.Get("battle.turn", state.TurnCount,
+                _localization.Get(state.CurrentTurn == TurnOwner.Player ? "side.player" : "side.enemy"));
             _viewModel.RefreshCommands(state);
-            _viewModel.AppendLog("Battle Start: choose an action.");
+            _viewModel.AppendLog(_localization.Get("battle.start"));
         }
 
         private void Update()
@@ -105,6 +108,8 @@ namespace Presentation.Battle
             ConfigureText(_playerHpText, 18f, 30f);
             ConfigureText(_enemyHpText, 18f, 30f);
             ConfigureText(_logText, 16f, 24f);
+            foreach (var text in GetComponentsInChildren<TMP_Text>(true))
+                LocalizedFontProvider.Apply(text, _localization);
             ConfigureVisualStyle();
             ApplyMobileLayout();
         }
@@ -261,11 +266,16 @@ namespace Presentation.Battle
             }
         }
 
-        private static string FormatTurnText(string value)
+        private string EnemyName(int characterId, string fallback)
         {
-            return string.IsNullOrWhiteSpace(value)
-                ? string.Empty
-                : value.Replace("Turn", "TURN").Replace(" / ", "  •  ").ToUpperInvariant();
+            var key = characterId switch
+            {
+                2 => "character.slime",
+                3 => "character.sentinel",
+                4 => "character.warden",
+                _ => null
+            };
+            return key == null ? fallback : _localization.Get(key);
         }
 
         private static void ConfigureText(TMP_Text text, float minimum, float maximum)
@@ -289,12 +299,12 @@ namespace Presentation.Battle
 
         private void RefreshPlayerHp()
         {
-            _playerHpText.text = $"<size=18><color=#82B7FF>HERO</color></size>\nHP  {_viewModel.PlayerHp.Value} / {_viewModel.PlayerMaxHp.Value}";
+            _playerHpText.text = _localization.Get("battle.hero_hp", _viewModel.PlayerHp.Value, _viewModel.PlayerMaxHp.Value);
         }
 
         private void RefreshEnemyHp()
         {
-            _enemyHpText.text = $"<size=18><color=#FF9B8E>ENEMY</color></size>\nHP  {_viewModel.EnemyHp.Value} / {_viewModel.EnemyMaxHp.Value}";
+            _enemyHpText.text = _localization.Get("battle.enemy_hp", _viewModel.EnemyHp.Value, _viewModel.EnemyMaxHp.Value);
         }
 
         private void ExecuteAction(BattleAction action)

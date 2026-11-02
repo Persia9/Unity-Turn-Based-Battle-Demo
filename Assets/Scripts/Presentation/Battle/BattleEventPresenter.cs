@@ -25,6 +25,7 @@ namespace Presentation.Battle
         private readonly ISubscriber<BattleActionResolvedMessage> _actionResolved;
         private readonly IBattleSession _session;
         private readonly RunFlowUseCase _runFlow;
+        private readonly ILocalizationService _localization;
 
         private readonly BattleViewModel _viewModel;
         private readonly IPopupService _popupService;
@@ -36,7 +37,7 @@ namespace Presentation.Battle
             BattleViewModel viewModel,
             IPopupService popupService,
             ISubscriber<BattleActionResolvedMessage> actionResolved,
-            IBattleSession session, RunFlowUseCase runFlow)
+            IBattleSession session, RunFlowUseCase runFlow, ILocalizationService localization)
         {
             _damageApplied = damageApplied;
             _turnChanged = turnChanged;
@@ -44,6 +45,7 @@ namespace Presentation.Battle
             _viewModel = viewModel;
             _popupService = popupService;
             _actionResolved = actionResolved; _session = session; _runFlow = runFlow;
+            _localization = localization;
         }
 
         public void Initialize()
@@ -60,12 +62,12 @@ namespace Presentation.Battle
             if (message.TargetSide == BattleSide.Player)
             {
                 _viewModel.PlayerHp.Value = message.RemainingHp;
-                _viewModel.AppendLog($"Player takes {message.Damage} damage.");
+                _viewModel.AppendLog(_localization.Get("log.player_damage", message.Damage));
             }
             else
             {
                 _viewModel.EnemyHp.Value = message.RemainingHp;
-                _viewModel.AppendLog($"Enemy takes {message.Damage} damage.");
+                _viewModel.AppendLog(_localization.Get("log.enemy_damage", message.Damage));
             }
         }
 
@@ -73,8 +75,8 @@ namespace Presentation.Battle
         {
             var result = message.Result;
             _viewModel.AppendLog(result.Action == BattleAction.Defend
-                ? "Player defends: next enemy damage is halved."
-                : $"{result.Actor} uses {result.Action}.");
+                ? _localization.Get("log.player_defends")
+                : _localization.Get("log.action", Side(result.Actor), _viewModel.ActionLabel(result.Action)));
             _viewModel.RefreshCommands(_session.State);
         }
 
@@ -82,16 +84,16 @@ namespace Presentation.Battle
         {
             _viewModel.TurnCount.Value = message.TurnCount;
             _viewModel.CanPlayerAct.Value = message.TurnOwner == TurnOwner.Player;
-            _viewModel.TurnText.Value = $"Turn {message.TurnCount} / {message.TurnOwner}";
+            _viewModel.TurnText.Value = _localization.Get("battle.turn", message.TurnCount, Side(message.TurnOwner));
             _viewModel.RefreshCommands(_session.State);
-            _viewModel.AppendLog($"Turn changed: {message.TurnOwner}");
+            _viewModel.AppendLog(_localization.Get("log.turn_changed", Side(message.TurnOwner)));
         }
 
         private void OnBattleFinished(BattleFinishedMessage message)
         {
             _viewModel.RefreshCommands(_session.State);
             _viewModel.CanPlayerAct.Value = false;
-            _viewModel.AppendLog($"Battle finished. Winner: {message.Winner}");
+            _viewModel.AppendLog(_localization.Get("log.battle_finished", Side(message.Winner)));
             if (!_runFlow.CompleteBattle()) return;
             OpenResultPopup(message.Winner).Forget();
         }
@@ -107,9 +109,12 @@ namespace Presentation.Battle
             {
                 Debug.LogError("Failed to open ResultPopup after battle completion.");
                 Debug.LogException(error);
-                _viewModel.AppendLog("Failed to open the result screen.");
+                _viewModel.AppendLog(_localization.Get("log.result_failed"));
             }
         }
+
+        private string Side(BattleSide side) => _localization.Get(side == BattleSide.Player ? "side.player" : "side.enemy");
+        private string Side(TurnOwner owner) => _localization.Get(owner == TurnOwner.Player ? "side.player" : "side.enemy");
 
         public void Dispose()
         {

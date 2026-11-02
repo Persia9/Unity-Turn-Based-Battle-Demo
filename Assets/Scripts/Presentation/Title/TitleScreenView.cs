@@ -1,6 +1,8 @@
 using Application.UseCases;
 using Cysharp.Threading.Tasks;
 using Infrastructure.UI;
+using Application.Services;
+using Presentation.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,9 +16,12 @@ namespace Presentation.Title
         [SerializeField] private RectTransform _title;
         [SerializeField] private RectTransform _menu;
         [Inject] private RunFlowUseCase _runFlow;
+        [Inject] private ILocalizationService _localization;
         private RectTransform _safeAreaContent;
         private TMP_Text _tagline;
         private TMP_Text _progress;
+        private Button _languageButton;
+        private TMP_Text _languageLabel;
         private Rect _lastSafeArea;
         private Vector2Int _lastScreenSize;
         private bool _visualStyleConfigured;
@@ -25,11 +30,16 @@ namespace Presentation.Title
         {
             EnsureMobileLayout();
             _startButton.onClick.AddListener(OnStartClicked);
+            _languageButton.onClick.AddListener(OnLanguageClicked);
+            _localization.LanguageChanged += RefreshLocalization;
+            RefreshLocalization();
         }
 
         public override void OnClosed()
         {
             _startButton.onClick.RemoveListener(OnStartClicked);
+            if (_languageButton != null) _languageButton.onClick.RemoveListener(OnLanguageClicked);
+            _localization.LanguageChanged -= RefreshLocalization;
         }
 
         private void OnStartClicked()
@@ -65,9 +75,6 @@ namespace Presentation.Title
             }
 
             var titleText = _title.GetComponent<TMP_Text>();
-            titleText.text = "<size=22><color=#75AFFF>TACTICAL TURN-BASED RPG</color></size>\n" +
-                             "<size=62><b>CUBE BATTLE</b></size>\n" +
-                             "<size=28><color=#B9C8DC>THREE-BATTLE EXPEDITION</color></size>";
             titleText.enableAutoSizing = true;
             titleText.fontSizeMin = 24f;
             titleText.fontSizeMax = 62f;
@@ -79,7 +86,6 @@ namespace Presentation.Title
             var startLabel = _startButton.GetComponentInChildren<TMP_Text>(true);
             if (startLabel != null)
             {
-                startLabel.text = "BEGIN EXPEDITION";
                 startLabel.enableAutoSizing = true;
                 startLabel.fontSizeMin = 20f;
                 startLabel.fontSizeMax = 36f;
@@ -104,6 +110,7 @@ namespace Presentation.Title
                 "01    •    02    •    03", 25f, new Color(1f, 0.82f, 0.42f));
             _progress.fontStyle = FontStyles.Bold;
             _progress.characterSpacing = 8f;
+            CreateLanguageButton(titleText);
 
             CreateDecoration("Player Accent", new Color(0.08f, 0.32f, 0.72f, 0.24f),
                 new Vector2(0f, 0.5f), new Vector2(-80f, 30f), new Vector2(340f, 620f), -14f);
@@ -130,6 +137,48 @@ namespace Presentation.Title
                 label.outlineColor = new Color(0f, 0f, 0f, 0.7f);
                 label.outlineWidth = 0.12f;
             }
+        }
+
+        private void CreateLanguageButton(TMP_Text styleSource)
+        {
+            var buttonObject = new GameObject("Language Button", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            var rect = (RectTransform)buttonObject.transform;
+            rect.SetParent(_safeAreaContent, false);
+            rect.anchorMin = rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(1f, 1f);
+            rect.anchoredPosition = new Vector2(-18f, -18f);
+            rect.sizeDelta = new Vector2(108f, 54f);
+            var image = buttonObject.GetComponent<Image>();
+            image.color = new Color(0.09f, 0.14f, 0.22f, 0.95f);
+            _languageButton = buttonObject.GetComponent<Button>();
+            _languageButton.targetGraphic = image;
+
+            _languageLabel = CreateText("Language Label", styleSource, string.Empty, 20f, Color.white);
+            _languageLabel.transform.SetParent(rect, false);
+            var labelRect = (RectTransform)_languageLabel.transform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            _languageLabel.fontStyle = FontStyles.Bold;
+        }
+
+        private void OnLanguageClicked() => _localization.ToggleLanguage();
+
+        private void RefreshLocalization()
+        {
+            if (_title == null || _localization == null) return;
+            var titleText = _title.GetComponent<TMP_Text>();
+            titleText.text = $"<size=22><color=#75AFFF>{_localization.Get("title.genre")}</color></size>\n" +
+                             "<size=62><b>CUBE BATTLE</b></size>\n" +
+                             $"<size=28><color=#B9C8DC>{_localization.Get("title.subtitle")}</color></size>";
+            if (_tagline != null) _tagline.text = _localization.Get("title.tagline");
+            if (_progress != null) _progress.text = "01    •    02    •    03";
+            var startLabel = _startButton.GetComponentInChildren<TMP_Text>(true);
+            if (startLabel != null) startLabel.text = _localization.Get("title.start");
+            if (_languageLabel != null) _languageLabel.text = _localization.Get("language.toggle");
+            foreach (var text in GetComponentsInChildren<TMP_Text>(true))
+                LocalizedFontProvider.Apply(text, _localization);
         }
 
         private TMP_Text CreateText(string objectName, TMP_Text styleSource, string content, float size, Color color)

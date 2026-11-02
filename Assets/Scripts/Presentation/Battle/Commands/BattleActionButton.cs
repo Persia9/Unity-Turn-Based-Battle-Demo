@@ -56,14 +56,15 @@ namespace Presentation.Battle.Commands
             if (_definition == null || _viewModel == null)
             {
                 _button.interactable = false;
-                if (_label != null) _label.text = "Unassigned";
+                if (_label != null) _label.text = _viewModel?.ActionLabel((BattleAction)(-1)) ?? "Unassigned";
                 if (_description != null) _description.text = string.Empty;
                 return;
             }
             var state = _viewModel.GetCommandState(_definition.Action);
             _button.interactable = isActiveAndEnabled && state.CanExecute;
             if (_label != null) _label.text = state.Cooldown > 0
-                ? $"{_definition.DisplayName} (CD {state.Cooldown})" : _definition.DisplayName;
+                ? _viewModel.CooldownLabel(_definition.Action, state.Cooldown)
+                : _viewModel.ActionLabel(_definition.Action);
             if (_description != null) _description.text = _definition.Description;
         }
         private void OnClicked()

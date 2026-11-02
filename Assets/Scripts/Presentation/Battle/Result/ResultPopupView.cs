@@ -4,6 +4,7 @@ using Application.UseCases;
 using Cysharp.Threading.Tasks;
 using Domain.Run;
 using Infrastructure.UI;
+using Presentation.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -28,6 +29,7 @@ namespace Presentation.Battle.Result
         [Inject] private ReturnToTitleUseCase _returnToTitle;
         [Inject] private RunFlowUseCase _flow;
         [Inject] private RunSession _run;
+        [Inject] private ILocalizationService _localization;
         private ResultPopupContext _context;
         private bool _upgradeScreen;
         private RunUpgrade? _selectedUpgrade;
@@ -45,8 +47,10 @@ namespace Presentation.Battle.Result
             _selectedUpgrade = null;
             var state = _run.State;
             _upgradeScreen = state.Phase == RunPhase.ChoosingUpgrade;
-            var heading = _upgradeScreen ? $"Battle {state.Round}/3 cleared!"
-                : state.Phase == RunPhase.Cleared && _context.IsWin ? "EXPEDITION CLEARED!" : "EXPEDITION FAILED";
+            var heading = _upgradeScreen ? _localization.Get("result.round_clear", state.Round)
+                : state.Phase == RunPhase.Cleared && _context.IsWin
+                    ? _localization.Get("result.cleared")
+                    : _localization.Get("result.failed");
             _summary = BuildSummary(heading, state);
             _resultText.text = _summary;
             _closeButton.onClick.AddListener(OnTitleClicked);
@@ -59,6 +63,7 @@ namespace Presentation.Battle.Result
                 slot.Handler = () => Continue(selected.Upgrade).Forget();
                 slot.Button.onClick.AddListener(slot.Handler);
             }
+            RefreshButtonLabels();
             SetBusy(false);
         }
 
@@ -88,12 +93,12 @@ namespace Presentation.Battle.Result
 
         private string BuildSummary(string heading, RunState state)
         {
-            var guidance = _upgradeScreen
-                ? "Recovered up to 20 HP  •  Choose one upgrade for the next battle"
-                : "Retry starts a fresh expedition from battle 1";
+            var guidance = _localization.Get(_upgradeScreen ? "result.guidance.upgrade" : "result.guidance.retry");
             return $"<size=34><b><color=#FFD36A>{heading.ToUpperInvariant()}</color></b></size>\n\n" +
-                   $"<size=23><color=#9FB3CA>PROGRESS</color>   <b>{state.Wins} / 3 WINS</b>   •   REACHED {state.Round} / 3</size>\n" +
-                   $"<size=21>TURNS  <b>{state.TotalTurns}</b>      DAMAGE TAKEN  <b>{state.TotalDamageTaken}</b></size>\n" +
+                   $"<size=23><color=#9FB3CA>{_localization.Get("result.progress")}</color>   " +
+                   $"<b>{_localization.Get("result.wins", state.Wins)}</b>   •   {_localization.Get("result.reached", state.Round)}</size>\n" +
+                   $"<size=21>{_localization.Get("result.turns")}  <b>{state.TotalTurns}</b>      " +
+                   $"{_localization.Get("result.damage")}  <b>{state.TotalDamageTaken}</b></size>\n" +
                    $"<size=22><color=#77B7FF>HP  <b>{state.Hp} / {state.MaxHp}</b></color>      " +
                    $"<color=#FF987F>ATK  <b>+{state.DamageBonus}</b></color>      " +
                    $"<color=#80DDD2>GUARD  <b>{100 - state.GuardDamagePercent}%</b></color></size>\n" +
@@ -113,7 +118,7 @@ namespace Presentation.Battle.Result
 
             if (_titleText != null)
             {
-                _titleText.text = "EXPEDITION  //  RESULT";
+                _titleText.text = _localization.Get("result.title");
                 _titleText.color = new Color(0.76f, 0.84f, 0.96f);
                 _titleText.fontStyle = FontStyles.Bold;
                 _titleText.characterSpacing = 4f;
@@ -125,6 +130,8 @@ namespace Presentation.Battle.Result
             _resultText.lineSpacing = 8f;
             _resultText.outlineColor = new Color(0f, 0f, 0f, 0.65f);
             _resultText.outlineWidth = 0.1f;
+            LocalizedFontProvider.Apply(_titleText, _localization);
+            LocalizedFontProvider.Apply(_resultText, _localization);
 
             var upgradeColors = new[]
             {
@@ -136,6 +143,22 @@ namespace Presentation.Battle.Result
                 StyleButton(_upgrades[index].Button, upgradeColors[Mathf.Min(index, upgradeColors.Length - 1)], true);
             StyleButton(_retryButton, new Color(0.08f, 0.3f, 0.62f, 0.98f), true);
             StyleButton(_closeButton, new Color(0.1f, 0.14f, 0.2f, 0.98f), false);
+            foreach (var text in GetComponentsInChildren<TMP_Text>(true))
+                LocalizedFontProvider.Apply(text, _localization);
+        }
+
+        private void RefreshButtonLabels()
+        {
+            var keys = new[] { "result.attack", "result.vitality", "result.guard" };
+            for (var index = 0; index < _upgrades.Length; index++)
+            {
+                var label = _upgrades[index].Button.GetComponentInChildren<TMP_Text>(true);
+                if (label != null) label.text = _localization.Get(keys[Mathf.Min(index, keys.Length - 1)]);
+            }
+            var retryLabel = _retryButton.GetComponentInChildren<TMP_Text>(true);
+            if (retryLabel != null) retryLabel.text = _localization.Get("result.retry");
+            var closeLabel = _closeButton.GetComponentInChildren<TMP_Text>(true);
+            if (closeLabel != null) closeLabel.text = _localization.Get("result.return");
         }
 
         private void ApplyMobileLayout()
@@ -235,7 +258,7 @@ namespace Presentation.Battle.Result
             catch (Exception error)
             {
                 Debug.LogException(error);
-                if (this != null) _resultText.text = _summary + "\nLoad failed. Press your chosen upgrade again to retry.";
+                if (this != null) _resultText.text = _summary + "\n" + _localization.Get("result.load_upgrade_failed");
             }
             finally { if (this != null) SetBusy(false); }
         }
@@ -244,7 +267,7 @@ namespace Presentation.Battle.Result
         {
             SetBusy(true);
             try { await _flow.StartNewRun(); }
-            catch (Exception error) { Debug.LogException(error); if (this != null) _resultText.text = _summary + "\nLoad failed. Retry or return to title."; }
+            catch (Exception error) { Debug.LogException(error); if (this != null) _resultText.text = _summary + "\n" + _localization.Get("result.load_retry_failed"); }
             finally { if (this != null) SetBusy(false); }
         }
         private void OnTitleClicked() => ReturnToTitle().Forget();
