@@ -135,6 +135,8 @@ R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」�
 ## 面接・レビュー用資料
 
 - [3分のデモ台本](INTERVIEW_DEMO.ja.md)
+- [設計説明](DESIGN_EXPLANATION.ja.md)
+- [クライアントエンジニア面接用ガイド・想定Q&A](INTERVIEW_GUIDE.ja.md)
 - [主要コードの読み方・練習問題](CODE_READING_PRACTICE.ja.md)
 - [操作と攻略例](PLAY_GUIDE.ja.md)
 - [行動ボタンの設定](ACTION_CONFIGURATION.ja.md)

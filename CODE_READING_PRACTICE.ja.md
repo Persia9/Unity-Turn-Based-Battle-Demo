@@ -14,11 +14,12 @@
 
 ## 1. ゲーム仕様を先に理解する
 
-このデモは3連戦の1対1ターン制バトルです。
+このデモは、三連戦と無限モードを選べる1対1ターン制バトルです。
 
 ```text
 Title
-  ↓ Start Expedition
+  ├─ Expedition
+  │    ↓
 Battle 1: Slime / 通常攻撃のみ
   ↓ 勝利・最大20HP回復・強化選択
 Battle 2: Sentinel / 3ターンごとに強攻撃
@@ -28,6 +29,11 @@ Battle 3: Iron Warden / 強攻撃を連続する周期
 Cleared または Defeated
   ↓
 Retry または Title
+
+  └─ Endless
+       ↓
+     Battle → 強化選択 → 次のBattleを敗北まで反復
+     3ラウンドごとに敵能力上昇、10ラウンドごとにBoss
 ```
 
 プレイヤーの行動：
@@ -99,9 +105,10 @@ Installers: 上記をZenjectで接続
 
 初期化すると手番、勝敗、Cooldown、防御状態がリセットされます。
 
-### RunState：3連戦をまたぐ状態
+### RunState：三連戦／無限モードをまたぐ状態
 
 - `RunPhase`
+- `RunMode`（Expedition／Endless）
 - Round、Wins
 - 現在HP、最大HP
 - 攻撃・防御強化
@@ -195,9 +202,9 @@ EntryPointの`Run().Forget()`自体には明示的な`try/catch`がありませ�
 ## 6. StartからBattle Sceneまで
 
 ```text
-TitleScreenView.OnStartClicked
-→ Startボタンを無効化
-→ RunFlowUseCase.StartNewRun
+TitleScreenView.OnExpeditionClicked / OnEndlessClicked
+→ 両モードボタンを無効化
+→ RunFlowUseCase.StartNewRun(mode)
    ├─ _loadingで二重開始を拒否
    ├─ Stage 1とPlayer Characterを取得
    ├─ RunState.Start(MaxHp)
@@ -473,7 +480,7 @@ DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の�
 | `BattleActionResult` | 解決済み行動の値 |
 | `BattleState` | 1戦の状態遷移 |
 | `BattleSystem` | ダメージ・防御・倍率 |
-| `RunState` | 3連戦のPhase、HP、強化、戦績 |
+| `RunState` | 三連戦／無限のMode、Phase、HP、強化、戦績 |
 
 ### Application
 
@@ -536,7 +543,7 @@ DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の�
 | `EncounterRulesTests` | 敵Pattern、強化順、切り上げ |
 | `RunStateTests` | 回復、強化、最終勝利、敗北、再開 |
 | `BattleUseCaseTests` | Message順、再入、連打、cancel、Revision、攻略 |
-| `RunFlowUseCaseTests` | 3連戦、全強化組合せ、Scene再試行 |
+| `RunFlowUseCaseTests` | 3連戦、無限難易度とボス、全強化組合せ、Scene再試行 |
 | `BattleCommandStateTests` | Button可否とCooldown |
 | MasterData系tests | 同時初期化、部分再試行、Repository例外 |
 | `ArchitectureTests` | 依存方向 |
