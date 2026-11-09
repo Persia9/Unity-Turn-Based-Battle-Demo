@@ -1,8 +1,7 @@
 #if UNITY_EDITOR
 using System;
-using System.Collections.Generic;
 using System.IO;
-using Infrastructure.MasterData.Masters;
+using System.Linq;
 using MasterMemory;
 using UnityEditor;
 using UnityEngine;
@@ -11,67 +10,63 @@ namespace Infrastructure.MasterData.Editor
 {
     public static class MasterDataBuildMenu
     {
-        [MenuItem("Tools/MasterData/Build Demo MasterData")]
-        public static void BuildAll()
+        public const string DefaultSourcePath = "Assets/MasterData/Source/DemoMasterData.asset";
+        public const string CoreOutputPath = "Assets/MasterData/Binary/master_core.bytes";
+        public const string UIOutputPath = "Assets/MasterData/Binary/master_ui.bytes";
+
+        [MenuItem("Tools/MasterData/Select Data Source")]
+        public static void SelectSource()
         {
-            var coreBuilder = new DatabaseBuilder();
-            coreBuilder.Append(new[]
-            {
-                new CharacterMaster { Id = 1, Name = "Hero", MaxHp = 100, DefaultSkillId = 1 },
-                new CharacterMaster { Id = 2, Name = "Slime", MaxHp = 80, DefaultSkillId = 2 },
-                new CharacterMaster { Id = 3, Name = "Sentinel", MaxHp = 130, DefaultSkillId = 3 },
-                new CharacterMaster { Id = 4, Name = "Iron Warden", MaxHp = 150, DefaultSkillId = 4 },
-            });
-            coreBuilder.Append(new[]
-            {
-                new SkillMaster { Id = 1, Name = "Slash", Power = 20 },
-                new SkillMaster { Id = 2, Name = "Bite", Power = 8 },
-                new SkillMaster { Id = 3, Name = "Slam", Power = 10 },
-                new SkillMaster { Id = 4, Name = "Crush", Power = 10 },
-            });
-            coreBuilder.Append(new[]
-            {
-                new StageMaster { Id = 1, PlayerCharacterId = 1, EnemyCharacterId = 2, EnemyPattern = 0, DisplayName = "First Encounter" },
-                new StageMaster { Id = 2, PlayerCharacterId = 1, EnemyCharacterId = 3, EnemyPattern = 1, DisplayName = "Read the Forecast" },
-                new StageMaster { Id = 3, PlayerCharacterId = 1, EnemyCharacterId = 4, EnemyPattern = 2, DisplayName = "Iron Warden" },
-            });
+            var source = LoadDefault();
+            Selection.activeObject = source;
+            EditorGUIUtility.PingObject(source);
+        }
 
-            var uiBuilder = new DatabaseBuilder();
-            uiBuilder.Append(new[]
-            {
-                new UIMaster
-                {
-                    Id = "TitleScreen", PrefabKey = "UI/Title/TitleScreen", Layer = 1, Type = 0, Cache = true,
-                    Singleton = true, BlockInput = false
-                },
-                new UIMaster
-                {
-                    Id = "BattleHud", PrefabKey = "UI/Battle/BattleHud", Layer = 0, Type = 2, Cache = true,
-                    Singleton = true, BlockInput = false
-                },
-                new UIMaster
-                {
-                    Id = "ResultPopup", PrefabKey = "UI/Battle/ResultPopup", Layer = 2, Type = 1, Cache = false,
-                    Singleton = false, BlockInput = true
-                },
-            });
+        [MenuItem("Tools/MasterData/Build Demo MasterData")]
+        public static void BuildAll() => Build(LoadDefault());
 
-            Write("Assets/MasterData/Binary/master_core.bytes", coreBuilder.Build());
-            Write("Assets/MasterData/Binary/master_ui.bytes", uiBuilder.Build());
+        [MenuItem("Tools/MasterData/Build Selected Data Source")]
+        public static void BuildSelected() => Build(Selection.activeObject as DemoMasterDataSource);
 
+        [MenuItem("Tools/MasterData/Build Selected Data Source", true)]
+        private static bool CanBuildSelected() => Selection.activeObject is DemoMasterDataSource;
+
+        private static DemoMasterDataSource LoadDefault()
+        {
+            var source = AssetDatabase.LoadAssetAtPath<DemoMasterDataSource>(DefaultSourcePath);
+            if (source == null)
+                throw new InvalidOperationException($"Master data source is missing: {DefaultSourcePath}");
+            return source;
+        }
+
+        public static void Build(DemoMasterDataSource source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            var errors = MasterDataSourceValidator.Validate(source.Data);
+            if (errors.Count != 0)
+                throw new InvalidOperationException("Master data validation failed:\n" + string.Join("\n", errors));
+            var data = source.Data;
+            var core = new DatabaseBuilder();
+            core.Append(data.Characters.Select(x => x.ToMaster()));
+            core.Append(data.Skills.Select(x => x.ToMaster()));
+            core.Append(data.Stages.Select(x => x.ToMaster()));
+            var ui = new DatabaseBuilder();
+            ui.Append(data.UI.Select(x => x.ToMaster()));
+            var coreBytes = core.Build();
+            var uiBytes = ui.Build();
+            AssetDatabase.SaveAssets();
+            Write(CoreOutputPath, coreBytes);
+            Write(UIOutputPath, uiBytes);
             AssetDatabase.Refresh();
-            Debug.Log("Demo master data built.");
+            Debug.Log(
+                $"Master data built from {AssetDatabase.GetAssetPath(source)}: {coreBytes.Length} core bytes, {uiBytes.Length} UI bytes.");
         }
 
         private static void Write(string path, ReadOnlySpan<byte> bytes)
         {
-            var directory = Path.GetDirectoryName(path);
-            if (!Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            File.WriteAllBytes(path, bytes.ToArray());
+            var absolute = Path.Combine(UnityEngine.Application.dataPath, "..", path);
+            Directory.CreateDirectory(Path.GetDirectoryName(absolute));
+            File.WriteAllBytes(absolute, bytes.ToArray());
         }
     }
 }
