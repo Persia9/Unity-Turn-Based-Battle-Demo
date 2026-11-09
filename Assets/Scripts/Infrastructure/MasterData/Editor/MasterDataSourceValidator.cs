@@ -18,6 +18,7 @@ namespace Infrastructure.MasterData.Editor
                 return errors;
             }
 
+            errors.AddRange(LocalizationSourceValidator.Validate(data.Localization));
             var characters = Rows(data.Characters, "Characters", errors);
             var skills = Rows(data.Skills, "Skills", errors);
             var stages = Rows(data.Stages, "Stages", errors);
@@ -60,7 +61,6 @@ namespace Infrastructure.MasterData.Editor
                 if (string.IsNullOrWhiteSpace(row.Id)) errors.Add("UI: Id is required.");
                 else if (!uiIds.Add(row.Id)) errors.Add($"UI: duplicate Id '{row.Id}'.");
                 if (string.IsNullOrWhiteSpace(row.PrefabKey)) errors.Add($"UI '{row.Id}': PrefabKey is required.");
-                if (!Enum.IsDefined(typeof(UILayer), row.Layer)) errors.Add($"UI '{row.Id}': Layer is invalid.");
                 if (!Enum.IsDefined(typeof(UIType), row.Type)) errors.Add($"UI '{row.Id}': Type is invalid.");
             }
 

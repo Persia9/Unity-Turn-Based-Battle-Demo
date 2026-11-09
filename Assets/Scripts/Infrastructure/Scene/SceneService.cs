@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 namespace Infrastructure.Scene
 {
-    public sealed class UnitySceneService : ISceneService
+    public sealed class SceneService : ISceneService
     {
         public async UniTask LoadScene(string sceneName)
         {

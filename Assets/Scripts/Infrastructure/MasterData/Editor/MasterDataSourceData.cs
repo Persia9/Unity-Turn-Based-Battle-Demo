@@ -13,6 +13,7 @@ namespace Infrastructure.MasterData.Editor
         public List<SkillSourceRow> Skills = new();
         public List<StageSourceRow> Stages = new();
         public List<UISourceRow> UI = new();
+        public List<LocalizationSourceRow> Localization = new();
     }
 
     [Serializable]
@@ -57,16 +58,25 @@ namespace Infrastructure.MasterData.Editor
     {
         public string Id;
         public string PrefabKey;
-        public UILayer Layer;
         public UIType Type;
         public bool Cache;
-        public bool Singleton;
         public bool BlockInput;
 
         public UIMaster ToMaster() => new UIMaster
         {
-            Id = Id, PrefabKey = PrefabKey, Layer = (int)Layer, Type = (int)Type,
-            Cache = Cache, Singleton = Singleton, BlockInput = BlockInput
+            Id = Id, PrefabKey = PrefabKey, Type = (int)Type,
+            Cache = Cache, BlockInput = BlockInput
         };
+    }
+
+    [Serializable]
+    public sealed class LocalizationSourceRow
+    {
+        public string Key;
+        public string English;
+        public string Japanese;
+
+        public LocalizationMaster ToMaster() => new LocalizationMaster
+            { Key = Key, English = English, Japanese = Japanese };
     }
 }

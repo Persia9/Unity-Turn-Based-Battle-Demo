@@ -8,7 +8,13 @@ namespace Infrastructure.UI
     {
         private IAssetService _assets;
         private Object _prefab;
-        public void Initialize(IAssetService assets, Object prefab) { _assets = assets; _prefab = prefab; }
+
+        public void Initialize(IAssetService assets, Object prefab)
+        {
+            _assets = assets;
+            _prefab = prefab;
+        }
+
         private void OnDestroy()
         {
             if (_assets != null && _prefab != null) _assets.Release(_prefab).Forget();

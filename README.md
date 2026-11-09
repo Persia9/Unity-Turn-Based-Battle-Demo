@@ -37,7 +37,7 @@ Unity 6000.3.12f1 による、1vs1ターン制バトルです。全3戦の遠征
 3. 依存パッケージの取得とコンパイル後、`Assets/Scenes/Title.unity` を開いて Play → Start Expedition。
 4. Addressables の Editor Play Mode は Use Asset Database で確認できます。プレイヤービルドでは Addressables のコンテンツもビルドしてください。
 
-マスターの生成メニューは Tools > MasterData > Build Demo MasterData。詳細は [SETUP.ja.md](SETUP.ja.md) にあります。
+マスターは `Assets/MasterData/Excel` の5つのExcelで編集し、Tools > MasterData > Build Demo MasterData で CSV → MasterMemory のバイナリへ変換します。[編集・変換手順](MASTER_DATA_SOURCE.zh-CN.md) と [SETUP.ja.md](SETUP.ja.md) を参照してください。
 
 ## 責務と依存方向
 
@@ -142,3 +142,11 @@ R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」�
 - [行動ボタンの設定](ACTION_CONFIGURATION.ja.md)
 
 第三者ライブラリのライセンスと元プロジェクトの LICENSE は保持しています。
+
+## 多语言数据
+
+英日文本由 `Assets/MasterData/Excel/Localization.xlsx` 维护，导出为 `master_localization.bytes`，经 Addressables 和 LocalizationRepository 提供给 ILocalizationService。服务内部不再有硬编码翻译字典。修改方法和验证范围见 [多语言MasterData说明](LOCALIZATION_MASTER_DATA.zh-CN.md)。
+
+## Excelデータ編集（現在の既定フロー）
+
+`Assets/MasterData/Excel` の Characters / Skills / Stages / UI / Localization を編集し、Tools > MasterData > Build From Excel で5つのCSVと3つのMasterMemoryバイナリを生成します。[Excel編集手順](EXCEL_MASTER_DATA.zh-CN.md) を参照してください。旧MasterData ScriptableObjectとLegacyメニューは削除済みです。

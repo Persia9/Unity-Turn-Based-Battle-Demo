@@ -4,27 +4,32 @@ namespace Infrastructure.UI
     {
         public string Id { get; }
         public string PrefabKey { get; }
-        public UILayer Layer { get; }
+
+        public UILayer Layer => Type switch
+        {
+            UIType.Hud => UILayer.Hud,
+            UIType.Screen => UILayer.Screen,
+            UIType.Popup => UILayer.Popup,
+            UIType.Overlay => UILayer.Overlay,
+            UIType.Toast => UILayer.Top,
+            _ => throw new System.ArgumentOutOfRangeException(nameof(Type), Type, "Unknown UI type.")
+        };
+
         public UIType Type { get; }
         public bool Cache { get; }
-        public bool Singleton { get; }
         public bool BlockInput { get; }
 
         public UIDefinition(
             string id,
             string prefabKey,
-            UILayer layer,
             UIType type,
             bool cache,
-            bool singleton,
             bool blockInput)
         {
             Id = id;
             PrefabKey = prefabKey;
-            Layer = layer;
             Type = type;
             Cache = cache;
-            Singleton = singleton;
             BlockInput = blockInput;
         }
     }

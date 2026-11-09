@@ -9,10 +9,14 @@ namespace Infrastructure.MasterData
         private readonly MasterDatabaseInitialization<MemoryDatabase> _initialization;
         public MemoryDatabase CoreDb => _initialization.CoreDb;
         public MemoryDatabase UiDb => _initialization.UiDb;
+        public MemoryDatabase LocalizationDb => _initialization.LocalizationDb;
         public bool IsCoreReady => CoreDb != null;
         public bool IsUiReady => UiDb != null;
+        public bool IsLocalizationReady => LocalizationDb != null;
+
         public AddressableMasterDatabaseProvider(ILogger logger, IMasterDatabaseLoader loader)
             => _initialization = new MasterDatabaseInitialization<MemoryDatabase>(loader.Load, logger);
+
         public UniTask InitializeAsync() => _initialization.InitializeAsync();
         public UniTask EnsureUiDbAsync() => InitializeAsync();
     }

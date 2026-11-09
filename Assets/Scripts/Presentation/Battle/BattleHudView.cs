@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Domain.Battle;
 using Domain.Run;
+using Infrastructure.Localization;
 using Infrastructure.UI;
 using R3;
 using TMPro;

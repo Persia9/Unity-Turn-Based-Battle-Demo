@@ -1,6 +1,6 @@
 using System;
 
-namespace Application.Services
+namespace Infrastructure.Localization
 {
     public enum GameLanguage
     {

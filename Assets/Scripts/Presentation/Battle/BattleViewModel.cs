@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Application.Services;
 using R3;
 using Domain.Battle;
+using Infrastructure.Localization;
 using Presentation.Battle.Commands;
 
 namespace Presentation.Battle

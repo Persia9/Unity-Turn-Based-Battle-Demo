@@ -15,7 +15,6 @@ namespace Infrastructure.Asset
             }
             catch
             {
-                // Successful loads are released by their owner; failed loads have no owner.
                 if (handle.IsValid()) Addressables.Release(handle);
                 throw;
             }

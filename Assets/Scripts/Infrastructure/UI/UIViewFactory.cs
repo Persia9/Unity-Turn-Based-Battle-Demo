@@ -25,7 +25,6 @@ namespace Infrastructure.UI
                 instance = _container.InstantiatePrefab(prefab);
                 var view = instance.GetComponent<T>();
                 if (view == null) throw new System.InvalidOperationException($"{prefabKey} has no {typeof(T).Name}.");
-                // Keep the loaded prefab alive for as long as its clone exists.
                 instance.AddComponent<UIViewAssetLease>().Initialize(_assetService, prefab);
                 return view;
             }

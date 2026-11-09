@@ -11,9 +11,6 @@ namespace Infrastructure.Platform
         {
             QualitySettings.vSyncCount = 0;
             UnityEngine.Application.targetFrameRate = TargetFrameRate;
-
-            if (UnityEngine.Application.isMobilePlatform)
-                Screen.sleepTimeout = SleepTimeout.SystemSetting;
         }
     }
 }

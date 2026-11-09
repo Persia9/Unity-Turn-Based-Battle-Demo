@@ -1,0 +1,5 @@
+﻿Id,Name,MaxHp,DefaultSkillId
+1,Hero,100,1
+2,Slime,80,2
+3,Sentinel,130,3
+4,Iron Warden,150,4

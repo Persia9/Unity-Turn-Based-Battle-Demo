@@ -7,5 +7,6 @@ namespace Core.Common
 
         public const string MasterCoreKey = "Master/Core";
         public const string MasterUiKey = "Master/UI";
+        public const string MasterLocalizationKey = "Master/Localization";
     }
 }

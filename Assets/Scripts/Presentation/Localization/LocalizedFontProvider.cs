@@ -1,5 +1,5 @@
-using Application.Services;
 using System.Collections.Generic;
+using Infrastructure.Localization;
 using TMPro;
 using UnityEngine;
 

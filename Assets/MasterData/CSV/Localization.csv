@@ -1,0 +1,80 @@
+﻿Key,English,Japanese
+language.toggle,JP,EN
+title.genre,TACTICAL TURN-BASED RPG,戦略ターン制RPG
+title.subtitle,THREE-BATTLE EXPEDITION,三連戦エクスペディション
+title.tagline,READ THE ENEMY   •   CHOOSE YOUR ACTION   •   SURVIVE,敵を読む   •   行動を選ぶ   •   三連戦を生き抜く
+title.start,BEGIN EXPEDITION,遠征を開始
+title.start.expedition,"EXPEDITION
+THREE BATTLES","三連戦モード
+3戦を突破"
+title.start.endless,"ENDLESS
+FIGHT UNTIL DEFEAT","無限モード
+敗北まで挑戦"
+side.player,PLAYER,プレイヤー
+side.enemy,ENEMY,敵
+character.hero,HERO,勇者
+character.slime,SLIME,スライム
+character.sentinel,SENTINEL,センチネル
+character.warden,WARDEN,ウォーデン
+battle.run,"BATTLE {0:00} / 03   {1}
+ATK BOOST +{2}    GUARD {3}%","バトル {0:00} / 03   {1}
+攻撃強化 +{2}    防御 {3}%"
+battle.run.endless,"ENDLESS  ROUND {0:00}   {1}
+ATK BOOST +{2}    GUARD {3}%","無限モード  ラウンド {0:00}   {1}
+攻撃強化 +{2}    防御 {3}%"
+battle.turn,TURN {0}  •  {1},ターン {0}  •  {1}
+battle.start,Battle Start: choose an action.,戦闘開始：行動を選んでください。
+battle.finished,Battle finished,戦闘終了
+battle.intent.normal,Enemy next: Normal attack,敵の次の行動：通常攻撃
+battle.intent.strong,Enemy next: STRONG ATTACK x3 - Consider defending!,敵の次の行動：強攻撃 ×3 — 防御推奨！
+battle.guard.active,Guard active: next hit takes {0}% damage,防御中：次の被ダメージは{0}%
+battle.guard.inactive,Defend: reduce the next enemy hit by {0}%,防御：次の敵攻撃を{0}%軽減
+battle.hero_hp,"<size=18><color=#82B7FF>HERO</color>   ATK {2}</size>
+HP  {0} / {1}","<size=18><color=#82B7FF>勇者</color>   攻撃 {2}</size>
+HP  {0} / {1}"
+battle.enemy_hp,"<size=18>ATK {2}   <color=#FF9B8E>ENEMY</color></size>
+HP  {0} / {1}","<size=18>攻撃 {2}   <color=#FF9B8E>敵</color></size>
+HP  {0} / {1}"
+action.attack,Attack,攻撃
+action.defend,Defend,防御
+action.strong,Strong attack x2,強攻撃 ×2
+action.cooldown,{0} (CD {1}),{0}（あと{1}ターン）
+action.unassigned,Unassigned,未設定
+log.player_damage,Player takes {0} damage.,プレイヤーは{0}ダメージを受けた。
+log.enemy_damage,Enemy takes {0} damage.,敵に{0}ダメージ。
+log.player_defends,Player defends: next enemy damage is reduced.,プレイヤーは防御した。次の被ダメージを軽減。
+log.action,{0} uses {1}.,{0}の行動：{1}。
+log.turn_changed,Turn changed: {0},{0}のターン。
+log.battle_finished,Battle finished. Winner: {0},戦闘終了。勝者：{0}
+log.result_failed,Failed to open the result screen.,結果画面を開けませんでした。
+result.title,EXPEDITION  //  RESULT,遠征  //  戦闘結果
+result.round_clear,BATTLE {0}/3 CLEARED!,バトル {0}/3 クリア！
+result.title.endless,ENDLESS  //  RESULT,無限モード  //  戦闘結果
+result.round_clear.endless,ROUND {0} CLEARED!,ラウンド {0} クリア！
+result.cleared,EXPEDITION CLEARED!,遠征クリア！
+result.failed,EXPEDITION FAILED,遠征失敗
+result.failed.endless,ENDLESS RUN ENDED,無限モード終了
+result.progress,PROGRESS,進行状況
+result.wins,{0} / 3 WINS,{0} / 3 勝
+result.reached,REACHED {0} / 3,到達 {0} / 3
+result.wins.endless,{0} WINS,{0} 勝
+result.reached.endless,REACHED ROUND {0},到達ラウンド {0}
+result.turns,TURNS,総ターン
+result.damage,DAMAGE TAKEN,被ダメージ
+result.guidance.upgrade,Recovered up to 20 HP  •  Choose one upgrade for the next battle,HPを最大20回復しました  •  次のバトル用に強化を1つ選択
+result.guidance.retry,Retry starts a fresh expedition from battle 1,リトライするとバトル1から再開します
+result.guidance.retry.endless,Retry starts a fresh endless run from round 1,リトライするとラウンド1から再開します
+result.attack,"Attack +5
+Boost all attacks","攻撃 +5
+すべての攻撃を強化"
+result.vitality,"Vitality +25
+Max HP +25 & heal 25","生命力 +25
+最大HP +25・HPを25回復"
+result.guard,"Guard +15 pts
+Reduce damage while guarding","防御 +15
+防御中のダメージを軽減"
+result.retry,Retry expedition,遠征をリトライ
+result.retry.endless,Retry endless run,無限モードをリトライ
+result.return,Return to title,タイトルへ戻る
+result.load_upgrade_failed,Load failed. Press your chosen upgrade again to retry.,読込に失敗しました。同じ強化をもう一度押してください。
+result.load_retry_failed,Load failed. Retry or return to title.,読込に失敗しました。再試行するかタイトルへ戻ってください。

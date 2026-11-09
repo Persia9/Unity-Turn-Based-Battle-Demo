@@ -6,6 +6,7 @@ using Infrastructure.UI;
 using Presentation.Battle.Result;
 using Cysharp.Threading.Tasks;
 using Domain.Battle;
+using Infrastructure.Localization;
 using MessagePipe;
 using UnityEngine;
 using Zenject;

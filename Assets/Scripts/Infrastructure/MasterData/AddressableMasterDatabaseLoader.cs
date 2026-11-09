@@ -15,7 +15,10 @@ namespace Infrastructure.MasterData
                 var text = await handle.ToUniTask<TextAsset>();
                 return new MemoryDatabase(text.bytes);
             }
-            finally { if (handle.IsValid()) Addressables.Release(handle); }
+            finally
+            {
+                if (handle.IsValid()) Addressables.Release(handle);
+            }
         }
     }
 }

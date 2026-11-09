@@ -4,6 +4,7 @@ using Infrastructure.UI;
 using Application.Services;
 using Presentation.Localization;
 using Domain.Run;
+using Infrastructure.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -54,7 +55,10 @@ namespace Presentation.Title
             if (!_startButton.interactable || !_endlessButton.interactable) return;
             _startButton.interactable = false;
             _endlessButton.interactable = false;
-            try { await _runFlow.StartNewRun(mode); }
+            try
+            {
+                await _runFlow.StartNewRun(mode);
+            }
             finally
             {
                 if (this != null)
@@ -68,7 +72,8 @@ namespace Presentation.Title
         private void Update()
         {
             if (_safeAreaContent == null) return;
-            if (_lastSafeArea != Screen.safeArea || _lastScreenSize.x != Screen.width || _lastScreenSize.y != Screen.height)
+            if (_lastSafeArea != Screen.safeArea || _lastScreenSize.x != Screen.width ||
+                _lastScreenSize.y != Screen.height)
                 ApplyMobileLayout();
         }
 
@@ -157,6 +162,7 @@ namespace Presentation.Title
                 label.outlineColor = new Color(0f, 0f, 0f, 0.7f);
                 label.outlineWidth = 0.12f;
             }
+
             var endlessLabel = _endlessButton.GetComponentInChildren<TMP_Text>(true);
             if (endlessLabel != null)
             {
@@ -169,7 +175,8 @@ namespace Presentation.Title
 
         private void CreateLanguageButton(TMP_Text styleSource)
         {
-            var buttonObject = new GameObject("Language Button", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            var buttonObject = new GameObject("Language Button", typeof(RectTransform), typeof(CanvasRenderer),
+                typeof(Image), typeof(Button));
             var rect = (RectTransform)buttonObject.transform;
             rect.SetParent(_safeAreaContent, false);
             rect.anchorMin = rect.anchorMax = new Vector2(1f, 1f);
@@ -213,7 +220,8 @@ namespace Presentation.Title
 
         private TMP_Text CreateText(string objectName, TMP_Text styleSource, string content, float size, Color color)
         {
-            var textObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            var textObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer),
+                typeof(TextMeshProUGUI));
             var text = textObject.GetComponent<TextMeshProUGUI>();
             text.transform.SetParent(_safeAreaContent, false);
             text.font = styleSource.font;

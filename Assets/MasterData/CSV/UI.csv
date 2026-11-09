@@ -1,0 +1,4 @@
+﻿Id,PrefabKey,Type,Cache,BlockInput
+TitleScreen,UI/Title/TitleScreen,Screen,TRUE,FALSE
+BattleHud,UI/Battle/BattleHud,Hud,TRUE,FALSE
+ResultPopup,UI/Battle/ResultPopup,Popup,FALSE,TRUE

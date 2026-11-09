@@ -1,0 +1,4 @@
+﻿Id,PlayerCharacterId,EnemyCharacterId,EnemyPattern,DisplayName
+1,1,2,NormalOnly,First Encounter
+2,1,3,EveryThirdTurn,Read the Forecast
+3,1,4,BossCycle,Iron Warden

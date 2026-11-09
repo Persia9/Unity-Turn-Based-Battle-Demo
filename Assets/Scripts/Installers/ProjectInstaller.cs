@@ -21,15 +21,16 @@ namespace Installers
         public override void InstallBindings()
         {
             Container.Bind<ILogger>().To<UnityLogger>().AsSingle();
-            Container.Bind<ILocalizationService>().To<UnityLocalizationService>().AsSingle();
+            Container.Bind<ILocalizationService>().To<LocalizationService>().AsSingle();
             Container.BindInterfacesTo<MobileRuntimeSettings>().AsSingle();
 
             Container.Bind<IAssetService>().To<AddressableAssetService>().AsSingle();
-            Container.Bind<ISceneService>().To<UnitySceneService>().AsSingle();
+            Container.Bind<ISceneService>().To<SceneService>().AsSingle();
 
             Container.Bind<IMasterDatabaseLoader>().To<AddressableMasterDatabaseLoader>().AsSingle();
             Container.BindInterfacesAndSelfTo<AddressableMasterDatabaseProvider>().AsSingle();
 
+            Container.Bind<ILocalizationRepository>().To<LocalizationRepository>().AsSingle();
             Container.Bind<ICharacterRepository>().To<CharacterRepository>().AsSingle();
             Container.Bind<ISkillRepository>().To<SkillRepository>().AsSingle();
             Container.Bind<IStageRepository>().To<StageRepository>().AsSingle();
@@ -53,7 +54,6 @@ namespace Installers
             Container.BindMessageBroker<BattleActionResolvedMessage>(options);
             Container.BindMessageBroker<TurnChangedMessage>(options);
             Container.BindMessageBroker<BattleFinishedMessage>(options);
-
         }
     }
 }

@@ -2,9 +2,27 @@ using System;
 
 namespace Domain.Run
 {
-    public enum RunPhase { NotStarted, InBattle, ChoosingUpgrade, Cleared, Defeated }
-    public enum RunUpgrade { Attack, Vitality, Guard }
-    public enum RunMode { Expedition, Endless }
+    public enum RunPhase
+    {
+        NotStarted,
+        InBattle,
+        ChoosingUpgrade,
+        Cleared,
+        Defeated
+    }
+
+    public enum RunUpgrade
+    {
+        Attack,
+        Vitality,
+        Guard
+    }
+
+    public enum RunMode
+    {
+        Expedition,
+        Endless
+    }
 
     public sealed class RunState
     {
@@ -27,22 +45,40 @@ namespace Domain.Run
             if (maxHp <= 0) throw new ArgumentOutOfRangeException(nameof(maxHp));
             if (!Enum.IsDefined(typeof(RunMode), mode)) throw new ArgumentOutOfRangeException(nameof(mode));
             Mode = mode;
-            Phase = RunPhase.InBattle; Round = 1; Wins = 0;
+            Phase = RunPhase.InBattle;
+            Round = 1;
+            Wins = 0;
             MaxHp = Hp = _battleStartingHp = maxHp;
-            DamageBonus = 0; GuardDamagePercent = 50; TotalTurns = TotalDamageTaken = 0;
+            DamageBonus = 0;
+            GuardDamagePercent = 50;
+            TotalTurns = TotalDamageTaken = 0;
         }
+
         public void CompleteBattle(bool won, int remainingHp, int turns)
         {
             if (Phase != RunPhase.InBattle) throw new InvalidOperationException("Run is not in battle.");
             if (remainingHp < 0 || remainingHp > _battleStartingHp || turns < 1 || won != (remainingHp > 0))
                 throw new ArgumentOutOfRangeException(nameof(remainingHp));
-            TotalTurns += turns; TotalDamageTaken += _battleStartingHp - remainingHp; Hp = remainingHp;
-            if (!won) { Phase = RunPhase.Defeated; return; }
+            TotalTurns += turns;
+            TotalDamageTaken += _battleStartingHp - remainingHp;
+            Hp = remainingHp;
+            if (!won)
+            {
+                Phase = RunPhase.Defeated;
+                return;
+            }
+
             Wins++;
-            if (Mode == RunMode.Expedition && Round == BattleCount) { Phase = RunPhase.Cleared; return; }
+            if (Mode == RunMode.Expedition && Round == BattleCount)
+            {
+                Phase = RunPhase.Cleared;
+                return;
+            }
+
             Hp = Math.Min(MaxHp, Hp + RecoveryHp);
             Phase = RunPhase.ChoosingUpgrade;
         }
+
         public void ChooseUpgrade(RunUpgrade upgrade)
         {
             if (Phase != RunPhase.ChoosingUpgrade) throw new InvalidOperationException("No upgrade is pending.");
@@ -50,10 +86,16 @@ namespace Domain.Run
             switch (upgrade)
             {
                 case RunUpgrade.Attack: DamageBonus += 5; break;
-                case RunUpgrade.Vitality: MaxHp += 25; Hp = Math.Min(MaxHp, Hp + 25); break;
+                case RunUpgrade.Vitality:
+                    MaxHp += 25;
+                    Hp = Math.Min(MaxHp, Hp + 25);
+                    break;
                 case RunUpgrade.Guard: GuardDamagePercent = Math.Max(20, GuardDamagePercent - 15); break;
             }
-            Round++; _battleStartingHp = Hp; Phase = RunPhase.InBattle;
+
+            Round++;
+            _battleStartingHp = Hp;
+            Phase = RunPhase.InBattle;
         }
     }
 }

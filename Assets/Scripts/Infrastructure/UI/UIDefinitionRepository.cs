@@ -17,10 +17,8 @@ namespace Infrastructure.UI
             return new UIDefinition(
                 master.Id,
                 master.PrefabKey,
-                (UILayer)master.Layer,
                 (UIType)master.Type,
                 master.Cache,
-                master.Singleton,
                 master.BlockInput);
         }
     }
