@@ -4,7 +4,7 @@
 
 ## 1. 1分の自己紹介付き説明例
 
-> Unityクライアント開発の設計と実装を説明できる作品として、ターン制バトルデモを改善しました。三連戦と無限モードがあり、攻撃、防御、強攻撃、戦闘間強化を実装しています。設計面では、1戦の状態と周回状態を分け、ゲームルールをUnity非依存のDomainへ置きました。UniTaskによる敵ターン、MessagePipeによる戦闘イベント、R3による表示状態、Zenjectによる寿命管理を使い分けています。また、モバイルSafe Area、日本語・英語、Addressables、EditMode／PlayModeテストにも対応しました。外部キャラクター素材に依存せず、GitHubから再現できるようCube表現を採用しています。
+> Unityクライアント開発の設計と実装を説明できる作品として、ターン制バトルデモを改善しました。三連戦と無限モードがあり、攻撃、防御、強攻撃、戦闘間強化を実装しています。設計面では、1戦の状態と周回状態を分け、ゲームルールをUnity非依存のDomainへ置きました。UniTaskによる敵ターン、MessagePipeによる戦闘イベント、R3による表示状態、Zenjectによる寿命管理を使い分けています。また、モバイルSafe Area、日本語・英語、AssetBundle、EditMode／PlayModeテストにも対応しました。外部キャラクター素材に依存せず、GitHubから再現できるようCube表現を採用しています。
 
 ## 2. 3分発表の例
 
@@ -26,7 +26,7 @@
 
 ### 2:25〜3:00：検証と限界
 
-> DomainとUseCaseはEditMode test、AddressablesのUIとTitle SceneはPlayMode smoke testで確認しています。一方、全戦闘を実操作するE2Eと実機CIは未対応です。次に改善するならAndroid実機とiOS出力の自動確認を追加します。
+> DomainとUseCaseはEditMode test、AssetBundleのUIとTitle SceneはPlayMode smoke testで確認しています。一方、全戦闘を実操作するE2Eと実機CIは未対応です。次に改善するならAndroid実機とiOS出力の自動確認を追加します。
 
 操作を含む台本は`INTERVIEW_DEMO.ja.md`を参照してください。
 
@@ -44,7 +44,7 @@
 8. `RunFlowUseCase`：次戦、強化、無限モード
 9. 対応するテスト：正常系と異常系
 
-各ファイルで「このクラスが知らないもの」も説明します。例えば`BattleSystem`はButton、Scene、Text、Addressablesを知りません。
+各ファイルで「このクラスが知らないもの」も説明します。例えば`BattleSystem`はButton、Scene、Text、AssetBundleを知りません。
 
 ## 4. 頻出質問と回答例
 
@@ -86,7 +86,7 @@
 
 ### Q. テストで何を保証できていませんか
 
-> Inspector参照、実Addressables、SceneContextは一部のPlayMode smoke testで確認していますが、タイトルから最終結果までのE2E、全実機解像度、Player Buildは完全自動化していません。テストの本数ではなく保証境界を説明します。
+> Inspector参照、実AssetBundle、SceneContextは一部のPlayMode smoke testで確認していますが、タイトルから最終結果までのE2E、全実機解像度、Player Buildは完全自動化していません。テストの本数ではなく保証境界を説明します。
 
 ## 5. 改善事例をSTAR形式で話す
 
@@ -143,7 +143,7 @@
 - `BattleState`と`RunState`の違いをコードで示せる
 - 1ターンの流れをファイル順に追える
 - CancellationTokenとRevisionの両方が必要な理由を話せる
-- Addressables Handleの所有者を説明できる
+- AssetBundle Handleの所有者を説明できる
 - テストが保証しない範囲を言える
 - README記載と実際のUnity画面が一致している
 - Gitに秘密情報や有料アセットを含めていない
@@ -153,6 +153,6 @@
 - クライアントチームでは、ゲームルールとUnity表示の境界をどのように決めていますか。
 - Scene遷移や非同期処理のキャンセル方針にチーム標準はありますか。
 - EditMode、PlayMode、実機テストをどの比率で運用していますか。
-- Addressablesの更新、依存関係、メモリ計測をどのように自動化していますか。
+- AssetBundleの更新、依存関係、メモリ計測をどのように自動化していますか。
 - 新機能実装時、エンジニアは仕様・演出・UI設計へどの段階から参加しますか。
 

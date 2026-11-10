@@ -3,13 +3,10 @@
   "references": [
     "BattleDemo.Domain",
     "UniTask",
-    "UniTask.Addressables",
     "R3.Unity",
     "MessagePipe",
     "MessagePipe.Zenject",
     "Zenject",
-    "Unity.Addressables",
-    "Unity.ResourceManager",
     "Unity.TextMeshPro",
     "UnityEngine.UI"
   ]

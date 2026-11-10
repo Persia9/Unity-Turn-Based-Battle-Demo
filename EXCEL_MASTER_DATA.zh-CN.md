@@ -1,6 +1,6 @@
 # 五个 Excel 维护 MasterData
 
-默认流程：**Excel → CSV → 校验 → MasterMemory `.bytes` → Addressables → 运行时**。
+默认流程：**Excel → CSV → 校验 → MasterMemory `.bytes` → AssetBundle → 运行时**。
 
 ## 文件与字段
 
@@ -21,7 +21,7 @@
 1. Unity 菜单 **Tools > MasterData > Open Excel Folder**，打开要修改的表格。
 2. 编辑或追加记录，保存Excel。保持文件名、Data工作表名和字段名不变，不合并单元格。
 3. 点击 **Tools > MasterData > Build From Excel (Excel - CSV - Bytes)**。
-4. 停止并重新运行Play，避免继续使用缓存的数据库。使用打包资源时，请重新构建Addressables内容。
+4. 停止并重新运行Play，避免继续使用缓存的数据库。使用打包资源时，请重新构建AssetBundle内容。
 
 原来的 **Build Demo MasterData** 现在也执行完整的Excel流程，不再默认读取ScriptableObject。不需要安装Excel插件、COM、Python或额外NuGet包。
 
@@ -34,7 +34,7 @@
 
 CSV输出在 `Assets/MasterData/CSV`：Characters.csv、Skills.csv、Stages.csv、UI.csv、Localization.csv。
 
-Characters / Skills / Stages 合并为 `master_core.bytes`，UI为`master_ui.bytes`，Localization为`master_localization.bytes`。保留既有输出的`.meta`和Addressables地址。
+Characters / Skills / Stages 合并为 `master_core.bytes`，UI为`master_ui.bytes`，Localization为`master_localization.bytes`。保留既有输出的`.meta`和AssetBundle地址。
 
 ## 编辑约定
 

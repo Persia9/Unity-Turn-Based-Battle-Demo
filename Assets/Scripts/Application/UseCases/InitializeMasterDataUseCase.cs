@@ -5,9 +5,9 @@ namespace Application.UseCases
 {
     public sealed class InitializeMasterDataUseCase
     {
-        private readonly AddressableMasterDatabaseProvider _provider;
+        private readonly MasterDatabaseProvider _provider;
 
-        public InitializeMasterDataUseCase(AddressableMasterDatabaseProvider provider)
+        public InitializeMasterDataUseCase(MasterDatabaseProvider provider)
         {
             _provider = provider;
         }

@@ -40,7 +40,7 @@ Button の On Click() に手動でメソッドを登録する必要はありま�
 BattleActionDefinition → BattleActionButton → HUD の共通コールバック → PlayPlayerTurnUseCase → Domain
 
 使用可否と残りクールダウンは Domain → BattleViewModel → 各 BattleActionButton に反映します。View は各行動のルールを判定しません。
-行動定義は HUD Prefab から直接参照されるため、Addressables では Prefab の依存アセットとして含まれます。個別の Addressable 登録は不要です。既にバンドルをビルドした場合は再ビルドしてください。
+行動定義は HUD Prefab から直接参照されるため、AssetBundle では Prefab の依存アセットとして含まれます。個別の Addressable 登録は不要です。既にバンドルをビルドした場合は再ビルドしてください。
 
 ## 確認範囲
 

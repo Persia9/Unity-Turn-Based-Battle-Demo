@@ -4,7 +4,7 @@
 
 ## 1. 30秒で説明する
 
-> Unity 6で制作した、三連戦と無限モードを持つ1対1のターン制バトルです。View、進行処理、ゲームルールを分離し、戦闘ルールはUnity APIへ依存しないDomainとして実装しました。戦闘をまたぐ状態と1戦だけの状態を分け、非同期の敵ターン、シーン遷移、UIの多重操作、Addressablesの解放まで扱っています。英語・日本語、モバイルSafe Area、EditMode／PlayModeテストにも対応しています。
+> Unity 6で制作した、三連戦と無限モードを持つ1対1のターン制バトルです。View、進行処理、ゲームルールを分離し、戦闘ルールはUnity APIへ依存しないDomainとして実装しました。戦闘をまたぐ状態と1戦だけの状態を分け、非同期の敵ターン、シーン遷移、UIの多重操作、AssetBundleの解放まで扱っています。英語・日本語、モバイルSafe Area、EditMode／PlayModeテストにも対応しています。
 
 ## 2. このデモで示したい能力
 
@@ -28,7 +28,7 @@ Application
       ↓ 状態遷移・計算
 Domain
 
-Infrastructure ─ Addressables、MasterMemory、Scene、UI生成
+Infrastructure ─ AssetBundle、MasterMemory、Scene、UI生成
 Installers     ─ Zenjectによる生成と接続
 ```
 
@@ -37,7 +37,7 @@ Installers     ─ Zenjectによる生成と接続
 | Domain | 戦闘・周回ルール、状態遷移 | `BattleSystem`、`BattleState`、`RunState` |
 | Application | 1操作や画面進行の調整 | `AttackUseCase`、`PlayPlayerTurnUseCase`、`RunFlowUseCase` |
 | Presentation | 入力、表示値、演出 | `BattleHudView`、`BattleViewModel`、各Presenter |
-| Infrastructure | 外部技術の具体実装 | Repository、Addressables、`UIService`、`SceneService` |
+| Infrastructure | 外部技術の具体実装 | Repository、AssetBundle、`UIService`、`SceneService` |
 | Installers | オブジェクトの寿命と依存関係 | `ProjectInstaller`、`BattleSceneInstaller` |
 
 厳密なClean Architectureを名乗る構成ではありません。Domainは独立Assemblyですが、それ以外の製品コードは主に`BattleDemo.Runtime`にあります。小規模デモでAssemblyを細分化しすぎず、重要な依存方向は構造テストでも確認する判断です。
@@ -148,9 +148,9 @@ Repositoryは定義を取得し、`RunFlowUseCase`が戦闘開始時のSnapshot�
 - `SemaphoreSlim(1, 1)`は非同期処理用の鍵として使う。
 - `WaitAsync`後は必ず`finally`で`Release`する。
 - UI生成の成功・失敗に関係なく鍵を返す。
-- GateとAddressables Handleを誰が破棄するかを明確にする。
+- GateとAssetBundle Handleを誰が破棄するかを明確にする。
 
-## 11. Addressablesの所有権
+## 11. AssetBundleの所有権
 
 ロードしたものは「誰が、いつ解放するか」をセットで決めます。
 
@@ -184,14 +184,14 @@ Domainは日本語／英語の文言を知りません。Presentationが`ILocali
 
 - 全戦闘を実操作するE2E PlayMode test
 - Android／iOS全端末の表示
-- Addressables Player BuildのCI検証
+- AssetBundle Player BuildのCI検証
 - 長時間の無限モードによるバランス
 
 ## 14. 設計上のトレードオフ
 
 ### ライブラリが多い
 
-小規模ゲームとしてはZenject、UniTask、R3、MessagePipe、MasterMemory、Addressablesは多めです。このデモでは各基盤の責務を示す目的があります。製品ではチーム標準、保守期間、機能規模に応じて減らします。
+小規模ゲームとしてはZenject、UniTask、R3、MessagePipe、MasterMemory、AssetBundleは多めです。このデモでは各基盤の責務を示す目的があります。製品ではチーム標準、保守期間、機能規模に応じて減らします。
 
 ### Runtime Assemblyが大きい
 

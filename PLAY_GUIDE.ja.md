@@ -46,7 +46,7 @@ Enemy next はそのターンの敵行動の予告です。敵を倒せる場合
 
 ## 調整・確認
 
-敵のHP・スキル威力・行動パターンは MasterDataBuildMenu と生成済み master_core.bytes に反映しています。データを変更したらマスターと Addressables を再ビルドしてください。
+敵のHP・スキル威力・行動パターンは MasterDataBuildMenu と生成済み master_core.bytes に反映しています。データを変更したらマスターと AssetBundle を再ビルドしてください。
 行動ボタンの割り当て方法は ACTION_CONFIGURATION.ja.md を参照してください。
 
 現在はロジックを確認するEditMode testに加え、3つのUI AddressableとTitle Scene表示を確認する4本のPlayMode smoke testがあります。Battleを最後まで操作するE2E、プレイヤービルド、性能は別途確認が必要です。

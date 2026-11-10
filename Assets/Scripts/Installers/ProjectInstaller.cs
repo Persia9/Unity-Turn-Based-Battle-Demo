@@ -24,11 +24,11 @@ namespace Installers
             Container.Bind<ILocalizationService>().To<LocalizationService>().AsSingle();
             Container.BindInterfacesTo<MobileRuntimeSettings>().AsSingle();
 
-            Container.Bind<IAssetService>().To<AddressableAssetService>().AsSingle();
+            Container.BindInterfacesTo<AssetBundleAssetService>().AsSingle();
             Container.Bind<ISceneService>().To<SceneService>().AsSingle();
 
-            Container.Bind<IMasterDatabaseLoader>().To<AddressableMasterDatabaseLoader>().AsSingle();
-            Container.BindInterfacesAndSelfTo<AddressableMasterDatabaseProvider>().AsSingle();
+            Container.Bind<IMasterDatabaseLoader>().To<AssetBundleMasterDatabaseLoader>().AsSingle();
+            Container.BindInterfacesAndSelfTo<MasterDatabaseProvider>().AsSingle();
 
             Container.Bind<ILocalizationRepository>().To<LocalizationRepository>().AsSingle();
             Container.Bind<ICharacterRepository>().To<CharacterRepository>().AsSingle();

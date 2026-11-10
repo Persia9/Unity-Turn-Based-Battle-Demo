@@ -6,10 +6,10 @@
 2. Unity Hub から Assets / Packages / ProjectSettings があるフォルダーを追加します。
 3. **Unity 6000.3.12f1** で開き、初回の Package Manager の依存関係取得とコンパイルを待ちます。Git のインストールとネット接続が必要です。
 4. `Assets/Scenes/Title.unity` を開いて Play。Start Expedition → 第1戦 → 強化選択 → 第2戦 → 強化選択 → ボス → 最終結果 → Retry またはタイトル の順に確認できます。
-5. プレイヤービルド前は Addressables Groups の Build > New Build > Default Build Script を実行します。Title がビルドの先頭シーンです。
+5. Player ビルド時に AssetBundle を自動生成します。手動実行は Tools > AssetBundles > Build Local Bundles。Title が先頭シーンです。
 
-Editor の Addressables Play Mode Script は Use Asset Database を選択すると、ローカルアセットで確認できます。
-マスターを再生成する場合は Tools > MasterData > Build Demo MasterData を実行し、配布用 Addressables も再ビルドしてください。
+Editor は LocalAssetCatalog の対応表からアセットを直接読み込み、Bundle の事前ビルドは不要です。
+マスターを再生成する場合は Tools > MasterData > Build Demo MasterData を実行し、配布用 AssetBundle も再ビルドしてください。
 
 ## 補完した機能
 
@@ -18,7 +18,7 @@ Editor の Addressables Play Mode Script は Use Asset Database を選択する�
 - UI のファクトリー・レジストリー・ViewModel をシーン単位で管理。シーンの DI で UI を生成。
 - UIMaster の Cache / BlockInput の適用。同時 Open／Close は直列化し、同じ UI ID は常に1インスタンスを再利用。
 - Popup / Screen の Type 検証。Popup の BackStack や画面遷移アニメーションは拡張対象のままです。
-- UI 破棄時の Addressables 参照解放。マスターロードは失敗箇所から再試行可能にし、ロードハンドルを解放。
+- UI 破棄時の AssetBundle アセット参照の解放。マスターロードは失敗箇所から再試行可能にし、アセット参照を解放。
 - HUD の購読解除と再購読、敵ターン待機のキャンセル、シーンごとの戦闘ログ初期化と40行制限。
 - Domain を Unity API 非参照の asmdef に分離。入力検証と EditMode テストを追加。
 - Battle シーンを直接再生する場合の初期化。
@@ -44,13 +44,13 @@ Editor の Addressables Play Mode Script は Use Asset Database を選択する�
 - UseCase が入力の重複・通知中の再入・未初期化・終了後の行動を拒否します。
 - シーン終了および HUD 閉鎖のキャンセルに加え、BattleSession の Revision で古い待機処理から再戦への干渉を防ぎます。
 - マスターロードを IMasterDatabaseLoader に分離。失敗したキーと原因を MasterDataLoadException に保持し、再度 InitializeAsync を呼ぶと失敗箇所から再試行します。成功済みの DB は再ロードしません。
-- MasterDatabaseInitialization の共通処理は、テスト用の制御可能なローダーで再試行・同時呼び出しを検証します。Addressables 自体の通信やハンドル解放は Unity 側で別途確認してください。
+- MasterDatabaseInitialization の共通処理は、テスト用の制御可能なローダーで再試行・同時呼び出しを検証します。AssetBundle 自体の通信やハンドル解放は Unity 側で別途確認してください。
 - 独立した NUnit テストから製品コードを参照できるよう BattleDemo.Runtime と Editor 用アセンブリを定義しました。既存のスクリプト GUID は保持しています。
 
 ### テストの範囲と結果
 
 Unity を起動せず、実際の製品ソースと NUnit 3.14.0 / UniTask 2.5.11 / MessagePipe 1.8.2 の .NET アセンブリを使って **26 ケース成功**を確認しました。
-これはロジックの検証です。Unity 用パッケージ、ソースジェネレーター、Zenject の実際のシーン注入、Prefab の表示、Addressables の実ロードは未検証です。
+これはロジックの検証です。Unity 用パッケージ、ソースジェネレーター、Zenject の実際のシーン注入、Prefab の表示、AssetBundle の実ロードは未検証です。
 
 - ArchitectureTests: 2 ケース。Application から Presentation への参照と Domain への外部依存を検出。
 - Domain: 6 ケース（パラメーター化された勝敗2ケースを含む）。
@@ -59,9 +59,6 @@ Unity を起動せず、実際の製品ソースと NUnit 3.14.0 / UniTask 2.5.1
 
 Unity では Test Runner > EditMode > Run All を実行してください。追加したテストは Assets/Tests/Application、既存の Domain テストは Assets/Tests/EditMode にあります。
 
-## Addressables のコンパイル修正
-
-BattleDemo.Runtime.asmdef に UniTask.Addressables の参照を追加しました。AssetService とマスターローダーは型付き ToUniTask<T>() でロード結果を取得し、AssetService のロード失敗時にもハンドルを解放します。既存プロジェクトへ適用する場合は、この asmdef と両ローダーの3ファイルをまとめて更新してください。Unity 上でのコンパイルは未確認です。
 
 ## 3つの行動と敵の予告（最新の追加）
 
@@ -71,7 +68,7 @@ BattleDemo.Runtime.asmdef に UniTask.Addressables の参照を追加しまし�
 
 今回の追加後は合計 **42ケース成功**（従来26ケース＋行動・バランスの16ケース）です。製品の C# ソースと実ライブラリを用いた .NET 上の検証で、Unity は起動していません。Prefab の参照整合性と C# 構文も確認しました。新しいボタンの見た目・シーン注入・実際の画面操作は Unity 側でご確認ください。
 
-既存プロジェクトへ反映する場合は Assets/Scripts、Assets/Tests、HUD/UIRoot の Prefab、master_core.bytes を含む一式を更新してください。Addressables をビルド済みの場合は再ビルドが必要です。
+既存プロジェクトへ反映する場合は Assets/Scripts、Assets/Tests、HUD/UIRoot の Prefab、master_core.bytes を含む一式を更新してください。AssetBundle をビルド済みの場合は再ビルドが必要です。
 
 ## 行動定義の割り当て（最新）
 
@@ -89,6 +86,6 @@ PLAY_GUIDE.ja.md を現在のルールに更新しました。タイトルから
 - ResultPopupView：中間結果では強化3択、最終結果では Retry expedition / Return to title を表示。次の戦闘のロード失敗時は選択済みの強化を再度押して再試行できます。強化は重複適用しません。
 - StageMaster：行動パターンと表示名を追加。3ステージ・4キャラクター・4スキルを同梱バイナリへ反映。
 
-現在はEditModeで戦闘・周回・強化全9通り・戦績・再入・キャンセル・ロード失敗後の再試行・MasterDataを検証し、PlayModeで3つのUI AddressableとTitle Scene表示を確認する4本のsmoke testを用意しています。実際の成功件数は、使用するUnity環境の Test Runner でEditModeとPlayModeをそれぞれ実行して確認してください。
+現在はEditModeで戦闘・周回・強化全9通り・戦績・再入・キャンセル・ロード失敗後の再試行・MasterDataを検証し、PlayModeで3つのUI アセットとTitle Scene表示を確認する4本のsmoke testを用意しています。実際の成功件数は、使用するUnity環境の Test Runner でEditModeとPlayModeをそれぞれ実行して確認してください。
 
-既存プロジェクトへ適用するときは Scripts / Tests と .meta、BattleHudView / ResultPopupView / TitleScreenView の Prefab、Defend の行動定義、master_core.bytes を含む一式を更新してください。古い StartBattleUseCase.cs と .meta は削除してください。スキーマとバイナリの両方が変わるため、Addressables は必ず再ビルドしてください。
+既存プロジェクトへ適用するときは Scripts / Tests と .meta、BattleHudView / ResultPopupView / TitleScreenView の Prefab、Defend の行動定義、master_core.bytes を含む一式を更新してください。古い StartBattleUseCase.cs と .meta は削除してください。スキーマとバイナリの両方が変わるため、AssetBundle は必ず再ビルドしてください。

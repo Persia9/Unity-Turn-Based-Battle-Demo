@@ -4,7 +4,7 @@ using ILogger = Core.Logging.ILogger;
 
 namespace Infrastructure.MasterData
 {
-    public sealed class AddressableMasterDatabaseProvider : IMasterDatabaseProvider
+    public sealed class MasterDatabaseProvider : IMasterDatabaseProvider
     {
         private readonly MasterDatabaseInitialization<MemoryDatabase> _initialization;
         public MemoryDatabase CoreDb => _initialization.CoreDb;
@@ -14,7 +14,7 @@ namespace Infrastructure.MasterData
         public bool IsUiReady => UiDb != null;
         public bool IsLocalizationReady => LocalizationDb != null;
 
-        public AddressableMasterDatabaseProvider(ILogger logger, IMasterDatabaseLoader loader)
+        public MasterDatabaseProvider(ILogger logger, IMasterDatabaseLoader loader)
             => _initialization = new MasterDatabaseInitialization<MemoryDatabase>(loader.Load, logger);
 
         public UniTask InitializeAsync() => _initialization.InitializeAsync();

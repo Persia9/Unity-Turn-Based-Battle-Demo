@@ -72,7 +72,7 @@ Application: UseCase・Session・Message
         ↓
 Domain: 状態・ルール
 
-Infrastructure: Addressables・MasterMemory・UI生成・Scene操作
+Infrastructure: AssetBundle・MasterMemory・UI生成・Scene操作
 Installers: 上記をZenjectで接続
 ```
 
@@ -85,7 +85,7 @@ Installers: 上記をZenjectで接続
 | `BattleDemo.Editor` | MasterData生成 | Editor限定 |
 | `BattleDemo.Domain.Tests` | Domain tests | EditMode |
 | `BattleDemo.Application.Tests` | UseCase、Repository、構造tests | EditMode |
-| `BattleDemo.PlayMode.Tests` | AddressablesとTitle Scene | PlayMode |
+| `BattleDemo.PlayMode.Tests` | AssetBundleとTitle Scene | PlayMode |
 
 `ArchitectureTests`はソースを走査し、Domainが外側やUnityを参照しないこと、ApplicationがPresentationを参照しないことを補助的に検査します。コンパイラーによる完全な層分離ではありません。
 
@@ -167,7 +167,7 @@ BattleUnitSnapshot.BasePower
 ```text
 Resources/ProjectContext.prefab
   └─ ProjectInstaller
-       ├─ Addressables service
+       ├─ AssetBundle service
        ├─ MasterData provider / repositories
        ├─ BattleSession / RunSession
        ├─ RunFlowUseCase / AttackUseCase
@@ -185,7 +185,7 @@ Assets/Scenes/Title.unity
 ```text
 TitleSceneEntryPoint.Initialize
 → InitializeMasterDataUseCase.Execute
-→ Master/CoreとMaster/UIをAddressablesからロード
+→ Master/CoreとMaster/UIをAssetBundleからロード
 → IUIService.Open<TitleScreenView>("TitleScreen")
 → UIMasterからPrefabKeyとLayerを取得
 → UI/Title/TitleScreenをロード
@@ -419,7 +419,7 @@ Sceneロード失敗時には強化とRound進行が完了済みです。同じU
 
 ### UIViewFactory
 
-1. AddressablesからPrefabをLoad。
+1. AssetBundleからPrefabをLoad。
 2. Scene側の`DiContainer.InstantiatePrefab()`で生成。
 3. rootに期待するView componentがあるか確認。
 4. `UIViewAssetLease`を追加。
@@ -444,7 +444,7 @@ Close：同IDの唯一のView取得 → `OnClosed` → blocker削除 → Cache�
 
 `Master/Core`：Character、Skill、Stage。`Master/UI`：UI定義。
 
-Editorメニュー`Tools > MasterData > Build Demo MasterData`が`.bytes`を生成し、Addressablesの`Master/Core`と`Master/UI`で配信します。
+Editorメニュー`Tools > MasterData > Build Demo MasterData`が`.bytes`を生成し、AssetBundleの`Master/Core`と`Master/UI`で配信します。
 
 `MasterDatabaseInitialization<T>`はSemaphoreSlimで同時初期化を直列化します。Core成功後にUIだけ失敗するとCoreを保持し、次回はUIだけ再試行します。失敗はkeyとinner exceptionを持つ`MasterDataLoadException`へ変換します。
 
@@ -518,7 +518,7 @@ DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の�
 
 | 領域 | 役割 |
 |---|---|
-| Asset | Addressables Load／Release |
+| Asset | AssetBundle Load／Release |
 | MasterData | バイナリ、初期化、Repository、例外 |
 | Scene | SceneManagerの抽象化 |
 | UI | 定義、生成、Layer、Cache、所有権 |
@@ -553,7 +553,7 @@ DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の�
 1. TitleScreen Addressとroot component。
 2. BattleHud Addressとroot component。
 3. ResultPopup Addressとroot component。
-4. Title Sceneを実ロードし、実DI・MasterData・Addressables経由でTitleScreen表示。
+4. Title Sceneを実ロードし、実DI・MasterData・AssetBundle経由でTitleScreen表示。
 
 ### 未保証
 
@@ -573,8 +573,8 @@ Prefab smoke testはAddressとroot componentを確認しますが、private Seri
 1. `RunRules.ExpeditionBattleCount = 3`と`RunRules.BetweenBattleRecoveryHp = 20`に対し、Viewにも`/3`と`20 HP`が直書きされています。
 2. PresenterのDefendログは`damage is halved`固定ですが、Guard強化後は35%や20%を受けます。計算とDefenseTextは正しく、ログだけ一般化されていません。
 3. MasterDataの`EnemyPattern`、UIの`Layer`／`Type`はintからenumへcastします。UI側は変換時の範囲検証がありません。
-4. UI IDは文字列で複数箇所を接続します。MasterData、Addressables、呼び出し側の一致が必要です。
-5. 小規模デモに対してZenject、UniTask、R3、MessagePipe、MasterMemory、Addressablesと基盤が多めです。教材としての意図と簡略化案の両方を説明すべきです。
+4. UI IDは文字列で複数箇所を接続します。MasterData、AssetBundle、呼び出し側の一致が必要です。
+5. 小規模デモに対してZenject、UniTask、R3、MessagePipe、MasterMemory、AssetBundleと基盤が多めです。教材としての意図と簡略化案の両方を説明すべきです。
 6. Applicationは具象Unity APIを避けていますが、Infrastructure namespaceのinterfaceを参照します。厳密にするならportをApplicationへ移す余地があります。
 7. SessionはProjectスコープなのでTitleへ戻るだけではRunStateは消えません。StartNewRunで明示的に初期化します。
 
@@ -611,7 +611,7 @@ Prefab smoke testはAddressとroot componentを確認しますが、private Seri
 1. Scene YAML／InspectorでSceneContext、Installer、UIRoot参照。
 2. PrefabのSerializeField。
 3. 3つのBattleActionDefinition。
-4. Addressables Groupの5 Address。
+4. AssetBundle Groupの5 Address。
 5. MasterData生成と`.bytes`。
 6. Test RunnerでEditMode／PlayMode。
 7. Titleから3戦を手動で通す。
@@ -631,7 +631,7 @@ Prefab smoke testはAddressとroot componentを確認しますが、private Seri
 次の語が入っているか確認します。
 
 ```text
-ProjectContext / SceneContext / EntryPoint / Addressables / MasterData
+ProjectContext / SceneContext / EntryPoint / AssetBundle / MasterData
 RunState / BattleState / Revision / MessagePipe / BattleViewModel / CancellationToken
 ```
 
@@ -685,7 +685,7 @@ BattleAction、BattleSystem、Snapshot HP更新、Definition、Message、`TotalD
 
 ### UIを追加する
 
-UIMaster、Addressables、Prefab root、UIType／Layer、呼び出し元、Prefab smoke testを確認します。
+UIMaster、AssetBundle、Prefab root、UIType／Layer、呼び出し元、Prefab smoke testを確認します。
 
 ---
 

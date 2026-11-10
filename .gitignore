@@ -103,3 +103,7 @@ InitTestScene*.unity*
 
 # JetBrains
 .idea/
+
+# Generated local AssetBundles (rebuilt before each Player build).
+/Assets/StreamingAssets/AssetBundles/
+/Assets/StreamingAssets/AssetBundles.meta

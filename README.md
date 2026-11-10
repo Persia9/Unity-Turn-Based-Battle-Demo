@@ -35,7 +35,7 @@ Unity 6000.3.12f1 による、1vs1ターン制バトルです。全3戦の遠征
 1. Windows のパス長制限を避け、`C:\Dev\BattleDemo` など短いパスへ展開します。
 2. Unity Hub で Assets / Packages / ProjectSettings のあるフォルダーを追加し、6000.3.12f1 で開きます。
 3. 依存パッケージの取得とコンパイル後、`Assets/Scenes/Title.unity` を開いて Play → Start Expedition。
-4. Addressables の Editor Play Mode は Use Asset Database で確認できます。プレイヤービルドでは Addressables のコンテンツもビルドしてください。
+4. Editor は LocalAssetCatalog の対応表からローカルアセットを直接読み込みます。Player ビルド前に AssetBundle を自動生成します。手動実行は Tools > AssetBundles > Build Local Bundles。
 
 マスターは `Assets/MasterData/Excel` の5つのExcelで編集し、Tools > MasterData > Build Demo MasterData で CSV → MasterMemory のバイナリへ変換します。[編集・変換手順](MASTER_DATA_SOURCE.zh-CN.md) と [SETUP.ja.md](SETUP.ja.md) を参照してください。
 
@@ -57,7 +57,7 @@ Core：共通知識のみ
 | Domain | 戦闘・周回のルールと状態遷移。Unity API非依存 | BattleSystem、BattleState、RunState |
 | Application | 入力要求の処理、敵ターン待機、周回進行、通知 | AttackUseCase、PlayPlayerTurnUseCase、RunFlowUseCase |
 | Presentation | ボタン入力、表示用状態、結果画面 | BattleActionButton、BattleViewModel、BattleEventPresenter |
-| Infrastructure | UI生成、アセット・マスターデータのロード、シーン操作 | UIService、UIViewFactory、AddressableMasterDatabaseLoader |
+| Infrastructure | UI生成、アセット・マスターデータのロード、シーン操作 | UIService、UIViewFactory、AssetBundleMasterDatabaseLoader |
 | Installers | Project／Scene単位の依存登録 | ProjectInstaller、BattleSceneInstaller、SceneInstaller |
 
 Domain は専用の `BattleDemo.Domain` アセンブリで Unity 参照を無効にしています。それ以外の製品コードは主に `BattleDemo.Runtime` にまとまっています。全層を個別アセンブリで隔離する構成ではなく、Application → Presentation の参照禁止などはソース検査テストで補っています。
@@ -82,7 +82,7 @@ BattleActionDefinition は既存の行動ID、表示名、説明文を持つ Scr
 
 新しい表示名、配置、既存行動の割り当てはデータ／Prefabで変更できます。一方、回復や毒など新しいルールを追加する場合は Domain / UseCase とテストの変更が必要です。効果を自由に組み立てる汎用スキルシステムではありません。
 
-敵・スキル・ステージ・UI定義は MasterMemory、アセット配布単位は Addressables を利用しています。攻撃倍率や強化の効果量など、コードで定義したルールもあります。
+敵・スキル・ステージ・UI定義は MasterMemory、アセット配布単位はローカル AssetBundle を利用しています。攻撃倍率や強化の効果量など、コードで定義したルールもあります。
 
 ### 4. ライブラリの役割を分ける
 
@@ -93,7 +93,7 @@ BattleActionDefinition は既存の行動ID、表示名、説明文を持つ Scr
 | R3 | ViewModelの現在値とUIの同期、購読の寿命管理 |
 | MessagePipe | ダメージ、行動、ターン、決着など発生したイベントの通知 |
 | MasterMemory | 型付きのマスターデータ参照とバイナリ生成 |
-| Addressables | Prefab・マスターの非同期ロードと参照の解放 |
+| AssetBundle | StreamingAssets からの Prefab・マスターの非同期ロードと参照管理 |
 
 R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」の通知に使い分けています。同期呼び出しや状態参照も残しており、全てをイベントで接続しているわけではありません。
 
@@ -123,7 +123,7 @@ R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」�
 | 全9通りの強化による攻略 | 予告に応じる戦略で3戦クリアを自動検証 |
 | Unity上の手動動作確認 | 利用者による確認済み |
 | Unity Test RunnerでのEditModeテスト実行 | 利用環境で要確認 |
-| PlayMode smoke test | UI Addressable 3件とTitle Scene表示の4本を追加。実行は利用環境で要確認 |
+| PlayMode smoke test | UI アセット3件とTitle Scene表示の4本を追加。実行は利用環境で要確認 |
 | プレイヤービルド、性能計測、リモート配布 | この作業では未確認 |
 
 テストは `Assets/Tests/EditMode`、`Assets/Tests/Application`、`Assets/Tests/PlayMode` にあります。ロジックテストをUnity用パッケージ・ソースジェネレーター・実シーンの全自動検証と同一視していません。Unity上では Test Runner からEditModeとPlayModeをそれぞれ実行します。
@@ -145,10 +145,12 @@ R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」�
 
 ## 多语言数据
 
-英日文本由 `Assets/MasterData/Excel/Localization.xlsx` 维护，导出为 `master_localization.bytes`，经 Addressables 和 LocalizationRepository 提供给 ILocalizationService。服务内部不再有硬编码翻译字典。修改方法和验证范围见 [多语言MasterData说明](LOCALIZATION_MASTER_DATA.zh-CN.md)。
+英日文本由 `Assets/MasterData/Excel/Localization.xlsx` 维护，导出为 `master_localization.bytes`，经 AssetBundle 和 LocalizationRepository 提供给 ILocalizationService。服务内部不再有硬编码翻译字典。修改方法和验证范围见 [多语言MasterData说明](LOCALIZATION_MASTER_DATA.zh-CN.md)。
 
 ## Excelデータ編集（現在の既定フロー）
 
 `Assets/MasterData/Excel` の Characters / Skills / Stages / UI / Localization を編集し、Tools > MasterData > Build From Excel で5つのCSVと3つのMasterMemoryバイナリを生成します。[Excel編集手順](EXCEL_MASTER_DATA.zh-CN.md) を参照してください。旧MasterData ScriptableObjectとLegacyメニューは削除済みです。
 
 UIの責務分離とライフサイクルは [MVVM.zh-CN.md](MVVM.zh-CN.md) に記載しています。
+
+本地资源包的构建、加载和验证方式见 [AssetBundle 使用说明](ASSETBUNDLE.zh-CN.md)。
