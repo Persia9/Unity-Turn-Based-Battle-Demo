@@ -35,7 +35,7 @@ Unity 6000.3.12f1 による、1vs1ターン制バトルです。全3戦の遠征
 1. Windows のパス長制限を避け、`C:\Dev\BattleDemo` など短いパスへ展開します。
 2. Unity Hub で Assets / Packages / ProjectSettings のあるフォルダーを追加し、6000.3.12f1 で開きます。
 3. 依存パッケージの取得とコンパイル後、`Assets/Scenes/Title.unity` を開いて Play → Start Expedition。
-4. Addressables の Editor Play Mode は Use Asset Database で確認できます。プレイヤービルドでは Addressables のコンテンツもビルドしてください。
+4. Editor の Use Asset Database はゲーム内容の確認用です。資源更新のデモは Bootstrap から起動し、Tools > Content Update で初期資源・Player・更新資源を順に構築します。詳細は [Addressables資源更新手順](ADDRESSABLES_CONTENT_UPDATE.zh-CN.md) を参照してください。
 
 マスターは `Assets/MasterData/Excel` の5つのExcelで編集し、Tools > MasterData > Build Demo MasterData で CSV → MasterMemory のバイナリへ変換します。[編集・変換手順](MASTER_DATA_SOURCE.zh-CN.md) と [SETUP.ja.md](SETUP.ja.md) を参照してください。
 
@@ -93,7 +93,7 @@ BattleActionDefinition は既存の行動ID、表示名、説明文を持つ Scr
 | R3 | ViewModelの現在値とUIの同期、購読の寿命管理 |
 | MessagePipe | ダメージ、行動、ターン、決着など発生したイベントの通知 |
 | MasterMemory | 型付きのマスターデータ参照とバイナリ生成 |
-| Addressables | Prefab・マスターの非同期ロードと参照の解放 |
+| Addressables | 遠隔Catalog更新、資源ダウンロード、Scene・Prefab・マスターのロード |
 
 R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」の通知に使い分けています。同期呼び出しや状態参照も残しており、全てをイベントで接続しているわけではありません。
 
@@ -152,3 +152,5 @@ R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」�
 `Assets/MasterData/Excel` の Characters / Skills / Stages / UI / Localization を編集し、Tools > MasterData > Build From Excel で5つのCSVと3つのMasterMemoryバイナリを生成します。[Excel編集手順](EXCEL_MASTER_DATA.zh-CN.md) を参照してください。旧MasterData ScriptableObjectとLegacyメニューは削除済みです。
 
 UIの責務分離とライフサイクルは [MVVM.zh-CN.md](MVVM.zh-CN.md) に記載しています。
+
+Build Settings に内蔵するSceneはBootstrapのみです。TitleとBattleはRemote Contentグループからロードします。現在の実行環境ではUnityのライセンスIPC/WMI初期化に失敗するため、新しいBundleとPlayerの実ビルドは未確認です。

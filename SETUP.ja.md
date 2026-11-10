@@ -6,7 +6,7 @@
 2. Unity Hub から Assets / Packages / ProjectSettings があるフォルダーを追加します。
 3. **Unity 6000.3.12f1** で開き、初回の Package Manager の依存関係取得とコンパイルを待ちます。Git のインストールとネット接続が必要です。
 4. `Assets/Scenes/Title.unity` を開いて Play。Start Expedition → 第1戦 → 強化選択 → 第2戦 → 強化選択 → ボス → 最終結果 → Retry またはタイトル の順に確認できます。
-5. プレイヤービルド前は Addressables Groups の Build > New Build > Default Build Script を実行します。Title がビルドの先頭シーンです。
+5. 配布・更新のデモは Tools > Content Update のメニューを使用します。内蔵シーンは Bootstrap のみで、Title / Battle はAddressablesの遠隔資源です。初期状態ファイルを使う更新手順は ADDRESSABLES_CONTENT_UPDATE.zh-CN.md を参照してください。
 
 Editor の Addressables Play Mode Script は Use Asset Database を選択すると、ローカルアセットで確認できます。
 マスターを再生成する場合は Tools > MasterData > Build Demo MasterData を実行し、配布用 Addressables も再ビルドしてください。

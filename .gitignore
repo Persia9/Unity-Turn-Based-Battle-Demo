@@ -103,3 +103,10 @@ InitTestScene*.unity*
 
 # JetBrains
 .idea/
+
+# Generated remote content and demo players (keep release state backups separately).
+/ServerData/
+/Artifacts/
+
+__pycache__/
+*.py[cod]

@@ -12,12 +12,15 @@ using Infrastructure.Scene;
 using Infrastructure.UI;
 using MessagePipe;
 using Zenject;
+using UnityEngine;
 using ILogger = Core.Logging.ILogger;
 
 namespace Installers
 {
     public sealed class ProjectInstaller : MonoInstaller
     {
+        [SerializeField] private SceneLoadingOverlay _loadingOverlayPrefab;
+
         public override void InstallBindings()
         {
             Container.Bind<ILogger>().To<UnityLogger>().AsSingle();
@@ -25,7 +28,10 @@ namespace Installers
             Container.BindInterfacesTo<MobileRuntimeSettings>().AsSingle();
 
             Container.Bind<IAssetService>().To<AddressableAssetService>().AsSingle();
+            Container.Bind<ISceneLoadingOverlay>().To<SceneLoadingOverlay>()
+                .FromComponentInNewPrefab(_loadingOverlayPrefab).UnderTransform(transform).AsSingle();
             Container.Bind<ISceneService>().To<SceneService>().AsSingle();
+            Container.Bind<IContentUpdateService>().To<AddressableContentUpdateService>().AsSingle();
 
             Container.Bind<IMasterDatabaseLoader>().To<AddressableMasterDatabaseLoader>().AsSingle();
             Container.BindInterfacesAndSelfTo<AddressableMasterDatabaseProvider>().AsSingle();
