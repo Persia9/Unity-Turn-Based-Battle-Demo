@@ -4,16 +4,16 @@ namespace Domain.Battle
 {
     public sealed class BattleState
     {
+        private int _strongReadyOnTurn;
         public BattleUnitSnapshot Player { get; private set; }
         public BattleUnitSnapshot Enemy { get; private set; }
         public TurnOwner CurrentTurn { get; private set; }
         public bool IsFinished { get; private set; }
         public BattleSide? Winner { get; private set; }
         public int TurnCount { get; private set; }
-        private int _strongReadyOnTurn;
         public EnemyAttackPattern EnemyPattern { get; private set; }
         public int PlayerDamageBonus { get; private set; }
-        public int GuardDamagePercent { get; private set; } = 50;
+        public int GuardDamagePercent { get; private set; } = BattleRules.DefaultGuardDamagePercent;
         public bool IsPlayerDefending { get; private set; }
         public int StrongAttackCooldown => Math.Max(0,
             _strongReadyOnTurn - TurnCount - (CurrentTurn == TurnOwner.Enemy ? 1 : 0));
@@ -23,8 +23,11 @@ namespace Domain.Battle
             get
             {
                 if (TurnCount <= 0) return BattleAction.Attack;
-                var strong = EnemyPattern == EnemyAttackPattern.EveryThirdTurn ? TurnCount % 3 == 0
-                    : EnemyPattern == EnemyAttackPattern.BossCycle && (TurnCount % 4 == 2 || TurnCount % 4 == 3);
+                var strong = EnemyPattern == EnemyAttackPattern.EveryThirdTurn
+                    ? TurnCount % BattleRules.EnemyStrongAttackInterval == 0
+                    : EnemyPattern == EnemyAttackPattern.BossCycle &&
+                      (TurnCount % BattleRules.BossAttackCycleLength == BattleRules.BossStrongAttackFirstPhase ||
+                       TurnCount % BattleRules.BossAttackCycleLength == BattleRules.BossStrongAttackSecondPhase);
                 return strong ? BattleAction.StrongAttack : BattleAction.Attack;
             }
         }
@@ -42,7 +45,8 @@ namespace Domain.Battle
         {
             if (!CanPlayerChoose(action)) throw new InvalidOperationException("Player action is unavailable.");
             IsPlayerDefending = action == BattleAction.Defend;
-            if (action == BattleAction.StrongAttack) _strongReadyOnTurn = TurnCount + 3;
+            if (action == BattleAction.StrongAttack)
+                _strongReadyOnTurn = TurnCount + BattleRules.StrongAttackReuseTurnInterval;
         }
 
         internal bool ConsumePlayerDefense()
@@ -53,7 +57,8 @@ namespace Domain.Battle
         }
 
         public void Initialize(BattleUnitSnapshot player, BattleUnitSnapshot enemy,
-            EnemyAttackPattern pattern = EnemyAttackPattern.EveryThirdTurn, int damageBonus = 0, int guardDamagePercent = 50)
+            EnemyAttackPattern pattern = EnemyAttackPattern.EveryThirdTurn, int damageBonus = 0,
+            int guardDamagePercent = BattleRules.DefaultGuardDamagePercent)
         {
             if (player.MaxHp <= 0 || player.Hp <= 0 || player.Hp > player.MaxHp)
                 throw new ArgumentOutOfRangeException(nameof(player));

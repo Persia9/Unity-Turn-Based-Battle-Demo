@@ -202,7 +202,7 @@ EntryPointの`Run().Forget()`自体には明示的な`try/catch`がありませ�
 ## 6. StartからBattle Sceneまで
 
 ```text
-TitleScreenView.OnExpeditionClicked / OnEndlessClicked
+TitleScreenView.OnExpeditionClicked / OnEndlessClicked → TitleScreenViewModel.Start
 → 両モードボタンを無効化
 → RunFlowUseCase.StartNewRun(mode)
    ├─ _loadingで二重開始を拒否
@@ -411,11 +411,11 @@ Sceneロード失敗時には強化とRound進行が完了済みです。同じU
 
 ### UIMaster
 
-| ID | Address | Layer | Type | Cache | Singleton | Block |
-|---|---|---|---|---:|---:|---:|
-| TitleScreen | UI/Title/TitleScreen | Screen | Screen | true | true | false |
-| BattleHud | UI/Battle/BattleHud | Hud | Hud | true | true | false |
-| ResultPopup | UI/Battle/ResultPopup | Popup | Popup | false | false | true |
+| ID | Address | Type | Cache | Block |
+|---|---|---|---:|---:|
+| TitleScreen | UI/Title/TitleScreen | Screen | true | false |
+| BattleHud | UI/Battle/BattleHud | Hud | true | false |
+| ResultPopup | UI/Battle/ResultPopup | Popup | false | true |
 
 ### UIViewFactory
 
@@ -430,9 +430,9 @@ Scene側Containerで生成するため、BattleHudの`[Inject]`はBattle Scene�
 
 `SemaphoreSlim`でOpen／Closeを直列化し、opened、cache、input blockerを管理します。
 
-Open：定義取得 → Singleton確認 → Cacheまたは生成 → Layer配置 → blocker → Context → active → `OnOpened` → Registry。
+Open：定義取得 → 同IDの既存View確認（常に1インスタンス） → Cacheまたは生成 → Layer配置 → blocker → Context → active → `OnOpened` → Registry。
 
-Close：最後の同ID View取得 → `OnClosed` → blocker削除 → Cacheへ戻すかDestroy。
+Close：同IDの唯一のView取得 → `OnClosed` → blocker削除 → Cacheへ戻すかDestroy。
 
 `Dispose()`はScene内のViewとblockerを破棄します。SemaphoreSlimをDisposeしないのは、await中の処理がfinallyで`Release()`する可能性があるためです。
 
@@ -500,19 +500,19 @@ DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の�
 
 | ファイル | 役割 |
 |---|---|
-| `TitleScreenView` | Start入力、多重押下抑止、Safe Area対応のモバイルレイアウト |
-| `BattleHudView` | 初期表示、R3購読、Action送信 |
-| `BattleViewModel` | 表示値とCommandState |
+| `TitleScreenView` / `TitleScreenViewModel` | UI部品への反映と入力転送 / モード選択、入力抑止、多言語テキスト、エラー状態 |
+| `BattleHudView` | ViewModelのR3購読、UI部品への反映、Action転送 |
+| `BattleViewModel` | 初期表示、HP文字列、周回情報、CommandState、UseCase呼び出し |
 | `BattleEventPresenter` | Message購読、表示更新、ResultPopup |
-| `CubeBattleCharacterPresenter` | 解決済み行動をCube人物の3D演出へ変換 |
-| `CubeBattleCharacterView` | Cube部品の生成、突進、防御、被弾、倒れる動き |
+| `CubeBattleCharacterPresenter` | 設定した人物Prefabを生成し、解決済み行動を3D演出へ変換 |
+| `CubeBattleCharacterView` | Prefabの部品参照、突進、防御、被弾、倒れる動き |
 | `BattleCharacterAnchors` | Battle SceneのPlayerRoot／EnemyRoot参照 |
-| `PerformanceView` | Battle SceneのFPS、フレーム時間、メモリを低頻度更新で表示 |
+| `PerformanceView` / `PerformanceViewModel` | 性能パネルのUI反映 / サンプリング間隔、表示文字列、表示状態 |
 | `BattleActionButton` | Definition駆動の共通Button |
 | `BattleActionDefinition` | Action ID・表示名・説明 |
 | `BattleCommandState` | 実行可否とCooldown |
 | `ResultPopupContext` | 勝敗Context |
-| `ResultPopupView` | 戦績、強化、Retry、Title |
+| `ResultPopupView` / `ResultPopupViewModel` | UI部品への反映と入力転送 / 戦績、強化、Retry、Title、エラー状態 |
 
 ### Infrastructure / Installer / SceneFlow
 
@@ -570,7 +570,7 @@ Prefab smoke testはAddressとroot componentを確認しますが、private Seri
 
 ## 18. 現在の注意点・改善余地
 
-1. `RunState.BattleCount = 3`と`RecoveryHp = 20`に対し、Viewにも`/3`と`20 HP`が直書きされています。
+1. `RunRules.ExpeditionBattleCount = 3`と`RunRules.BetweenBattleRecoveryHp = 20`に対し、Viewにも`/3`と`20 HP`が直書きされています。
 2. PresenterのDefendログは`damage is halved`固定ですが、Guard強化後は35%や20%を受けます。計算とDefenseTextは正しく、ログだけ一般化されていません。
 3. MasterDataの`EnemyPattern`、UIの`Layer`／`Type`はintからenumへcastします。UI側は変換時の範囲検証がありません。
 4. UI IDは文字列で複数箇所を接続します。MasterData、Addressables、呼び出し側の一致が必要です。
@@ -677,7 +677,7 @@ Master初期化やUI Open／Closeが共有状態を同時変更しないよう�
 
 ### 4戦にする
 
-`BattleCount`、StageMaster、Viewの`/3`、Result文言、Stage ID、攻略testを確認します。
+`RunRules.ExpeditionBattleCount`、StageMaster、Viewの`/3`、Result文言、Stage ID、攻略testを確認します。
 
 ### 戦闘中回復を追加する
 

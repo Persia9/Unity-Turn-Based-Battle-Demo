@@ -90,8 +90,8 @@ namespace Application.UseCases
         private int CurrentStageId()
         {
             if (_run.State.Mode == RunMode.Expedition) return _run.State.Round;
-            if (EndlessDifficulty.IsBossRound(_run.State.Round)) return RunState.BattleCount;
-            return ((_run.State.Round - 1) % (RunState.BattleCount - 1)) + 1;
+            if (EndlessDifficulty.IsBossRound(_run.State.Round)) return RunRules.ExpeditionBattleCount;
+            return ((_run.State.Round - 1) % (RunRules.ExpeditionBattleCount - 1)) + 1;
         }
     }
 }

@@ -45,7 +45,9 @@ namespace Presentation.Battle
             _battleFinished = battleFinished;
             _viewModel = viewModel;
             _popupService = popupService;
-            _actionResolved = actionResolved; _session = session; _runFlow = runFlow;
+            _actionResolved = actionResolved;
+            _session = session;
+            _runFlow = runFlow;
             _localization = localization;
         }
 
@@ -56,6 +58,14 @@ namespace Presentation.Battle
             _turnSubscription = _turnChanged.Subscribe(OnTurnChanged);
             _finishSubscription = _battleFinished.Subscribe(OnBattleFinished);
             _actionSubscription = _actionResolved.Subscribe(OnActionResolved);
+        }
+
+        public void Dispose()
+        {
+            _damageSubscription?.Dispose();
+            _turnSubscription?.Dispose();
+            _finishSubscription?.Dispose();
+            _actionSubscription?.Dispose();
         }
 
         private void OnDamageApplied(DamageAppliedMessage message)
@@ -114,15 +124,10 @@ namespace Presentation.Battle
             }
         }
 
-        private string Side(BattleSide side) => _localization.Get(side == BattleSide.Player ? "side.player" : "side.enemy");
-        private string Side(TurnOwner owner) => _localization.Get(owner == TurnOwner.Player ? "side.player" : "side.enemy");
+        private string Side(BattleSide side) =>
+            _localization.Get(side == BattleSide.Player ? "side.player" : "side.enemy");
 
-        public void Dispose()
-        {
-            _damageSubscription?.Dispose();
-            _turnSubscription?.Dispose();
-            _finishSubscription?.Dispose();
-            _actionSubscription?.Dispose();
-        }
+        private string Side(TurnOwner owner) =>
+            _localization.Get(owner == TurnOwner.Player ? "side.player" : "side.enemy");
     }
 }

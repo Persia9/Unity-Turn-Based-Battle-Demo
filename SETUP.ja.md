@@ -16,7 +16,7 @@ Editor の Addressables Play Mode Script は Use Asset Database を選択する�
 - 結果画面からタイトルへ戻り、再び戦闘を開始できる導線。
 - Start の連打によるシーンロード重複の抑止。
 - UI のファクトリー・レジストリー・ViewModel をシーン単位で管理。シーンの DI で UI を生成。
-- UIMaster の Cache / Singleton / BlockInput の適用。同時 Open は直列化し、非 Singleton は最後に開いたものから Close。
+- UIMaster の Cache / BlockInput の適用。同時 Open／Close は直列化し、同じ UI ID は常に1インスタンスを再利用。
 - Popup / Screen の Type 検証。Popup の BackStack や画面遷移アニメーションは拡張対象のままです。
 - UI 破棄時の Addressables 参照解放。マスターロードは失敗箇所から再試行可能にし、ロードハンドルを解放。
 - HUD の購読解除と再購読、敵ターン待機のキャンセル、シーンごとの戦闘ログ初期化と40行制限。

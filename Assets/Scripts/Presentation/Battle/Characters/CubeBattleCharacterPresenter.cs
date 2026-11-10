@@ -31,10 +31,20 @@ namespace Presentation.Battle.Characters
             var state = _session.State;
             var playerName = string.IsNullOrWhiteSpace(state.Player.Name) ? "Player" : state.Player.Name;
             var enemyName = string.IsNullOrWhiteSpace(state.Enemy.Name) ? "Enemy" : state.Enemy.Name;
-            _player = CubeBattleCharacterView.Create(_anchors.PlayerRoot, playerName, new Color(0.15f, 0.45f, 1f));
-            _enemy = CubeBattleCharacterView.Create(_anchors.EnemyRoot, enemyName, new Color(1f, 0.25f, 0.18f));
-            CreatePlatform();
+            _player = UnityEngine.Object.Instantiate(_anchors.PlayerPrefab, _anchors.PlayerRoot, false);
+            _player.name = playerName;
+            _enemy = UnityEngine.Object.Instantiate(_anchors.EnemyPrefab, _anchors.EnemyRoot, false);
+            _enemy.name = enemyName;
+            _platform = UnityEngine.Object.Instantiate(_anchors.PlatformPrefab, _anchors.PlayerRoot.parent, false);
             _subscription = _actions.Subscribe(OnActionResolved);
+        }
+
+        public void Dispose()
+        {
+            _subscription?.Dispose();
+            if (_player != null) UnityEngine.Object.Destroy(_player.gameObject);
+            if (_enemy != null) UnityEngine.Object.Destroy(_enemy.gameObject);
+            if (_platform != null) UnityEngine.Object.Destroy(_platform);
         }
 
         private void OnActionResolved(BattleActionResolvedMessage message)
@@ -52,32 +62,6 @@ namespace Presentation.Battle.Characters
 
             actor.PlayAttack(result.Action == BattleAction.StrongAttack, direction);
             target.PlayHit(result.RemainingHp <= 0, direction);
-        }
-
-        private void CreatePlatform()
-        {
-            _platform = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            _platform.name = "Cube Battle Platform";
-            _platform.transform.SetParent(_anchors.PlayerRoot.parent, false);
-            _platform.transform.localPosition = new Vector3(0f, -0.15f, 0f);
-            _platform.transform.localScale = new Vector3(8.5f, 0.3f, 4.5f);
-            var collider = _platform.GetComponent<Collider>();
-            if (collider != null) UnityEngine.Object.Destroy(collider);
-            _platform.GetComponent<Renderer>().material.color = new Color(0.18f, 0.2f, 0.24f);
-        }
-
-        public void Dispose()
-        {
-            _subscription?.Dispose();
-            if (_player != null) UnityEngine.Object.Destroy(_player.gameObject);
-            if (_enemy != null) UnityEngine.Object.Destroy(_enemy.gameObject);
-            if (_platform != null)
-            {
-                var platformRenderer = _platform.GetComponent<Renderer>();
-                if (platformRenderer != null && platformRenderer.material != null)
-                    UnityEngine.Object.Destroy(platformRenderer.material);
-                UnityEngine.Object.Destroy(_platform);
-            }
         }
     }
 }

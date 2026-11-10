@@ -199,6 +199,9 @@ MonoBehaviour:
   _uiRoot: {fileID: 8041170615447333028}
   _playerRoot: {fileID: 1761929985}
   _enemyRoot: {fileID: 1012944670}
+  _playerPrefab: {fileID: 11400000, guid: 918b1049234c4b4693203fe70669dc8a, type: 3}
+  _enemyPrefab: {fileID: 11400000, guid: ab006b1e72cf4578a5ade13e41dab2d1, type: 3}
+  _platformPrefab: {fileID: 100000, guid: 37dd5bc68d6b42578cf56e5a08e05fe6, type: 3}
 --- !u!1 &109155262
 GameObject:
   m_ObjectHideFlags: 0

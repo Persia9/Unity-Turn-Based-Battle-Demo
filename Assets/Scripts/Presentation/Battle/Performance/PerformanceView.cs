@@ -1,23 +1,26 @@
-using System;
-using System.Text;
+using R3;
+using TMPro;
 using UnityEngine;
-using UnityEngine.Profiling;
-using Infrastructure.Platform;
+using UnityEngine.UI;
+using Zenject;
 
 namespace Presentation.Battle.Performance
 {
     public sealed class PerformanceView : MonoBehaviour
     {
-        private const float RefreshInterval = 0.25f;
-        private const float Width = 270f;
-        private const float Height = 158f;
-        private readonly StringBuilder _builder = new(192);
-        private float _elapsed;
-        private int _frames;
-        private string _displayText = "Collecting performance data...";
-        private GUIStyle _labelStyle;
-        private GUIStyle _boxStyle;
-        private bool _visible;
+        [SerializeField] private Button _toggleButton;
+        [SerializeField] private TMP_Text _toggleLabel;
+        [SerializeField] private GameObject _panel;
+        [SerializeField] private TMP_Text _label;
+        private PerformanceViewModel _viewModel;
+        private CompositeDisposable _bindings;
+
+        [Inject]
+        private void Construct(PerformanceViewModel viewModel)
+        {
+            _viewModel = viewModel;
+            if (isActiveAndEnabled) Bind();
+        }
 
         private void Awake()
         {
@@ -26,76 +29,32 @@ namespace Presentation.Battle.Performance
 #endif
         }
 
-        private void Update()
+        private void OnEnable()
         {
-            _elapsed += Time.unscaledDeltaTime;
-            _frames++;
-            if (_elapsed < RefreshInterval) return;
-
-            var fps = _elapsed > 0f ? _frames / _elapsed : 0f;
-            var frameMilliseconds = fps > 0f ? 1000f / fps : 0f;
-            BuildDisplayText(fps, frameMilliseconds);
-            _elapsed = 0f;
-            _frames = 0;
+            if (_viewModel != null) Bind();
         }
 
-        private void BuildDisplayText(float fps, float frameMilliseconds)
+        private void Bind()
         {
-            _builder.Clear();
-            _builder.AppendLine("PERFORMANCE");
-            _builder.Append("FPS          ").Append(fps.ToString("F1"))
-                .Append(" / ").Append(MobileRuntimeSettings.TargetFrameRate).AppendLine();
-            _builder.Append("Frame        ").Append(frameMilliseconds.ToString("F2")).AppendLine(" ms");
-            _builder.Append("Unity alloc  ").AppendLine(FormatBytes(Profiler.GetTotalAllocatedMemoryLong()));
-            _builder.Append("Unity reserve ").AppendLine(FormatBytes(Profiler.GetTotalReservedMemoryLong()));
-            _builder.Append("Managed heap ").AppendLine(FormatBytes(GC.GetTotalMemory(false)));
-            _builder.Append("Resolution   ").Append(Screen.width).Append(" x ").Append(Screen.height);
-            _displayText = _builder.ToString();
+            Unbind();
+            _bindings = new CompositeDisposable();
+            _viewModel.IsVisible.Subscribe(value => _panel.SetActive(value)).AddTo(_bindings);
+            _viewModel.ToggleLabel.Subscribe(value => _toggleLabel.text = value).AddTo(_bindings);
+            _viewModel.Text.Subscribe(value => _label.text = value).AddTo(_bindings);
+            _toggleButton.onClick.AddListener(Toggle);
         }
 
-        private void OnGUI()
-        {
-            EnsureStyles();
-            GUI.depth = -1000;
-            var previousMatrix = GUI.matrix;
-            var scale = Mathf.Clamp(Screen.height / 720f, 1f, 2f);
-            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
-            var safeArea = Screen.safeArea;
-            var safeXMin = safeArea.xMin / scale;
-            var safeXMax = safeArea.xMax / scale;
-            var safeY = (Screen.height - safeArea.yMax) / scale;
-            var right = Mathf.Max(safeXMin + 8f, safeXMax - 12f);
-            var toggleRect = new Rect(right - 72f, safeY + 12f, 72f, 30f);
-            if (GUI.Button(toggleRect, _visible ? "CLOSE" : "PERF")) _visible = !_visible;
-            if (!_visible)
-            {
-                GUI.matrix = previousMatrix;
-                return;
-            }
+        private void Toggle() => _viewModel.Toggle();
+        private void Update() => _viewModel?.Tick(Time.unscaledDeltaTime);
 
-            var rect = new Rect(right - Width, toggleRect.yMax + 6f, Width, Height);
-            GUI.Box(rect, GUIContent.none, _boxStyle);
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 8f, rect.width - 24f, rect.height - 16f),
-                _displayText, _labelStyle);
-            GUI.matrix = previousMatrix;
+        private void Unbind()
+        {
+            _toggleButton.onClick.RemoveListener(Toggle);
+            _bindings?.Dispose();
+            _bindings = null;
         }
 
-        private void EnsureStyles()
-        {
-            if (_labelStyle != null) return;
-            _labelStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 14,
-                alignment = TextAnchor.UpperLeft
-            };
-            _labelStyle.normal.textColor = Color.white;
-            _boxStyle = new GUIStyle(GUI.skin.box);
-        }
-
-        private static string FormatBytes(long bytes)
-        {
-            const double megabyte = 1024d * 1024d;
-            return $"{bytes / megabyte:F1} MB";
-        }
+        private void OnDisable() => Unbind();
+        private void OnDestroy() => Unbind();
     }
 }

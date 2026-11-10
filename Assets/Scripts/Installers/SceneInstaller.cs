@@ -25,7 +25,6 @@ namespace Installers
             Container.BindInterfacesTo<UIService>().AsSingle();
             Container.Bind<IPopupService>().To<PopupService>().AsSingle();
             Container.Bind<IScreenService>().To<ScreenService>().AsSingle();
-
         }
     }
 }

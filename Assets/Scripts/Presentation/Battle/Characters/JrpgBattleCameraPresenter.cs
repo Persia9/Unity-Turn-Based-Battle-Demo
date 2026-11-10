@@ -3,10 +3,6 @@ using Zenject;
 
 namespace Presentation.Battle.Characters
 {
-    /// <summary>
-    /// Frames the battle from the player's side instead of using a flat, symmetrical stage view.
-    /// The anchors remain the single source of truth for character placement.
-    /// </summary>
     public sealed class JrpgBattleCameraPresenter : IInitializable
     {
         private static readonly Vector3 PlayerPosition = new(-2.6f, 0f, -1.15f);

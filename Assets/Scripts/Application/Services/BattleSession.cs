@@ -8,7 +8,8 @@ namespace Application.Services
         public BattleState State { get; } = new();
 
         public void Initialize(BattleUnitSnapshot player, BattleUnitSnapshot enemy,
-            EnemyAttackPattern pattern = EnemyAttackPattern.EveryThirdTurn, int damageBonus = 0, int guardDamagePercent = 50)
+            EnemyAttackPattern pattern = EnemyAttackPattern.EveryThirdTurn, int damageBonus = 0,
+            int guardDamagePercent = BattleRules.DefaultGuardDamagePercent)
         {
             State.Initialize(player, enemy, pattern, damageBonus, guardDamagePercent);
             Revision++;

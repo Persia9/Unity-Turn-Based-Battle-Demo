@@ -1,35 +1,22 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Presentation.Battle.Characters
 {
     public sealed class CubeBattleCharacterView : MonoBehaviour
     {
-        private readonly List<Renderer> _renderers = new();
-        private Color _baseColor;
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+        [SerializeField] private Renderer[] _renderers;
+        [SerializeField] private Color _defendColor;
+        [SerializeField] private Color _hitColor;
+        [SerializeField, Range(0f, 1f)] private float _defeatedBrightness;
+        private Color[] _baseColors;
+        private MaterialPropertyBlock _properties;
+        private Vector3 _homeScale;
         private Vector3 _homePosition;
         private Quaternion _homeRotation;
         private Coroutine _motion;
-
-        public static CubeBattleCharacterView Create(Transform parent, string displayName, Color color)
-        {
-            var root = new GameObject($"{displayName} Cube Character");
-            root.transform.SetParent(parent, false);
-            var view = root.AddComponent<CubeBattleCharacterView>();
-            view._baseColor = color;
-
-            view.AddPart("Body", new Vector3(0f, 1.35f, 0f), new Vector3(0.8f, 1.2f, 0.5f));
-            view.AddPart("Head", new Vector3(0f, 2.25f, 0f), new Vector3(0.65f, 0.65f, 0.65f));
-            view.AddPart("Left Arm", new Vector3(-0.62f, 1.4f, 0f), new Vector3(0.3f, 1.05f, 0.3f));
-            view.AddPart("Right Arm", new Vector3(0.62f, 1.4f, 0f), new Vector3(0.3f, 1.05f, 0.3f));
-            view.AddPart("Left Leg", new Vector3(-0.23f, 0.4f, 0f), new Vector3(0.32f, 0.8f, 0.38f));
-            view.AddPart("Right Leg", new Vector3(0.23f, 0.4f, 0f), new Vector3(0.32f, 0.8f, 0.38f));
-
-            view._homePosition = root.transform.localPosition;
-            view._homeRotation = root.transform.localRotation;
-            return view;
-        }
 
         public void PlayAttack(bool strong, Vector3 worldDirection)
         {
@@ -47,18 +34,20 @@ namespace Presentation.Battle.Characters
             StartMotion(Hit(lethal, ToLocalDirection(worldDirection)));
         }
 
-        private void AddPart(string partName, Vector3 localPosition, Vector3 localScale)
+        private void Awake()
         {
-            var part = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            part.name = partName;
-            part.transform.SetParent(transform, false);
-            part.transform.localPosition = localPosition;
-            part.transform.localScale = localScale;
-            var collider = part.GetComponent<Collider>();
-            if (collider != null) Destroy(collider);
-            var partRenderer = part.GetComponent<Renderer>();
-            partRenderer.material.color = _baseColor;
-            _renderers.Add(partRenderer);
+            _homePosition = transform.localPosition;
+            _homeRotation = transform.localRotation;
+            _homeScale = transform.localScale;
+            _properties = new MaterialPropertyBlock();
+            _baseColors = new Color[_renderers.Length];
+            for (var i = 0; i < _renderers.Length; i++)
+            {
+                var material = _renderers[i].sharedMaterial;
+                _baseColors[i] = material.HasProperty(BaseColorId)
+                    ? material.GetColor(BaseColorId)
+                    : material.color;
+            }
         }
 
         private void StartMotion(IEnumerator routine)
@@ -66,7 +55,8 @@ namespace Presentation.Battle.Characters
             if (_motion != null) StopCoroutine(_motion);
             transform.localPosition = _homePosition;
             transform.localRotation = _homeRotation;
-            SetColor(_baseColor);
+            transform.localScale = _homeScale;
+            RestoreColors();
             _motion = StartCoroutine(routine);
         }
 
@@ -80,18 +70,18 @@ namespace Presentation.Battle.Characters
 
         private IEnumerator Defend()
         {
-            SetColor(new Color(0.3f, 0.9f, 1f));
+            SetColor(_defendColor);
             var startScale = transform.localScale;
             transform.localScale = new Vector3(startScale.x * 1.15f, startScale.y * 0.85f, startScale.z * 1.15f);
             yield return new WaitForSeconds(0.35f);
             transform.localScale = startScale;
-            SetColor(_baseColor);
+            RestoreColors();
             _motion = null;
         }
 
         private IEnumerator Hit(bool lethal, Vector3 direction)
         {
-            SetColor(Color.white);
+            SetColor(_hitColor);
             var start = _homePosition;
             var knockback = start + direction * 0.18f;
             yield return Move(start, knockback, 0.08f);
@@ -104,14 +94,16 @@ namespace Presentation.Battle.Characters
                     transform.localRotation = Quaternion.Slerp(from, to, elapsed / 0.35f);
                     yield return null;
                 }
+
                 transform.localRotation = to;
-                SetColor(_baseColor * 0.35f);
+                RestoreColors(_defeatedBrightness);
             }
             else
             {
                 yield return Move(knockback, start, 0.12f);
-                SetColor(_baseColor);
+                RestoreColors();
             }
+
             _motion = null;
         }
 
@@ -131,19 +123,28 @@ namespace Presentation.Battle.Characters
                 transform.localPosition = Vector3.Lerp(from, to, elapsed / duration);
                 yield return null;
             }
+
             transform.localPosition = to;
         }
 
         private void SetColor(Color color)
         {
-            foreach (var item in _renderers)
-                if (item != null) item.material.color = color;
+            for (var i = 0; i < _renderers.Length; i++) ApplyColor(i, color);
         }
 
-        private void OnDestroy()
+        private void RestoreColors(float brightness = 1f)
         {
-            foreach (var item in _renderers)
-                if (item != null && item.material != null) Destroy(item.material);
+            for (var i = 0; i < _renderers.Length; i++) ApplyColor(i, _baseColors[i] * brightness);
+        }
+
+        private void ApplyColor(int index, Color color)
+        {
+            var item = _renderers[index];
+            if (item == null) return;
+            item.GetPropertyBlock(_properties);
+            _properties.SetColor(BaseColorId, color);
+            _properties.SetColor(ColorId, color);
+            item.SetPropertyBlock(_properties);
         }
     }
 }

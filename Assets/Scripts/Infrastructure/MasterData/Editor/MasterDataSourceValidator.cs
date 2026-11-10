@@ -51,8 +51,8 @@ namespace Infrastructure.MasterData.Editor
                 if (string.IsNullOrWhiteSpace(row.DisplayName)) errors.Add($"Stage {row.Id}: DisplayName is required.");
             }
 
-            // Both expedition and endless currently select from the first BattleCount stages.
-            for (var id = 1; id <= RunState.BattleCount; id++)
+            // Both expedition and endless currently select from the first ExpeditionBattleCount stages.
+            for (var id = 1; id <= RunRules.ExpeditionBattleCount; id++)
                 if (!stageIds.Contains(id))
                     errors.Add($"Required stage {id} is missing.");
             var uiIds = new HashSet<string>(StringComparer.Ordinal);

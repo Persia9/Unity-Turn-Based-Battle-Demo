@@ -35,6 +35,57 @@ namespace Infrastructure.UI
             where T : UIView, IUIContextReceiver<TContext>
             => OpenInternal<T>(uiId, view => view.SetContext(context));
 
+        public async UniTask Close(string id)
+        {
+            await _gate.WaitAsync();
+            try
+            {
+                if (_disposed || !_opened.TryGetValue(id, out var view)) return;
+                _opened.Remove(id);
+                _registry.Unregister(id);
+                if (view == null) return;
+                view.OnClosed();
+                RemoveBlocker(view);
+                if (_definitions.Get(id).Cache)
+                {
+                    view.gameObject.SetActive(false);
+                    _cache[id] = view;
+                }
+                else Object.Destroy(view.gameObject);
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+        public bool IsOpened(string id) => !_disposed && _registry.IsOpened(id);
+
+        public void Dispose()
+        {
+            _disposed = true;
+            foreach (var entry in _opened)
+            {
+                _registry.Unregister(entry.Key);
+                var view = entry.Value;
+                if (view != null)
+                {
+                    view.OnClosed();
+                    Object.Destroy(view.gameObject);
+                }
+            }
+
+            foreach (var view in _cache.Values)
+                if (view != null)
+                    Object.Destroy(view.gameObject);
+            foreach (var blocker in _blockers.Values)
+                if (blocker != null)
+                    Object.Destroy(blocker);
+            _opened.Clear();
+            _cache.Clear();
+            _blockers.Clear();
+        }
+
         private async UniTask<T> OpenInternal<T>(string id, Action<T> setContext) where T : UIView
         {
             await _gate.WaitAsync();
@@ -104,61 +155,10 @@ namespace Infrastructure.UI
             }
         }
 
-        public async UniTask Close(string id)
-        {
-            await _gate.WaitAsync();
-            try
-            {
-                if (_disposed || !_opened.TryGetValue(id, out var view)) return;
-                _opened.Remove(id);
-                _registry.Unregister(id);
-                if (view == null) return;
-                view.OnClosed();
-                RemoveBlocker(view);
-                if (_definitions.Get(id).Cache)
-                {
-                    view.gameObject.SetActive(false);
-                    _cache[id] = view;
-                }
-                else Object.Destroy(view.gameObject);
-            }
-            finally
-            {
-                _gate.Release();
-            }
-        }
-
         private void RemoveBlocker(UIView view)
         {
             if (_blockers.TryGetValue(view, out var blocker)) Object.Destroy(blocker);
             _blockers.Remove(view);
-        }
-
-        public bool IsOpened(string id) => !_disposed && _registry.IsOpened(id);
-
-        public void Dispose()
-        {
-            _disposed = true;
-            foreach (var entry in _opened)
-            {
-                _registry.Unregister(entry.Key);
-                var view = entry.Value;
-                if (view != null)
-                {
-                    view.OnClosed();
-                    Object.Destroy(view.gameObject);
-                }
-            }
-
-            foreach (var view in _cache.Values)
-                if (view != null)
-                    Object.Destroy(view.gameObject);
-            foreach (var blocker in _blockers.Values)
-                if (blocker != null)
-                    Object.Destroy(blocker);
-            _opened.Clear();
-            _cache.Clear();
-            _blockers.Clear();
         }
     }
 }

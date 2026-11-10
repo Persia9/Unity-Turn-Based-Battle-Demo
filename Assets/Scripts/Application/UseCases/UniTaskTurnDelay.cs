@@ -5,7 +5,9 @@ namespace Application.UseCases
 {
     public sealed class UniTaskTurnDelay : ITurnDelay
     {
+        private const int DelayMilliseconds = 700;
+
         public UniTask Wait(CancellationToken cancellationToken)
-            => UniTask.Delay(700, cancellationToken: cancellationToken);
+            => UniTask.Delay(DelayMilliseconds, cancellationToken: cancellationToken);
     }
 }

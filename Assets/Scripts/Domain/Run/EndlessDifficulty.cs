@@ -6,6 +6,8 @@ namespace Domain.Run
     {
         public const int RoundsPerTier = 3;
         public const int BossInterval = 10;
+        public const int HpGrowthPercentPerTier = 25;
+        public const int PowerGrowthPercentPerTier = 15;
 
         public static int Tier(int round)
         {
@@ -19,8 +21,8 @@ namespace Domain.Run
             return round % BossInterval == 0;
         }
 
-        public static int ScaleHp(int baseHp, int round) => Scale(baseHp, 100 + Tier(round) * 25);
-        public static int ScalePower(int basePower, int round) => Scale(basePower, 100 + Tier(round) * 15);
+        public static int ScaleHp(int baseHp, int round) => Scale(baseHp, 100 + Tier(round) * HpGrowthPercentPerTier);
+        public static int ScalePower(int basePower, int round) => Scale(basePower, 100 + Tier(round) * PowerGrowthPercentPerTier);
 
         private static int Scale(int baseValue, int percent)
         {

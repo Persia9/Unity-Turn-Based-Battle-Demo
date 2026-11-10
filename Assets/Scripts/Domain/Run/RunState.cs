@@ -1,4 +1,5 @@
 using System;
+using Domain.Battle;
 
 namespace Domain.Run
 {
@@ -26,8 +27,7 @@ namespace Domain.Run
 
     public sealed class RunState
     {
-        public const int BattleCount = 3;
-        public const int RecoveryHp = 20;
+        private int _battleStartingHp;
         public RunPhase Phase { get; private set; }
         public RunMode Mode { get; private set; }
         public int Round { get; private set; }
@@ -38,7 +38,6 @@ namespace Domain.Run
         public int GuardDamagePercent { get; private set; }
         public int TotalTurns { get; private set; }
         public int TotalDamageTaken { get; private set; }
-        private int _battleStartingHp;
 
         public void Start(int maxHp = 100, RunMode mode = RunMode.Expedition)
         {
@@ -50,7 +49,7 @@ namespace Domain.Run
             Wins = 0;
             MaxHp = Hp = _battleStartingHp = maxHp;
             DamageBonus = 0;
-            GuardDamagePercent = 50;
+            GuardDamagePercent = BattleRules.DefaultGuardDamagePercent;
             TotalTurns = TotalDamageTaken = 0;
         }
 
@@ -69,13 +68,13 @@ namespace Domain.Run
             }
 
             Wins++;
-            if (Mode == RunMode.Expedition && Round == BattleCount)
+            if (Mode == RunMode.Expedition && Round == RunRules.ExpeditionBattleCount)
             {
                 Phase = RunPhase.Cleared;
                 return;
             }
 
-            Hp = Math.Min(MaxHp, Hp + RecoveryHp);
+            Hp = Math.Min(MaxHp, Hp + RunRules.BetweenBattleRecoveryHp);
             Phase = RunPhase.ChoosingUpgrade;
         }
 
@@ -85,12 +84,15 @@ namespace Domain.Run
             if (!Enum.IsDefined(typeof(RunUpgrade), upgrade)) throw new ArgumentOutOfRangeException(nameof(upgrade));
             switch (upgrade)
             {
-                case RunUpgrade.Attack: DamageBonus += 5; break;
+                case RunUpgrade.Attack: DamageBonus += RunRules.AttackUpgradeBonus; break;
                 case RunUpgrade.Vitality:
-                    MaxHp += 25;
-                    Hp = Math.Min(MaxHp, Hp + 25);
+                    MaxHp += RunRules.VitalityMaxHpIncrease;
+                    Hp = Math.Min(MaxHp, Hp + RunRules.VitalityHealAmount);
                     break;
-                case RunUpgrade.Guard: GuardDamagePercent = Math.Max(20, GuardDamagePercent - 15); break;
+                case RunUpgrade.Guard:
+                    GuardDamagePercent = Math.Max(RunRules.MinimumGuardDamagePercent,
+                        GuardDamagePercent - RunRules.GuardUpgradeReductionPercent);
+                    break;
             }
 
             Round++;

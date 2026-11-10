@@ -1,4 +1,5 @@
 using SceneFlow.Title;
+using Presentation.Title;
 
 namespace Installers
 {
@@ -7,6 +8,7 @@ namespace Installers
         public override void InstallBindings()
         {
             base.InstallBindings();
+            Container.BindInterfacesAndSelfTo<TitleScreenViewModel>().AsSingle();
 
             Container.BindInterfacesAndSelfTo<TitleSceneEntryPoint>().AsSingle();
         }

@@ -10,9 +10,9 @@ Unity 6000.3.12f1 による、1vs1ターン制バトルです。全3戦の遠征
 - 無限モード：敗北するまで戦闘と強化を繰り返します。3ラウンドごとに敵のHPと攻撃力が上昇し、10ラウンドごとにボスが登場します。
 
 - 通常攻撃・防御・強攻撃を選択。強攻撃には次の2プレイヤーターンのクールダウンがあります。
-- Battle SceneではCubeを組み合わせた簡易3D人物が、攻撃・防御・被弾・戦闘不能を表示します。
+- Battle SceneではPrefabで構成した簡易3D人物が、攻撃・防御・被弾・戦闘不能を表示します。モデルと通常色はAssets/Prefabs/BattleCharactersで編集できます。
 - EditorまたはDevelopment Buildでは、Battle Scene右上の`PERF`ボタンからFPS、フレーム時間、使用メモリを確認できます。本番ビルドでは自動的に無効になります。
-- Title、Battle HUD、Result PopupはスマートフォンのSafe Areaと横長画面へ追従し、大きなタップ領域と自動文字縮小を使います。
+- Title、Battle HUD、Result Popupの固定レイアウト・配色・文字サイズはPrefabで編集します。すべてのUIはMVVMを使い、ViewはUI部品の更新と入力転送、ViewModelは表示状態・多言語テキスト・UseCase呼び出しを担当します。 性能パネルもBattle HUD Prefabの子として配置し、文字の描辺はAssets/Settings/UIのMaterial Presetで設定します。
 - UIは日本語／英語に対応します。初回は端末言語を参照し、Title右上の言語ボタンで切り替えた選択を`PlayerPrefs`へ保存します。ゲームロジックはローカライズキーを持たず、表示層が`ILocalizationService`を通して文言を取得します。
 - Editor／モバイル版ともに60fpsを上限に動作します。モバイル版は左右両方向の横画面を正式対応とし、AndroidではSwappy frame pacingを有効化しています。
 - 敵の行動予告を見て防御を判断。3種類の敵で攻撃パターンが変わります。
@@ -23,7 +23,7 @@ Unity 6000.3.12f1 による、1vs1ターン制バトルです。全3戦の遠征
 
 - Unity 6のBuild ProfilesからiOSまたはAndroidを選択してください。
 - Product Nameは`Cube Battle`、Android Application ID／iOS Bundle Identifierは`com.wzq.turnbattle`、初期Versionは`1.0.0`に設定済みです。
-- 実機ではノッチ、Dynamic Island、パンチホールの内側へ操作UIが自動配置されます。背景だけは画面全体に表示できます。
+- UIはPrefabのRectTransformで配置します。実機の表示領域に合わせた調整もPrefabで行います。
 - Android/iOSのRelease buildではPerformance Viewを表示しません。計測する場合はDevelopment Buildを使用してください。
 - 最低限、16:9、19.5:9、20:9の横画面と、左右両方の端末回転でTitle → Battle → Result → 次戦/Retryを確認してください。
 - 音声は使用しません。
@@ -150,3 +150,5 @@ R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」�
 ## Excelデータ編集（現在の既定フロー）
 
 `Assets/MasterData/Excel` の Characters / Skills / Stages / UI / Localization を編集し、Tools > MasterData > Build From Excel で5つのCSVと3つのMasterMemoryバイナリを生成します。[Excel編集手順](EXCEL_MASTER_DATA.zh-CN.md) を参照してください。旧MasterData ScriptableObjectとLegacyメニューは削除済みです。
+
+UIの責務分離とライフサイクルは [MVVM.zh-CN.md](MVVM.zh-CN.md) に記載しています。

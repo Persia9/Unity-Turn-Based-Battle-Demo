@@ -6,7 +6,9 @@ namespace Application.Services
     {
         BattleState State { get; }
         int Revision { get; }
+
         void Initialize(BattleUnitSnapshot player, BattleUnitSnapshot enemy,
-            EnemyAttackPattern pattern = EnemyAttackPattern.EveryThirdTurn, int damageBonus = 0, int guardDamagePercent = 50);
+            EnemyAttackPattern pattern = EnemyAttackPattern.EveryThirdTurn, int damageBonus = 0,
+            int guardDamagePercent = BattleRules.DefaultGuardDamagePercent);
     }
 }

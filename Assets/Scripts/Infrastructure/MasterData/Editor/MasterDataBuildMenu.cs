@@ -32,13 +32,6 @@ namespace Infrastructure.MasterData.Editor
             Debug.Log("Excel -> CSV -> MasterMemory completed (five tables, three databases).");
         }
 
-        private static void Validate(MasterDataSourceData data)
-        {
-            var errors = MasterDataSourceValidator.Validate(data);
-            if (errors.Count != 0)
-                throw new InvalidOperationException("Master data validation failed:\n" + string.Join("\n", errors));
-        }
-
         public static Dictionary<string, byte[]> Serialize(MasterDataSourceData data)
         {
             Validate(data);
@@ -71,6 +64,13 @@ namespace Infrastructure.MasterData.Editor
             foreach (var pair in binaries) Write(pair.Key, pair.Value);
             AssetDatabase.Refresh();
             Debug.Log("MasterMemory databases rebuilt.");
+        }
+
+        private static void Validate(MasterDataSourceData data)
+        {
+            var errors = MasterDataSourceValidator.Validate(data);
+            if (errors.Count != 0)
+                throw new InvalidOperationException("Master data validation failed:\n" + string.Join("\n", errors));
         }
 
         private static string Absolute(string path) =>
