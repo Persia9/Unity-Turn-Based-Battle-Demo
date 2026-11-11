@@ -2,6 +2,8 @@
 
 Unity 6000.3.12f1 による、1vs1ターン制バトルです。全3戦の遠征と、敗北まで継続する無限モードを選べます。既存プロジェクトをベースに、戦闘の選択肢、周回フロー、責務分離、異常系テストを整備しました。小規模なゲームで、依存管理・非同期処理・状態通知・データロードの扱いを示すことを目的にしています。
 
+現在は HybridCLR 対応の構成です。起動は **Startup** から行い、Domain / Runtime を熱更新 DLL、Startup を AOT として分離しています。初回のネイティブ環境準備、ビルド手順、検証範囲は [HybridCLR セットアップ](HYBRIDCLR.zh-CN.md) を参照してください。IL2CPP Player の実行検証は未完了です。
+
 ## 遊べる内容
 
 タイトルで次の2モードから選択します。
@@ -34,8 +36,8 @@ Unity 6000.3.12f1 による、1vs1ターン制バトルです。全3戦の遠征
 
 1. Windows のパス長制限を避け、`C:\Dev\BattleDemo` など短いパスへ展開します。
 2. Unity Hub で Assets / Packages / ProjectSettings のあるフォルダーを追加し、6000.3.12f1 で開きます。
-3. 依存パッケージの取得とコンパイル後、`Assets/Scenes/Title.unity` を開いて Play → Start Expedition。
-4. Editor は LocalAssetCatalog の対応表からローカルアセットを直接読み込みます。Player ビルド前に AssetBundle を自動生成します。手動実行は Tools > AssetBundles > Build Local Bundles。
+3. 依存パッケージの取得とコンパイル後、`Assets/Scenes/Startup.unity` を開いて Play → Start Expedition。
+4. Editor は Startup から起動し、ローカルアセットで確認します。Player は Tools > HybridCLR Demo の Configure / Prepare Client Content / Build Demo Player の順に準備します。
 
 マスターは `Assets/MasterData/Excel` の5つのExcelで編集し、Tools > MasterData > Build Demo MasterData で CSV → MasterMemory のバイナリへ変換します。[編集・変換手順](MASTER_DATA_SOURCE.zh-CN.md) と [SETUP.ja.md](SETUP.ja.md) を参照してください。
 
@@ -93,7 +95,8 @@ BattleActionDefinition は既存の行動ID、表示名、説明文を持つ Scr
 | R3 | ViewModelの現在値とUIの同期、購読の寿命管理 |
 | MessagePipe | ダメージ、行動、ターン、決着など発生したイベントの通知 |
 | MasterMemory | 型付きのマスターデータ参照とバイナリ生成 |
-| AssetBundle | StreamingAssets からの Prefab・マスターの非同期ロードと参照管理 |
+| AssetBundle | 随包／検証済みキャッシュからの場面・Prefab・マスターのロード |
+| HybridCLR | Domain / Runtime DLL のロードと IL2CPP 上でのコード更新 |
 
 R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」の通知に使い分けています。同期呼び出しや状態参照も残しており、全てをイベントで接続しているわけではありません。
 

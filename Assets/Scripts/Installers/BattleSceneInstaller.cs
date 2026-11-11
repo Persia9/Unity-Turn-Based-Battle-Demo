@@ -32,7 +32,7 @@ namespace Installers
 
             Container.BindInterfacesAndSelfTo<BattleSceneEntryPoint>().AsSingle();
             Container.BindInterfacesAndSelfTo<BattleEventPresenter>().AsSingle();
-            Container.BindInterfacesTo<JrpgBattleCameraPresenter>().AsSingle();
+            Container.BindInterfacesAndSelfTo<JrpgBattleCameraPresenter>().AsSingle();
             Container.BindInterfacesAndSelfTo<CubeBattleCharacterPresenter>().AsSingle();
         }
     }

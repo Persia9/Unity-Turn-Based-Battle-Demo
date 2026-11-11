@@ -1,0 +1,5 @@
+<linker>
+  <assembly fullname="BattleDemo.Startup" preserve="all" />
+  <assembly fullname="Unity.TextMeshPro" preserve="all" />
+  <assembly fullname="UnityEngine.UI" preserve="all" />
+</linker>

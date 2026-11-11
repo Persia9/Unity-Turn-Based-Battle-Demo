@@ -530,6 +530,13 @@
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.subsystems": "1.0.0"
       }
+    },
+    "com.code-philosophy.hybridclr": {
+      "version": "https://github.com/focus-creative-games/hybridclr_unity.git#v9.1.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "7e74e59637055b535d50f41b69c94605da2a7a40"
     }
   }
 }

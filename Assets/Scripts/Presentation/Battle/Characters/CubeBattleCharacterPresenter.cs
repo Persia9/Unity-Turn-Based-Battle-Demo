@@ -39,6 +39,14 @@ namespace Presentation.Battle.Characters
             _subscription = _actions.Subscribe(OnActionResolved);
         }
 
+        public void ResetForBattle()
+        {
+            _player.ResetPose();
+            _enemy.ResetPose();
+            _player.name = _session.State.Player.Name;
+            _enemy.name = _session.State.Enemy.Name;
+        }
+
         public void Dispose()
         {
             _subscription?.Dispose();

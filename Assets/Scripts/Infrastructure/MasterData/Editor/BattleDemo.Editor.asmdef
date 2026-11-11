@@ -2,7 +2,10 @@
   "name": "BattleDemo.Editor",
   "references": [
     "BattleDemo.Runtime",
-    "BattleDemo.Domain"
+    "BattleDemo.Domain",
+    "BattleDemo.Startup",
+    "HybridCLR.Editor",
+    "HybridCLR.Runtime"
   ],
   "includePlatforms": [
     "Editor"

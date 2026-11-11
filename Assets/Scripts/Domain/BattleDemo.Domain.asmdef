@@ -1,5 +1,6 @@
 {
   "name": "BattleDemo.Domain",
   "rootNamespace": "Domain",
-  "noEngineReferences": true
+  "noEngineReferences": true,
+  "autoReferenced": false
 }

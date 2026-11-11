@@ -1,6 +1,0 @@
-<linker>
-  <!-- AssetBundle 内の Prefab にのみ参照される型を Player のコードストリップから保護する。 -->
-  <assembly fullname="BattleDemo.Runtime" preserve="all" />
-  <assembly fullname="Unity.TextMeshPro" preserve="all" />
-  <assembly fullname="UnityEngine.UI" preserve="all" />
-</linker>

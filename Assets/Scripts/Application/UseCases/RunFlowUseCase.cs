@@ -30,28 +30,43 @@ namespace Application.UseCases
             _loading = true;
             try
             {
-                var first = _stages.Get(1);
-                _run.State.Start(_characters.Get(first.PlayerCharacterId).MaxHp, mode);
-                _advancePending = false;
+                ResetRun(mode);
                 await LoadCurrentBattle();
             }
             finally { _loading = false; }
         }
-        public async UniTask ChooseUpgrade(RunUpgrade upgrade)
+        public void RestartInPlace(RunMode mode)
         {
-            if (_loading) return;
-            _loading = true;
-            try
-            {
-                if (_run.State.Phase == RunPhase.ChoosingUpgrade)
-                { _run.State.ChooseUpgrade(upgrade); _advancePending = true; }
-                else if (!_advancePending) throw new InvalidOperationException("No upgrade is pending.");
-                // On scene-load failure, retry without applying the upgrade twice.
-                await LoadCurrentBattle();
-                _advancePending = false;
-            }
-            finally { _loading = false; }
+            if (_loading) throw new InvalidOperationException("A battle transition is already in progress.");
+            ResetRun(mode);
+            PrepareCurrentBattle();
         }
+
+        private void ResetRun(RunMode mode)
+        {
+            var first = _stages.Get(1);
+            _run.State.Start(_characters.Get(first.PlayerCharacterId).MaxHp, mode);
+            _advancePending = false;
+        }
+
+        public void ChooseUpgrade(RunUpgrade upgrade)
+        {
+            if (_loading) throw new InvalidOperationException("A battle transition is already in progress.");
+            if (_run.State.Phase == RunPhase.ChoosingUpgrade)
+            {
+                _run.State.ChooseUpgrade(upgrade);
+                _advancePending = true;
+            }
+            else if (!_advancePending)
+            {
+                throw new InvalidOperationException("No upgrade is pending.");
+            }
+
+            // If preparation fails, retry without applying the upgrade twice.
+            PrepareCurrentBattle();
+            _advancePending = false;
+        }
+
         public void PrepareCurrentBattle()
         {
             if (_run.State.Phase == RunPhase.NotStarted)

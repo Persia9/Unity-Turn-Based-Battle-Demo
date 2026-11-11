@@ -1,3 +1,19 @@
+# 現在の起動・ビルド手順
+
+現在は HybridCLR と原生 AssetBundle を組み合わせた構成です。下記の旧ローカル版履歴より、[HYBRIDCLR.zh-CN.md](HYBRIDCLR.zh-CN.md) の手順を優先してください。
+
+1. Unity のパッケージ解決とコンパイル完了を待つ。
+2. Editor の動作確認は Assets/Scenes/Startup.unity から開始する。
+3. 初回は Tools > HybridCLR Demo > 1 Configure、HybridCLR > Installer で Install。
+4. 2 Prepare Client Content → 生成コードのコンパイル完了 → 3 Build Demo Player。
+5. 以降のコード・資産変更は 4 Build Code And Resource Update。元の Player を再起動して確認する。
+
+AOT の変更、基礎ライブラリの変更、新しい AOT API / 補充メタデータ要求はクライアント再配布が必要です。現時点では独立コンパイルと状態遷移チェックまで実施し、Unity ネイティブ出力と IL2CPP 実行は未検証です。
+
+---
+
+## 旧ローカル版の実装履歴（現行ビルド手順ではありません）
+
 # Unity 6000.3.12f1 向け 作業内容と起動手順
 
 ## 開き方

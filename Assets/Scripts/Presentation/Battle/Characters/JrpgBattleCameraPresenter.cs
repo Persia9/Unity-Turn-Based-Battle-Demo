@@ -16,7 +16,9 @@ namespace Presentation.Battle.Characters
             _anchors = anchors;
         }
 
-        public void Initialize()
+        public void Initialize() => ResetForBattle();
+
+        public void ResetForBattle()
         {
             _anchors.PlayerRoot.localPosition = PlayerPosition;
             _anchors.EnemyRoot.localPosition = EnemyPosition;

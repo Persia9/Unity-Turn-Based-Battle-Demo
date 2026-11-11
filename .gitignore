@@ -107,3 +107,18 @@ InitTestScene*.unity*
 # Generated local AssetBundles (rebuilt before each Player build).
 /Assets/StreamingAssets/AssetBundles/
 /Assets/StreamingAssets/AssetBundles.meta
+
+# HybridCLR generated payloads and native toolchain
+/Assets/StreamingAssets/HotUpdate/
+/Assets/StreamingAssets/HotUpdate.meta
+/Assets/Startup/Generated/
+/Assets/Startup/Generated.meta
+/HybridCLRData/
+/ServerData/
+/Artifacts/
+
+/Assets/HybridCLRGenerated/
+/Assets/HybridCLRGenerated.meta
+
+__pycache__/
+*.py[cod]

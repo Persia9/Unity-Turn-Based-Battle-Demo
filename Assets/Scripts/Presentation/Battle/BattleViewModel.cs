@@ -67,18 +67,25 @@ namespace Presentation.Battle
             Close();
             _opened = true;
             _turnCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime);
-            var state = _session.State;
-            PlayerMaxHp.Value = state.Player.MaxHp;
-            PlayerHp.Value = state.Player.Hp;
-            EnemyMaxHp.Value = state.Enemy.MaxHp;
-            EnemyHp.Value = state.Enemy.Hp;
-            TurnCount.Value = state.TurnCount;
             _displaySubscriptions = new CompositeDisposable();
             PlayerHp.Subscribe(_ => RefreshHp()).AddTo(_displaySubscriptions);
             PlayerMaxHp.Subscribe(_ => RefreshHp()).AddTo(_displaySubscriptions);
             EnemyHp.Subscribe(_ => RefreshHp()).AddTo(_displaySubscriptions);
             EnemyMaxHp.Subscribe(_ => RefreshHp()).AddTo(_displaySubscriptions);
             _localization.LanguageChanged += RefreshTexts;
+            ResetForBattle();
+        }
+
+        public void ResetForBattle()
+        {
+            if (!_opened || _disposed) return;
+            var state = _session.State;
+            PlayerMaxHp.Value = state.Player.MaxHp;
+            PlayerHp.Value = state.Player.Hp;
+            EnemyMaxHp.Value = state.Enemy.MaxHp;
+            EnemyHp.Value = state.Enemy.Hp;
+            TurnCount.Value = state.TurnCount;
+            _logs.Clear();
             RefreshTexts();
             AppendLog(Text("battle.start"));
         }

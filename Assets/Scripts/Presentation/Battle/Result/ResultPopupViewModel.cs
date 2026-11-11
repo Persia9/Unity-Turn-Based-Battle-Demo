@@ -1,4 +1,5 @@
 using System;
+using SceneFlow.Battle;
 using Application.Services;
 using Application.UseCases;
 using Core.Logging;
@@ -60,9 +61,9 @@ namespace Presentation.Battle.Result
         public ReactiveProperty<DisplayState> State { get; } = new(new DisplayState());
 
         [Inject]
-        public ResultPopupViewModel(RunSession run, RunFlowUseCase flow, ReturnToTitleUseCase returnToTitle,
-            ILocalizationService localization, ILogger logger)
-            : this(run, flow.ChooseUpgrade, flow.StartNewRun, returnToTitle.Execute, localization, logger)
+        public ResultPopupViewModel(RunSession run, ReturnToTitleUseCase returnToTitle,
+            BattleSceneEntryPoint battleScene, ILocalizationService localization, ILogger logger)
+            : this(run, battleScene.ChooseUpgrade, battleScene.Retry, returnToTitle.Execute, localization, logger)
         {
         }
 

@@ -3,7 +3,6 @@ using Application.Services;
 using Application.UseCases;
 using Core.Logging;
 using Domain.Battle;
-using Infrastructure.Asset;
 using Infrastructure.MasterData;
 using Infrastructure.MasterData.Repositories;
 using Infrastructure.Localization;
@@ -13,18 +12,41 @@ using Infrastructure.UI;
 using MessagePipe;
 using Zenject;
 using ILogger = Core.Logging.ILogger;
+using Cysharp.Threading.Tasks;
+using System;
+using UnityEngine.Scripting;
 
-namespace Installers
+#if UNITY_EDITOR
+using Infrastructure.Asset;
+using Startup;
+#endif
+
+namespace HotUpdate
 {
-    public sealed class ProjectInstaller : MonoInstaller
+    [Preserve]
+    public static class GameEntry
     {
-        public override void InstallBindings()
+        [Preserve]
+        public static async UniTask Start(DiContainer container)
         {
-            Container.Bind<ILogger>().To<UnityLogger>().AsSingle();
-            Container.Bind<ILocalizationService>().To<LocalizationService>().AsSingle();
-            Container.BindInterfacesTo<MobileRuntimeSettings>().AsSingle();
+#if UNITY_EDITOR
+            var editorContent = new EditorContentService();
+            container.Bind<IAssetService>().FromInstance(editorContent).AsSingle();
+            container.Bind<ISceneBundleLoader>().FromInstance(editorContent).AsSingle();
+#endif
+            var existingDisposables = container.ResolveAll<IDisposable>();
+            Install(container);
+            var manager = container.Resolve<DisposableManager>();
+            foreach (var disposable in container.ResolveAll<IDisposable>())
+                if (!existingDisposables.Contains(disposable) && !ReferenceEquals(disposable, manager)) manager.Add(disposable);
+            await container.Resolve<ISceneService>().LoadScene(Core.Common.GameConstants.TitleSceneName);
+        }
 
-            Container.BindInterfacesTo<AssetBundleAssetService>().AsSingle();
+        private static void Install(DiContainer Container)
+        {
+            Container.Bind<ILocalizationService>().To<LocalizationService>().AsSingle();
+            new MobileRuntimeSettings().Initialize();
+
             Container.Bind<ISceneService>().To<SceneService>().AsSingle();
 
             Container.Bind<IMasterDatabaseLoader>().To<AssetBundleMasterDatabaseLoader>().AsSingle();

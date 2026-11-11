@@ -50,13 +50,19 @@ namespace Presentation.Battle.Characters
             }
         }
 
-        private void StartMotion(IEnumerator routine)
+        public void ResetPose()
         {
             if (_motion != null) StopCoroutine(_motion);
+            _motion = null;
             transform.localPosition = _homePosition;
             transform.localRotation = _homeRotation;
             transform.localScale = _homeScale;
             RestoreColors();
+        }
+
+        private void StartMotion(IEnumerator routine)
+        {
+            ResetPose();
             _motion = StartCoroutine(routine);
         }
 

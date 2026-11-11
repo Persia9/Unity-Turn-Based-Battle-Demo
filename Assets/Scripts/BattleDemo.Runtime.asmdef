@@ -8,6 +8,8 @@
     "MessagePipe.Zenject",
     "Zenject",
     "Unity.TextMeshPro",
-    "UnityEngine.UI"
-  ]
+    "UnityEngine.UI",
+    "BattleDemo.Startup"
+  ],
+  "autoReferenced": false
 }

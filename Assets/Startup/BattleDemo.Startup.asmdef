@@ -1,0 +1,11 @@
+{
+  "name": "BattleDemo.Startup",
+  "references": [
+    "UniTask",
+    "Zenject",
+    "HybridCLR.Runtime",
+    "Unity.TextMeshPro",
+    "UnityEngine.UI"
+  ],
+  "autoReferenced": false
+}
