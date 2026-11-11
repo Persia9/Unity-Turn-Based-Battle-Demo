@@ -1,8 +1,8 @@
 ﻿Key,English,Japanese
 language.toggle,JP,EN
 title.genre,TACTICAL TURN-BASED RPG,戦略ターン制RPG
-title.subtitle,THREE-BATTLE EXPEDITION,三連戦エクスペディション
-title.tagline,READ THE ENEMY   •   CHOOSE YOUR ACTION   •   SURVIVE,敵を読む   •   行動を選ぶ   •   三連戦を生き抜く
+title.subtitle,SELECT A MODE,モードを選択
+title.tagline,READ THE ENEMY. CHOOSE YOUR NEXT MOVE.,敵の行動を読み、次の一手を選ぶ
 title.start,BEGIN EXPEDITION,遠征を開始
 title.start.expedition,"EXPEDITION
 THREE BATTLES","三連戦モード
