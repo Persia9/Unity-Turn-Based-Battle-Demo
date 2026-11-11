@@ -2424,9 +2424,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f5eee0f1e704e9dae4a3b289a35b8b8, type: 3}
   m_Name:
   m_EditorClassIdentifier: BattleDemo.Runtime::Presentation.Battle.Commands.BattleActionButton
-  _definition: {fileID: 11400000, guid: b272fdffc3df403983fde183758c25fc, type: 2}
+  _action: 0
   _label: {fileID: 8180144573991144200}
-  _description: {fileID: 0}
 --- !u!114 &920000000000000001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2439,9 +2438,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f5eee0f1e704e9dae4a3b289a35b8b8, type: 3}
   m_Name:
   m_EditorClassIdentifier: BattleDemo.Runtime::Presentation.Battle.Commands.BattleActionButton
-  _definition: {fileID: 11400000, guid: e8d7f635954e4e298b9829da48e8439e, type: 2}
+  _action: 1
   _label: {fileID: 900000000000000008}
-  _description: {fileID: 0}
 --- !u!114 &920000000000000002
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2454,9 +2452,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f5eee0f1e704e9dae4a3b289a35b8b8, type: 3}
   m_Name:
   m_EditorClassIdentifier: BattleDemo.Runtime::Presentation.Battle.Commands.BattleActionButton
-  _definition: {fileID: 11400000, guid: f67694b602de4d6497dbf5d9e028bd8f, type: 2}
+  _action: 2
   _label: {fileID: 900000000000000108}
-  _description: {fileID: 0}
 --- !u!1 &930000000000000000
 GameObject:
   m_ObjectHideFlags: 0

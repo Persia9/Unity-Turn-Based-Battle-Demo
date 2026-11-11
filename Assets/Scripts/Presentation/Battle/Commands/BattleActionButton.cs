@@ -11,9 +11,8 @@ namespace Presentation.Battle.Commands
     [DisallowMultipleComponent]
     public sealed class BattleActionButton : MonoBehaviour
     {
-        [SerializeField] private BattleActionDefinition _definition;
+        [SerializeField] private BattleAction _action;
         [SerializeField] private TMP_Text _label;
-        [SerializeField] private TMP_Text _description;
         private Button _button;
         private BattleViewModel _viewModel;
         private Action<BattleAction> _execute;
@@ -56,28 +55,26 @@ namespace Presentation.Battle.Commands
 
         private void Refresh()
         {
-            if (_definition == null || _viewModel == null)
+            if (_viewModel == null)
             {
                 _button.interactable = false;
-                if (_label != null) _label.text = _viewModel?.ActionLabel((BattleAction)(-1)) ?? "Unassigned";
-                if (_description != null) _description.text = string.Empty;
+                if (_label != null) _label.text = "Unassigned";
                 return;
             }
 
-            var state = _viewModel.GetCommandState(_definition.Action);
+            var state = _viewModel.GetCommandState(_action);
             _button.interactable = isActiveAndEnabled && state.CanExecute;
             if (_label != null)
                 _label.text = state.Cooldown > 0
-                    ? _viewModel.CooldownLabel(_definition.Action, state.Cooldown)
-                    : _viewModel.ActionLabel(_definition.Action);
-            if (_description != null) _description.text = _definition.Description;
+                    ? _viewModel.CooldownLabel(_action, state.Cooldown)
+                    : _viewModel.ActionLabel(_action);
         }
 
         private void OnClicked()
         {
-            if (isActiveAndEnabled && _definition != null && _viewModel != null &&
-                _viewModel.GetCommandState(_definition.Action).CanExecute)
-                _execute?.Invoke(_definition.Action);
+            if (isActiveAndEnabled && _viewModel != null &&
+                _viewModel.GetCommandState(_action).CanExecute)
+                _execute?.Invoke(_action);
         }
 
         private void Reset() => _label = GetComponentInChildren<TMP_Text>(true);

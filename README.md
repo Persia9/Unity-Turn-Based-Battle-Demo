@@ -80,7 +80,7 @@ BattleSession はその戦闘のHP、ターン、クールダウン、防御状�
 
 ### 3. 定義で変えられる範囲を明確にする
 
-BattleActionDefinition は既存の行動ID、表示名、説明文を持つ ScriptableObject です。共通の BattleActionButton に割り当てると、同じ View コードで行動を変更できます。
+共通の BattleActionButton の Inspector で行動を設定できます。表示ラベルは行動に対応するローカライズ文言を使用します。
 
 新しい表示名、配置、既存行動の割り当てはデータ／Prefabで変更できます。一方、回復や毒など新しいルールを追加する場合は Domain / UseCase とテストの変更が必要です。効果を自由に組み立てる汎用スキルシステムではありません。
 
