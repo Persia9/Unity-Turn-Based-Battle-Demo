@@ -1,4 +1,12 @@
-# MasterData数据源
+# マスターデータの編集元
+
+五つの Excel が編集元です。Build From Excel は五つの CSV と三つの MasterMemory データベースを生成します。
+
+---
+
+## 中文详解
+
+### MasterData数据源
 
 当前只使用五个Excel → 五个CSV → 三份MasterMemory数据库。旧MasterData ScriptableObject、专用Inspector和备用菜单已删除。
 

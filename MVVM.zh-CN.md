@@ -1,4 +1,12 @@
-# UI 的 MVVM 分工
+# 画面と ViewModel の役割
+
+View は入力を受け取り、ViewModel が公開する表示状態を反映します。操作の進行は UseCase、ダメージや勝敗などの判定は Domain が担当します。
+
+---
+
+## 中文详解
+
+### UI 的 MVVM 分工
 
 所有界面通过 R3 订阅 ViewModel 的显示状态，并将点击事件转发给 ViewModel。静态对象、颜色、字号和位置在 Prefab 中配置。
 

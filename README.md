@@ -4,7 +4,18 @@ Unity 6000.3.12f1 による、1vs1ターン制バトルです。全3戦の遠征
 
 現在は HybridCLR 対応の構成です。起動は **Startup** から行い、Domain / Runtime を熱更新 DLL、Startup を AOT として分離しています。初回のネイティブ環境準備、ビルド手順、検証範囲は [HybridCLR セットアップ](HYBRIDCLR.zh-CN.md) を参照してください。IL2CPP Player の実行検証は未完了です。
 
+## 日中対照の読み方
+
+日本語本文で説明を練習し、各節の **中文对照** で要点を確認できます。
+
+- [全体フロー図](CUBE%20BATTLE%20プロジェクトフロー.md)
+- [面接の説明例](INTERVIEW_GUIDE.ja.md)
+- [設計の説明](DESIGN_EXPLANATION.ja.md)
+- [コード読解練習](CODE_READING_PRACTICE.ja.md)
+
 ## 遊べる内容
+
+> **中文对照** 从标题画面选择三连战或无限模式，战斗使用攻击、防御和强攻击。
 
 タイトルで次の2モードから選択します。
 
@@ -23,6 +34,8 @@ Unity 6000.3.12f1 による、1vs1ターン制バトルです。全3戦の遠征
 
 ## Mobile build policy
 
+> **中文对照** 按对应平台的配置进行打包和性能验证，HybridCLR 演示出包步骤见专门文档。
+
 - Unity 6のBuild ProfilesからiOSまたはAndroidを選択してください。
 - Product Nameは`Cube Battle`、Android Application ID／iOS Bundle Identifierは`com.wzq.turnbattle`、初期Versionは`1.0.0`に設定済みです。
 - UIはPrefabのRectTransformで配置します。実機の表示領域に合わせた調整もPrefabで行います。
@@ -34,14 +47,18 @@ Unity 6000.3.12f1 による、1vs1ターン制バトルです。全3戦の遠征
 
 ## 起動
 
+> **中文对照** 编辑器从 Startup 场景开始；Player 根据清单选择内容。
+
 1. Windows のパス長制限を避け、`C:\Dev\BattleDemo` など短いパスへ展開します。
 2. Unity Hub で Assets / Packages / ProjectSettings のあるフォルダーを追加し、6000.3.12f1 で開きます。
 3. 依存パッケージの取得とコンパイル後、`Assets/Scenes/Startup.unity` を開いて Play → Start Expedition。
 4. Editor は Startup から起動し、ローカルアセットで確認します。Player は Tools > HybridCLR Demo の Configure / Prepare Client Content / Build Demo Player の順に準備します。
 
-マスターは `Assets/MasterData/Excel` の5つのExcelで編集し、Tools > MasterData > Build Demo MasterData で CSV → MasterMemory のバイナリへ変換します。[編集・変換手順](MASTER_DATA_SOURCE.zh-CN.md) と [SETUP.ja.md](SETUP.ja.md) を参照してください。
+マスターは `Assets/MasterData/Excel` の5つのExcelで編集し、Tools > MasterData > Build From Excel で CSV → MasterMemory のバイナリへ変換します。[編集・変換手順](MASTER_DATA_SOURCE.zh-CN.md) と [SETUP.ja.md](SETUP.ja.md) を参照してください。
 
 ## 責務と依存方向
+
+> **中文对照** 规则、用例、表现和资源数据各有对应职责，跨场景状态由共享服务保存。
 
 ```text
 Presentation → Application → Domain
@@ -65,6 +82,8 @@ Core：共通知識のみ
 Domain は専用の `BattleDemo.Domain` アセンブリで Unity 参照を無効にしています。それ以外の製品コードは主に `BattleDemo.Runtime` にまとまっています。全層を個別アセンブリで隔離する構成ではなく、Application → Presentation の参照禁止などはソース検査テストで補っています。
 
 ## 設計判断
+
+> **中文对照** 说明为何使用单场状态、周回状态、快照、事件和响应式绑定。
 
 ### 1. 1戦と周回の状態を分ける
 
@@ -119,6 +138,8 @@ R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」�
 
 ## 検証範囲
 
+> **中文对照** 根据测试类型和实际运行结果说明覆盖范围。
+
 | 確認項目 | 状況 |
 |---|---|
 | 戦闘・周回・コマンド状態等のEditModeテスト | Domain、UseCase、Repository、初期化、依存方向を検証 |
@@ -133,9 +154,13 @@ R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」�
 
 ## 次に改善するなら
 
+> **中文对照** 这一节记录后续改善方向。
+
 次はPlayModeでBattle Sceneの実DIとInspector参照を検証し、タイトル→戦闘→強化→決着→再挑戦を自動化します。その後、必要に応じてデータ検証とビルド手順をCIへ組み込みます。機能追加より、再現可能な確認手順と観測性の改善を優先します。
 
 ## 面接・レビュー用資料
+
+> **中文对照** 面试和代码讲解可以从流程图开始，再配合讲稿和代码阅读指南。
 
 - [3分のデモ台本](INTERVIEW_DEMO.ja.md)
 - [設計説明](DESIGN_EXPLANATION.ja.md)
@@ -148,9 +173,13 @@ R3 は「いま表示すべき値」、MessagePipe は「何が起きたか」�
 
 ## 多语言数据
 
+> **中文对照** 本地化文本由主数据提供；显示端通过键读取。
+
 英日文本由 `Assets/MasterData/Excel/Localization.xlsx` 维护，导出为 `master_localization.bytes`，经 AssetBundle 和 LocalizationRepository 提供给 ILocalizationService。服务内部不再有硬编码翻译字典。修改方法和验证范围见 [多语言MasterData说明](LOCALIZATION_MASTER_DATA.zh-CN.md)。
 
 ## Excelデータ編集（現在の既定フロー）
+
+> **中文对照** 编辑五张 Excel，经 Build From Excel 生成 CSV 和三份二进制主数据。
 
 `Assets/MasterData/Excel` の Characters / Skills / Stages / UI / Localization を編集し、Tools > MasterData > Build From Excel で5つのCSVと3つのMasterMemoryバイナリを生成します。[Excel編集手順](EXCEL_MASTER_DATA.zh-CN.md) を参照してください。旧MasterData ScriptableObjectとLegacyメニューは削除済みです。
 

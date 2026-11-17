@@ -4,9 +4,13 @@
 
 ## 1. 30秒で説明する
 
+> **中文对照** 用半分钟说清游戏玩法、核心设计和自己实现的部分。
+
 > Unity 6で制作した、三連戦と無限モードを持つ1対1のターン制バトルです。View、進行処理、ゲームルールを分離し、戦闘ルールはUnity APIへ依存しないDomainとして実装しました。戦闘をまたぐ状態と1戦だけの状態を分け、非同期の敵ターン、シーン遷移、UIの多重操作、AssetBundleの解放まで扱っています。英語・日本語、モバイルSafe Area、EditMode／PlayModeテストにも対応しています。
 
 ## 2. このデモで示したい能力
+
+> **中文对照** 结合可运行的场景说明分层、异步流程和数据配置能力。
 
 - ゲームルールとUnity表示処理の分離
 - 状態の所有者と寿命を決める設計
@@ -18,6 +22,8 @@
 Cubeは仮素材ではなく、外部ライセンスへ依存せず、ルールとクライアント実装を再現可能にするための表示です。キャラクター生成と演出はPresentationへ閉じているため、Prefab／Animatorへ交換してもDomainの変更は不要です。
 
 ## 3. 全体構造
+
+> **中文对照** 沿 Presentation、Application、Domain 和 Infrastructure 说明职责。
 
 ```text
 Scene / Prefab
@@ -44,6 +50,8 @@ Installers     ─ Zenjectによる生成と接続
 
 ## 4. 状態を2種類に分けた理由
 
+> **中文对照** 单场 HP、回合等由 BattleState 管，跨场战斗进度和强化由 RunState 管。
+
 ### BattleState：1戦だけの状態
 
 - Player／EnemyのHPと基礎攻撃力
@@ -65,6 +73,8 @@ Installers     ─ Zenjectによる生成と接続
 分離しなかった場合、次の戦闘へHPと強化を残す処理で、前戦の防御状態やクールダウンまで残る危険があります。`RunFlowUseCase.PrepareCurrentBattle()`がRunの値から新しいBattleを毎回構築することで、持ち越す値を明示しています。
 
 ## 5. 入力から表示更新まで
+
+> **中文对照** 按钮提交行动 ID，应用层执行流程，领域层产生结果，ViewModel 更新显示。
 
 ```text
 BattleActionButton
@@ -90,6 +100,8 @@ BattleActionButton
 
 ## 6. R3とMessagePipeを分けた理由
 
+> **中文对照** 事件描述已经发生的事，响应式状态供 UI 随时读取和订阅。
+
 | 手段 | このデモで表すもの | 例 |
 |---|---|---|
 | R3 | 現在表示すべき値 | 現在HP、ターン表示、行動可能状態 |
@@ -99,6 +111,8 @@ BattleActionButton
 全てをイベント化すると処理順とエラー経路が追いにくくなります。命令はUseCaseへ直接送り、複数の表示が反応する出来事だけをMessageとして配信します。
 
 ## 7. 非同期処理と多重実行
+
+> **中文对照** 解释等待敌方行动时如何约束重复输入，以及异步结束后如何处理状态。
 
 敵ターンまでの待機にはUniTaskを使います。重要なのは待機そのものではなく、待機中に画面が閉じた場合です。
 
@@ -111,6 +125,8 @@ BattleActionButton
 `Revision`は「処理がキャンセル通知に間に合わなかった場合」の追加防御です。
 
 ## 8. 三連戦と無限モード
+
+> **中文对照** 两个模式共享战斗系统，轮次推进和敌人数值由周回规则处理。
 
 `RunMode`を`RunState`が所有し、三連戦だけが3勝で`Cleared`へ遷移します。無限モードは勝利後に必ず強化選択へ進みます。
 
@@ -130,6 +146,8 @@ Endless:    勝利 → ChoosingUpgrade → 次ラウンド
 
 ## 9. MasterDataとSnapshot
 
+> **中文对照** 主数据提供基础值；开战时确定本场快照，战斗过程使用快照。
+
 ```text
 StageMaster
   → CharacterMaster
@@ -140,6 +158,8 @@ StageMaster
 Repositoryは定義を取得し、`RunFlowUseCase`が戦闘開始時のSnapshotへ変換します。戦闘中にMasterDataを何度も参照しないため、実行中の値が安定し、Domainテストも単純になります。
 
 ## 10. UIサービスとSemaphoreSlim
+
+> **中文对照** SemaphoreSlim 串行化有关 UI 操作，避免异步打开和关闭互相干扰。
 
 `UIService`は画面やPopupの生成・表示・破棄を担当します。同じUIへ複数のOpen／Close要求が同時に来ると、二重生成や所有権の競合が起きます。そのため、非同期ゲートで操作を直列化します。
 
@@ -152,6 +172,8 @@ Repositoryは定義を取得し、`RunFlowUseCase`が戦闘開始時のSnapshot�
 
 ## 11. AssetBundleの所有権
 
+> **中文对照** 说明资源加载器和 Bundle 的持有时机，以及 UI 释放资源引用的责任。
+
 ロードしたものは「誰が、いつ解放するか」をセットで決めます。
 
 - 成功したUI Asset：所有するFactory／Serviceの破棄時に解放
@@ -163,6 +185,8 @@ Repositoryは定義を取得し、`RunFlowUseCase`が戦闘開始時のSnapshot�
 
 ## 12. ローカライズ
 
+> **中文对照** 显示文本通过本地化键获取，语言切换会更新相关 UI。
+
 Domainは日本語／英語の文言を知りません。Presentationが`ILocalizationService`から表示文言を取得します。
 
 - 初回は端末言語を使用
@@ -172,6 +196,8 @@ Domainは日本語／英語の文言を知りません。Presentationが`ILocali
 - 未登録キーはキー自体を表示して不足を発見しやすくする
 
 ## 13. テスト戦略
+
+> **中文对照** 区分规则测试、场景验证和真机验证，按实际结果说明。
 
 | テスト | 主な保証 |
 |---|---|
@@ -189,6 +215,8 @@ Domainは日本語／英語の文言を知りません。Presentationが`ILocali
 
 ## 14. 設計上のトレードオフ
 
+> **中文对照** 说明当前选型解决了什么问题，以及新增玩法时具体要改哪里。
+
 ### ライブラリが多い
 
 小規模ゲームとしてはZenject、UniTask、R3、MessagePipe、MasterMemory、AssetBundleは多めです。このデモでは各基盤の責務を示す目的があります。製品ではチーム標準、保守期間、機能規模に応じて減らします。
@@ -202,6 +230,8 @@ Domain以外を細かくAssembly分割していないため、依存禁止の一
 現在のプレイ時間では途中保存の優先度が低く、面接で示したいクライアント設計から外れるため実装していません。無限モードの継続時間が長くなるなら再検討します。
 
 ## 15. 交換可能性を説明する例
+
+> **中文对照** 角色表现可替换，通过战斗事件驱动动作，领域规则无需依赖 Animator。
 
 > Cubeキャラクターは`CubeBattleCharacterPresenter`が生成し、DomainはGameObjectやAnimatorを参照しません。将来人型モデルへ変更する場合は、PresenterをPrefab／Animator版へ差し替え、BattleActionResolvedMessageをAttack、Defend、Hit、Deathへ対応させます。BattleStateやBattleSystemは変更しません。
 

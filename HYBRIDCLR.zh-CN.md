@@ -1,4 +1,12 @@
-# HybridCLR 代码与资源更新
+# HybridCLR によるコードとリソースの更新
+
+Startup は AOT として同梱し、Domain と Runtime は更新 DLL としてロードします。初回は 1 Configure、HybridCLR Installer、2 Prepare Client Content、3 Build Demo Player の順に進めます。既存クライアント向けの更新は 4 Build Code And Resource Update で作成し、元の AOT 補完メタデータを再利用します。配信先からの取得や検証に失敗した場合は、検証済みキャッシュまたは同梱コンテンツを使います。タイトル UI の準備完了後に active.txt への記録を試みます。
+
+---
+
+## 中文详解
+
+### HybridCLR 代码与资源更新
 
 当前工程固定使用 Unity 6000.3.12f1、HybridCLR 9.1.0，沿用原生 AssetBundle，不使用 Addressables。官方包来自 focus-creative-games/hybridclr_unity 的 v9.1.0；该版本内置 Unity 6000.3.x 的原生实现版本映射。
 
@@ -72,8 +80,12 @@ python Tools/serve_content.py
 - 更新复用原客户端的 AOT 补充元数据。固定 AOT 代码、第三方依赖、API 保留范围发生变化，或新增未准备的 AOT 泛型元数据需求时，菜单会要求重新发布客户端。
 - 更新生效点是下次启动，不支持战斗进行中替换程序集。原生 SDK、引擎和平台权限配置仍需重新出包。
 
-## 已验证与未验证
+## AOT 基线校验
+
+第 3、4 步会比较准备底包时记录的 AOT 输入。若报错列出 `ProjectSettings.asset`，先检查具体差异。Player 构建前的校验顺序为 -1，早于 Input System 的顺序 0，避免本次构建临时添加的预加载项影响该次校验。已保存到磁盘的设置差异仍会被检查。
+
+## 历史验证记录
 
 已完成基于 Unity 实际程序集、.NET Framework API 的 AOT / 热更新层 Player 与 Editor 条件编译、Editor 构建菜单编译，以及版本事务行为检查（本地启动、下载校验、提交时机、缓存复用、离线回退、坏版本隔离、缓存损坏、跨客户端 / AOT 元数据拒绝、路径与依赖检查、取消）。测试使用控制的文件与下载替身，不等同于真实网络或 AssetBundle 执行。
 
-在当前执行环境尝试 Unity 批处理时，Unity 在导入项目前因 Windows WMI 初始化断言退出（work/hybridclr-configure.log）。尚未完成原生 HybridCLR Installer、Generate/All、真实 Bundle 构建或 IL2CPP Player 运行，不能视为真机热更新已通过。请按首次准备步骤在本机 Unity 完成验证。
+在早期的批处理验证中，Unity 在导入项目前因 Windows WMI 初始化断言退出（work/hybridclr-configure.log）。该次批处理未能验证实际出包和真机更新。

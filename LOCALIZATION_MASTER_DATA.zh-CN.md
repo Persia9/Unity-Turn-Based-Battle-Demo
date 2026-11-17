@@ -1,4 +1,12 @@
-# 多语言统一使用 MasterData
+# ローカライズ用マスターデータ
+
+Localization.xlsx を編集し、Build From Excel で Master/Localization 用のバイナリを生成します。画面はキーから文言を取得し、言語の変更を表示に反映します。
+
+---
+
+## 中文详解
+
+### 多语言统一使用 MasterData
 
 ## 数据流
 

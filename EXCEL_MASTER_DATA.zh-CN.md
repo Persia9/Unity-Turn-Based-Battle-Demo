@@ -1,4 +1,12 @@
-# 五个 Excel 维护 MasterData
+# Excel マスターデータの編集と生成
+
+Characters、Skills、Stages、UI、Localization の五つの Excel が編集元です。Tools → MasterData → Build From Excel で CSV と三つの MasterMemory バイナリを生成します。Player に反映するには、クライアントの準備または更新コンテンツのビルドを行います。
+
+---
+
+## 中文详解
+
+### 五个 Excel 维护 MasterData
 
 默认流程：**Excel → CSV → 校验 → MasterMemory `.bytes` → AssetBundle → 运行时**。
 
@@ -23,7 +31,6 @@
 3. 点击 **Tools > MasterData > Build From Excel (Excel - CSV - Bytes)**。
 4. 停止并重新运行Play，避免继续使用缓存的数据库。使用打包资源时，请重新构建AssetBundle内容。
 
-原来的 **Build Demo MasterData** 现在也执行完整的Excel流程，不再默认读取ScriptableObject。不需要安装Excel插件、COM、Python或额外NuGet包。
 
 读取的是磁盘上的已保存文件，不是Excel窗口中尚未保存的内容。如文件被独占或保存过程中读取失败，请关闭Excel后重试。
 
@@ -54,7 +61,7 @@ Characters / Skills / Stages 合并为 `master_core.bytes`，UI为`master_ui.byt
 
 ## 数据源
 
-MasterData只使用Excel/CSV。旧ScriptableObject资产、专用Inspector和Legacy菜单已删除。MasterDataSourceData及其SourceRow类是CSV转换所需的普通C#数据对象，并不继承ScriptableObject。战斗按钮的BattleActionDefinition属于另外的UI配置，保持原样。
+MasterData只使用Excel/CSV。旧ScriptableObject资产、专用Inspector和Legacy菜单已删除。MasterDataSourceData及其SourceRow类是CSV转换所需的普通C#数据对象，并不继承ScriptableObject。战斗按钮在 HUD Prefab 的 BattleActionButton 上直接指定 BattleAction。
 
 ## 本次确认
 

@@ -14,9 +14,13 @@ AOT の変更、基礎ライブラリの変更、新しい AOT API / 補充メ�
 
 ## 旧ローカル版の実装履歴（現行ビルド手順ではありません）
 
+> **中文对照** 这一节记录早期本地版本的实现背景，现行出包请跟随 HybridCLR 文档。
+
 # Unity 6000.3.12f1 向け 作業内容と起動手順
 
 ## 開き方
+
+> **中文对照** 使用短路径打开项目，从 Startup 运行；修改 Excel 后执行 Build From Excel。
 
 1. Windows のパス長制限を避けるため、ZIP を `C:\Dev\BattleDemo` など短いパスに展開してください。
 2. Unity Hub から Assets / Packages / ProjectSettings があるフォルダーを追加します。
@@ -25,9 +29,11 @@ AOT の変更、基礎ライブラリの変更、新しい AOT API / 補充メ�
 5. Player ビルド時に AssetBundle を自動生成します。手動実行は Tools > AssetBundles > Build Local Bundles。Title が先頭シーンです。
 
 Editor は LocalAssetCatalog の対応表からアセットを直接読み込み、Bundle の事前ビルドは不要です。
-マスターを再生成する場合は Tools > MasterData > Build Demo MasterData を実行し、配布用 AssetBundle も再ビルドしてください。
+マスターを再生成する場合は Tools > MasterData > Build From Excel を実行し、配布用 AssetBundle も再ビルドしてください。
 
 ## 補完した機能
+
+> **中文对照** 这里列出的功能可以作为初次浏览项目的操作检查项。
 
 - 結果画面からタイトルへ戻り、再び戦闘を開始できる導線。
 - Start の連打によるシーンロード重複の抑止。
@@ -41,9 +47,13 @@ Editor は LocalAssetCatalog の対応表からアセットを直接読み込み
 
 ## 音声について
 
+> **中文对照** 按实际工程设置说明音频范围。
+
 本プロジェクトは音声を使用しません。音声サービス・通知・音声マスター・シーンの AudioListener を削除済みです。Unity の Disable Audio も有効にしています。追加の音声 SDK や SoundBank は不要です。
 
 ## 検証結果
+
+> **中文对照** 这里的测试结果属于文档记录的验证时点。
 
 - 音声項目を除いた core マスターを再生成し、同梱 MessagePack ライブラリで全3テーブルをデコードして値を確認済み。
 
@@ -54,6 +64,8 @@ Editor は LocalAssetCatalog の対応表からアセットを直接読み込み
 元リポジトリのライブラリとシーン・Prefab・バイナリマスターを引き継いでいます。README も音声なしの構成に更新しています。第三者ライセンスおよび LICENSE も保持しています。
 
 ## 面接向け改善：依存方向と異常系テスト
+
+> **中文对照** 答辩时可用依赖方向和异常测试说明如何约束改动。
 
 - Application の OpenResultPopupUseCase を削除し、結果通知を受けた BattleEventPresenter が表示を担当します。Application は Presentation の View / Context を参照しません。
 - 敵の待機と行動は PlayPlayerTurnUseCase に集約。HUD は入力を渡し、表示を更新します。ITurnDelay の実装には UniTask を使用しています。
@@ -78,6 +90,8 @@ Unity では Test Runner > EditMode > Run All を実行してください。追�
 
 ## 3つの行動と敵の予告（最新の追加）
 
+> **中文对照** 攻击、防御和强攻击共享行动入口，敌人预告来自战斗规则。
+
 操作とルールは PLAY_GUIDE.ja.md を参照してください。HUD Prefab に防御・強攻撃ボタン、敵の予告、ガード状態、クールダウン表示を追加しました。Canvas は 1280×720 を基準に画面サイズへ追従します。追加の Inspector 設定は不要です。
 
 通常攻撃20、強攻撃40、防御は次の敵攻撃を半減（端数切り上げ）。強攻撃は使用したターンの3ターン後に再使用可能です。敵の通常攻撃10、3ターンごとの強攻撃30、HP140に調整し、同梱の core マスターも再生成しました。バイナリマスターとエディターの生成コードは同じ値です。
@@ -88,11 +102,13 @@ Unity では Test Runner > EditMode > Run All を実行してください。追�
 
 ## 行動定義の割り当て（最新）
 
-ACTION_CONFIGURATION.ja.md に Inspector の設定手順をまとめました。Assets/Settings/BattleActions の定義を各 BattleActionButton に割り当てます。HUD には3ボタンを設定済みで、行動ごとの専用クリック処理は削除しました。既存の Domain のルールは維持しています。
+> **中文对照** 在 BattleActionButton 上选择 Action。
 
-今回追加した共通状態の7ケースを含め、最新のテスト結果は49ケース成功です。Unity は起動していません。Assets/Scripts、Assets/Tests、Assets/Settings/BattleActions、BattleHudView.prefab を .meta とともに更新してください。
+[行動ボタンの設定](ACTION_CONFIGURATION.ja.md) を参照してください。各ボタンの `BattleActionButton` で Action を選択します。
 
 ## 全3戦の周回フロー（最新）
+
+> **中文对照** 三连战按轮次推进，战间强化保存在本轮状态中。
 
 PLAY_GUIDE.ja.md を現在のルールに更新しました。タイトルから3戦に挑戦し、第1・2戦後に3択の強化を選びます。HPは最大20回復して持ち越し、最後に戦績を表示します。途中敗北・最終勝利の両方から再挑戦できます。
 

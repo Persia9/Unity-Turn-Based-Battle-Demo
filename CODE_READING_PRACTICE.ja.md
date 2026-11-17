@@ -14,6 +14,8 @@
 
 ## 1. ゲーム仕様を先に理解する
 
+> **中文对照** 先理解两种模式、战斗输入和敌人行动预告，再追踪代码。
+
 このデモは、三連戦と無限モードを選べる1対1ターン制バトルです。
 
 ```text
@@ -63,6 +65,8 @@ Guard強化後: 30 × 35% = 10.5 → 11
 
 ## 2. アーキテクチャ
 
+> **中文对照** Domain 管规则，Application 编排操作，Presentation 收集输入并呈现状态，Infrastructure 负责资源和数据访问。
+
 ```text
 Unity Scene / Prefab
         ↓
@@ -92,6 +96,8 @@ Installers: 上記をZenjectで接続
 ---
 
 ## 3. 最重要：BattleStateとRunState
+
+> **中文对照** BattleState 保存单场战斗状态，RunState 保存模式、轮次、跨战斗 HP 和强化。
 
 ### BattleState：1戦だけの状態
 
@@ -134,6 +140,8 @@ Revision 1 != 2 → 古い敵攻撃を中止
 
 ## 4. MasterDataからSnapshotまで
 
+> **中文对照** 开战时解析关卡、角色和技能，把本场基础属性写入快照。
+
 現在の攻撃力の正は`SkillMaster.Power`です。`CharacterMaster.Attack`はありません。
 
 ```text
@@ -164,10 +172,16 @@ BattleUnitSnapshot.BasePower
 
 ## 5. 起動からTitle表示まで
 
+> **中文对照** StartupLauncher 挑选加载器并进入 GameEntry。标题 UI 初始化完成后发出就绪信号。
+
 ```text
 Resources/ProjectContext.prefab
   └─ ProjectInstaller
-       ├─ AssetBundle service
+       └─ ILogger / StartupReady / StartupScreen
+
+StartupLauncher
+  ├─ Editor / Player に応じたリソースローダーを登録
+  └─ GameEntry.Start
        ├─ MasterData provider / repositories
        ├─ BattleSession / RunSession
        ├─ RunFlowUseCase / AttackUseCase
@@ -185,7 +199,7 @@ Assets/Scenes/Title.unity
 ```text
 TitleSceneEntryPoint.Initialize
 → InitializeMasterDataUseCase.Execute
-→ Master/CoreとMaster/UIをAssetBundleからロード
+→ Master/Core・Master/UI・Master/Localization をロード
 → IUIService.Open<TitleScreenView>("TitleScreen")
 → UIMasterからPrefabKeyとLayerを取得
 → UI/Title/TitleScreenをロード
@@ -195,11 +209,13 @@ TitleSceneEntryPoint.Initialize
 
 TitleのPlayMode testは、この経路でTitleScreenがScene上にactiveで生成されたことまで確認します。
 
-EntryPointの`Run().Forget()`自体には明示的な`try/catch`がありません。初期化失敗時の画面内リトライUIはありません。
+初期化に失敗すると、EntryPoint が `StartupReady.Fail` とローディング画面にエラーを通知します。
 
 ---
 
 ## 6. StartからBattle Sceneまで
+
+> **中文对照** 标题先写入 RunSession，再加载战斗场景；两个模式共享战斗场景。
 
 ```text
 TitleScreenView.OnExpeditionClicked / OnEndlessClicked → TitleScreenViewModel.Start
@@ -219,6 +235,8 @@ TitleScreenView.OnExpeditionClicked / OnEndlessClicked → TitleScreenViewModel.
 ---
 
 ## 7. Battle Sceneの構築
+
+> **中文对照** 场景入口准备战斗、打开 HUD，再隐藏加载界面。
 
 `BattleSceneInstaller`がSceneスコープを構築します。
 
@@ -244,6 +262,8 @@ TitleScreenView.OnExpeditionClicked / OnEndlessClicked → TitleScreenViewModel.
 ---
 
 ## 8. 1ターンの完全な流れ
+
+> **中文对照** 玩家操作经用例进入领域层，随后才按流程安排敌方行动。
 
 ```text
 BattleActionButton.OnClicked
@@ -299,6 +319,8 @@ Buttonの`interactable`だけに頼らず、Button、UseCase、Domainで可否�
 
 ## 9. Domainルールの読み方
 
+> **中文对照** 在领域层追踪伤害、防御、冷却和敌人攻击模式。
+
 ### TurnCount
 
 個別行動数ではなくプレイヤーターンのRound番号です。
@@ -338,6 +360,8 @@ Turn 4: 再使用可能
 
 ## 10. MessagePipeとR3
 
+> **中文对照** MessagePipe 发布战斗事件，R3 将显示状态变化传给 UI。
+
 MessagePipeは「起きた事実」、R3は「現在表示する値」です。
 
 | Message | 意味 |
@@ -366,6 +390,8 @@ BattleActionResolved → NextTurn → TurnChanged
 
 ## 11. 勝敗からResultPopupまで
 
+> **中文对照** 战斗结果由领域规则产生，表现层据此打开结算。
+
 ```text
 BattleFinishedMessage
 → BattleEventPresenter
@@ -389,6 +415,8 @@ Popup openは`Forget()`ですが、`OpenResultPopup()`内部で例外を捕捉�
 
 ## 12. 強化、ロード失敗、再試行
 
+> **中文对照** 强化只应用一次；重试准备战斗时要避免重复发放强化。
+
 ```text
 ResultPopupView.Continue
 → RunFlowUseCase.ChooseUpgrade
@@ -408,6 +436,8 @@ Sceneロード失敗時には強化とRound進行が完了済みです。同じU
 ---
 
 ## 13. UI基盤
+
+> **中文对照** UI 服务处理界面的打开、关闭和加载，具体界面负责绑定和清理订阅。
 
 ### UIMaster
 
@@ -442,9 +472,11 @@ Close：同IDの唯一のView取得 → `OnClosed` → blocker削除 → Cache�
 
 ## 14. MasterData基盤
 
+> **中文对照** Excel 转成 CSV 和 MasterMemory 二进制；运行时仓库按 ID 查主数据。
+
 `Master/Core`：Character、Skill、Stage。`Master/UI`：UI定義。
 
-Editorメニュー`Tools > MasterData > Build Demo MasterData`が`.bytes`を生成し、AssetBundleの`Master/Core`と`Master/UI`で配信します。
+Editorメニュー`Tools > MasterData > Build From Excel`が`.bytes`を生成し、AssetBundleの`Master/Core`と`Master/UI`で配信します。
 
 `MasterDatabaseInitialization<T>`はSemaphoreSlimで同時初期化を直列化します。Core成功後にUIだけ失敗するとCoreを保持し、次回はUIだけ再試行します。失敗はkeyとinner exceptionを持つ`MasterDataLoadException`へ変換します。
 
@@ -454,21 +486,16 @@ Editorメニュー`Tools > MasterData > Build Demo MasterData`が`.bytes`を生�
 
 ---
 
-## 15. Action Definitionの境界
+## 15. バトル行動ボタンの設定
 
-BattleHudのButtonには次が割り当てられます。
+> **中文对照** 按钮直接绑定 BattleAction；新增行为需要有对应执行规则。
 
-- `Assets/Settings/BattleActions/Attack.asset`
-- `Assets/Settings/BattleActions/Defend.asset`
-- `Assets/Settings/BattleActions/StrongAttack.asset`
+HUD の各 `BattleActionButton` に既存の `BattleAction` を割り当てます。表示文言とクールダウンは `BattleViewModel` を通して取得します。新しい行動の追加には、列挙値と実行ルールの変更が必要です。[設定手順](ACTION_CONFIGURATION.ja.md)
 
-DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の差し替えで既存Actionの割当と表示を変えられます。
-
-ただし効果は実装しません。毒、回復など新ルールにはDomain、Application、表示、testの変更が必要です。汎用Ability systemではありません。
-
----
 
 ## 16. 全コードの役割
+
+> **中文对照** 按职责查找类型，讲解时沿调用链串起对应类。
 
 ### Domain
 
@@ -508,8 +535,7 @@ DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の�
 | `CubeBattleCharacterView` | Prefabの部品参照、突進、防御、被弾、倒れる動き |
 | `BattleCharacterAnchors` | Battle SceneのPlayerRoot／EnemyRoot参照 |
 | `PerformanceView` / `PerformanceViewModel` | 性能パネルのUI反映 / サンプリング間隔、表示文字列、表示状態 |
-| `BattleActionButton` | Definition駆動の共通Button |
-| `BattleActionDefinition` | Action ID・表示名・説明 |
+| `BattleActionButton` | Action を割り当てる共通ボタン |
 | `BattleCommandState` | 実行可否とCooldown |
 | `ResultPopupContext` | 勝敗Context |
 | `ResultPopupView` / `ResultPopupViewModel` | UI部品への反映と入力転送 / 戦績、強化、Retry、Title、エラー状態 |
@@ -522,7 +548,7 @@ DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の�
 | MasterData | バイナリ、初期化、Repository、例外 |
 | Scene | SceneManagerの抽象化 |
 | UI | 定義、生成、Layer、Cache、所有権 |
-| `ProjectInstaller` | Sceneをまたぐ依存とMessage broker |
+| `ProjectInstaller` | ログ・起動状態・起動画面の登録 |
 | `SceneInstaller` | Scene単位UI基盤 |
 | `TitleSceneInstaller` | Title EntryPoint |
 | `BattleSceneInstaller` | Battle固有依存 |
@@ -533,6 +559,8 @@ DefinitionはAction enum、表示名、説明文を持ちます。Prefab上の�
 ---
 
 ## 17. Testから仕様を読む
+
+> **中文对照** 从测试断言确认规则的边界，也要分清测试覆盖到了哪一层。
 
 ### EditMode
 
@@ -570,6 +598,8 @@ Prefab smoke testはAddressとroot componentを確認しますが、private Seri
 
 ## 18. 現在の注意点・改善余地
 
+> **中文对照** 说明当前范围及需要进一步实测的内容。
+
 1. `RunRules.ExpeditionBattleCount = 3`と`RunRules.BetweenBattleRecoveryHp = 20`に対し、Viewにも`/3`と`20 HP`が直書きされています。
 2. PresenterのDefendログは`damage is halved`固定ですが、Guard強化後は35%や20%を受けます。計算とDefenseTextは正しく、ログだけ一般化されていません。
 3. MasterDataの`EnemyPattern`、UIの`Layer`／`Type`はintからenumへcastします。UI側は変換時の範囲検証がありません。
@@ -581,6 +611,8 @@ Prefab smoke testはAddressとroot componentを確認しますが、private Seri
 ---
 
 ## 19. 推奨の読む順番
+
+> **中文对照** 先读状态和规则，再追用例、视图模型和界面。
 
 ### 30分
 
@@ -610,7 +642,7 @@ Prefab smoke testはAddressとroot componentを確認しますが、private Seri
 
 1. Scene YAML／InspectorでSceneContext、Installer、UIRoot参照。
 2. PrefabのSerializeField。
-3. 3つのBattleActionDefinition。
+3. HUD の3つの BattleActionButton。
 4. AssetBundle Groupの5 Address。
 5. MasterData生成と`.bytes`。
 6. Test RunnerでEditMode／PlayMode。
@@ -619,6 +651,8 @@ Prefab smoke testはAddressとroot componentを確認しますが、private Seri
 ---
 
 ## 20. 自分で描く5シーケンス
+
+> **中文对照** 分别画出关键调用链，用实际类和方法名复述。
 
 答えを見ずに描きます。
 
@@ -638,6 +672,8 @@ RunState / BattleState / Revision / MessagePipe / BattleViewModel / Cancellation
 ---
 
 ## 21. 面接の質問と答え
+
+> **中文对照** 答题时说明职责归属，给出当前代码中的具体例子。
 
 ### なぜBattleStateとRunStateを分ける？
 
@@ -671,6 +707,8 @@ Master初期化やUI Open／Closeが共有状態を同時変更しないよう�
 
 ## 22. 変更課題
 
+> **中文对照** 选择一个小改动，先判断会影响哪层和哪些数据。
+
 ### StrongAttackを3倍にする
 
 `BattleSystem`、Domain／UseCase tests、攻略、`StrongAttack.asset`の表示名と説明を確認します。
@@ -681,7 +719,7 @@ Master初期化やUI Open／Closeが共有状態を同時変更しないよう�
 
 ### 戦闘中回復を追加する
 
-BattleAction、BattleSystem、Snapshot HP更新、Definition、Message、`TotalDamageTaken`の意味を確認します。
+BattleAction、BattleSystem、Snapshot HP更新、ボタンの Action、Message、`TotalDamageTaken`の意味を確認します。
 
 ### UIを追加する
 
@@ -690,6 +728,8 @@ UIMaster、AssetBundle、Prefab root、UIType／Layer、呼び出し元、Prefab
 ---
 
 ## 23. 最後に60秒で説明する
+
+> **中文对照** 六十秒内交代项目是什么、一次输入如何执行、两种玩法如何复用战斗，以及已验证的范围。
 
 コードを閉じ、各1〜2文で説明します。
 

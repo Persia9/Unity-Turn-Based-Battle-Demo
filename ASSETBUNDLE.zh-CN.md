@@ -1,4 +1,12 @@
-# AssetBundle 与 HybridCLR
+# AssetBundle と HybridCLR
+
+Editor はプロジェクト内のアセットを直接読み込みます。Player は選択したコンテンツのマニフェストに従い、依存 Bundle から順にロードします。Title と Battle は更新 DLL のロード後にシーン Bundle から開きます。
+
+---
+
+## 中文详解
+
+### AssetBundle 与 HybridCLR
 
 当前版的完整配置与测试方式见 [HybridCLR 说明](HYBRIDCLR.zh-CN.md)。
 
