@@ -25,7 +25,8 @@ namespace Infrastructure.MasterData.Editor
         private static BuildTarget Target => EditorUserBuildSettings.activeBuildTarget;
         private static string Baseline => Path.Combine(Root, "Artifacts", "HybridCLR", Target.ToString(), Uri.EscapeDataString(PlayerSettings.bundleVersion), "Baseline");
         private static string Installed => Path.Combine(UnityEngine.Application.streamingAssetsPath, "HotUpdate");
-        public int callbackOrder => 10000;
+        // Input System のビルド前処理（順序 0）が一時的なプリロード設定を追加する前に検証する。
+        public int callbackOrder => -1;
 
         [MenuItem("Tools/HybridCLR Demo/1 Configure")]
         public static void Configure()
