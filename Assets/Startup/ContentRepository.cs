@@ -94,7 +94,6 @@ namespace Startup
                     throw new InvalidDataException(
                         "This update failed to start previously; waiting for a new version.");
                 if (selected.CacheId == id) return selected;
-                // Cache directories are immutable versions. The active pointer changes only after game startup succeeds.
                 var directory = Path.Combine(cache, id);
                 Directory.CreateDirectory(directory);
                 foreach (var file in manifest.files)

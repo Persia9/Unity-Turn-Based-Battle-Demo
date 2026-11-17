@@ -14,8 +14,14 @@ namespace Infrastructure.MasterData
         public async UniTask<MemoryDatabase> Load(string key)
         {
             var text = await _assets.Load<TextAsset>(key);
-            try { return new MemoryDatabase(text.bytes); }
-            finally { await _assets.Release(text); }
+            try
+            {
+                return new MemoryDatabase(text.bytes);
+            }
+            finally
+            {
+                await _assets.Release(text);
+            }
         }
     }
 }

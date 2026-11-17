@@ -1,7 +1,6 @@
 using Application.Messages;
 using Application.Services;
 using Application.UseCases;
-using Core.Logging;
 using Domain.Battle;
 using Infrastructure.MasterData;
 using Infrastructure.MasterData.Repositories;
@@ -11,15 +10,10 @@ using Infrastructure.Scene;
 using Infrastructure.UI;
 using MessagePipe;
 using Zenject;
-using ILogger = Core.Logging.ILogger;
 using Cysharp.Threading.Tasks;
 using System;
 using UnityEngine.Scripting;
 
-#if UNITY_EDITOR
-using Infrastructure.Asset;
-using Startup;
-#endif
 
 namespace HotUpdate
 {
@@ -29,16 +23,12 @@ namespace HotUpdate
         [Preserve]
         public static async UniTask Start(DiContainer container)
         {
-#if UNITY_EDITOR
-            var editorContent = new EditorContentService();
-            container.Bind<IAssetService>().FromInstance(editorContent).AsSingle();
-            container.Bind<ISceneBundleLoader>().FromInstance(editorContent).AsSingle();
-#endif
             var existingDisposables = container.ResolveAll<IDisposable>();
             Install(container);
             var manager = container.Resolve<DisposableManager>();
             foreach (var disposable in container.ResolveAll<IDisposable>())
-                if (!existingDisposables.Contains(disposable) && !ReferenceEquals(disposable, manager)) manager.Add(disposable);
+                if (!existingDisposables.Contains(disposable) && !ReferenceEquals(disposable, manager))
+                    manager.Add(disposable);
             await container.Resolve<ISceneService>().LoadScene(Core.Common.GameConstants.TitleSceneName);
         }
 

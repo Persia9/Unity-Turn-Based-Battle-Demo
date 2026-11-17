@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 
 namespace Infrastructure.Asset
@@ -32,3 +33,4 @@ namespace Infrastructure.Asset
         }
     }
 }
+#endif

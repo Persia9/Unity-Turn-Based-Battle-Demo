@@ -15,11 +15,13 @@ namespace SceneFlow.Title
         private readonly InitializeMasterDataUseCase _initializeMasterDataUseCase;
         private readonly IUIService _uiService;
 
-        public TitleSceneEntryPoint(InitializeMasterDataUseCase initializeMasterDataUseCase, IUIService uiService, ILoadingScreen screen, StartupReady ready)
+        public TitleSceneEntryPoint(InitializeMasterDataUseCase initializeMasterDataUseCase, IUIService uiService,
+            ILoadingScreen screen, StartupReady ready)
         {
             _initializeMasterDataUseCase = initializeMasterDataUseCase;
             _uiService = uiService;
-            _screen = screen; _ready = ready;
+            _screen = screen;
+            _ready = ready;
         }
 
         public void Initialize()

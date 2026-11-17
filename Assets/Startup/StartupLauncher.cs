@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Zenject;
+using Infrastructure.Asset;
 
 #if UNITY_EDITOR
 using System.Linq;
@@ -11,7 +12,6 @@ using System.Linq;
 #else
 using System.IO;
 using HybridCLR;
-using Infrastructure.Asset;
 #endif
 
 namespace Startup
@@ -19,10 +19,9 @@ namespace Startup
     public sealed class StartupLauncher : MonoBehaviour
     {
         private static StartupLauncher _instance;
-        [SerializeField] private StartupScreen _screenPrefab;
 
         [SerializeField,
-         Tooltip("Empty uses installed content only; otherwise the platform directory containing manifest.json.")]
+         Tooltip("Empty uses installed content only.")]
         private string _remoteRoot = "";
 
         private StartupScreen _screen;
@@ -42,8 +41,6 @@ namespace Startup
 
             _instance = this;
             DontDestroyOnLoad(gameObject);
-            _screen = Instantiate(_screenPrefab, transform, false);
-            _screen.Show(string.Empty);
         }
 
         private void Start()
@@ -65,10 +62,12 @@ namespace Startup
             try
             {
                 var container = ProjectContext.Instance.Container;
-                var ready = new StartupReady();
-                container.Bind<ILoadingScreen>().FromInstance(_screen).AsSingle();
-                container.Bind<StartupReady>().FromInstance(ready).AsSingle();
+                _screen = container.Resolve<StartupScreen>();
+                _screen.Show(string.Empty);
+                var ready = container.Resolve<StartupReady>();
                 Assembly game;
+                IAssetService assets;
+                ISceneBundleLoader scenes;
 #if UNITY_EDITOR
                 if (!string.IsNullOrWhiteSpace(_remoteRoot))
                     Debug.Log(
@@ -76,6 +75,9 @@ namespace Startup
                 game = AppDomain.CurrentDomain.GetAssemblies()
                            .FirstOrDefault(x => x.GetName().Name == "BattleDemo.Runtime")
                        ?? Assembly.Load("BattleDemo.Runtime");
+                var editorContent = new EditorContentService();
+                assets = editorContent;
+                scenes = editorContent;
 #else
                 var repository = new ContentRepository(
                     Path.Combine(UnityEngine.Application.streamingAssetsPath, "HotUpdate"),
@@ -98,9 +100,11 @@ namespace Startup
                     if (assembly.name == "BattleDemo.Runtime") game = loaded;
                 }
                 _assets = new AssetBundleAssetService(repository, content);
-                container.Bind<IAssetService>().FromInstance(_assets).AsSingle();
-                container.Bind<ISceneBundleLoader>().FromInstance(_assets).AsSingle();
+                assets = _assets;
+                scenes = _assets;
 #endif
+                container.Bind<IAssetService>().FromInstance(assets).AsSingle();
+                container.Bind<ISceneBundleLoader>().FromInstance(scenes).AsSingle();
                 var entry = game?.GetType("HotUpdate.GameEntry", true)
                                 .GetMethod("Start", BindingFlags.Public | BindingFlags.Static)
                             ?? throw new MissingMethodException("HotUpdate.GameEntry.Start");
@@ -129,9 +133,11 @@ namespace Startup
                 }
 #endif
 
-                _screen.Fail(error is TargetInvocationException invocation
+                var startupError = error is TargetInvocationException invocation
                     ? invocation.InnerException ?? error
-                    : error);
+                    : error;
+                if (_screen != null) _screen.Fail(startupError);
+                else Debug.LogException(startupError);
             }
         }
     }

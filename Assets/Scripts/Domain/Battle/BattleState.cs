@@ -15,9 +15,13 @@ namespace Domain.Battle
         public int PlayerDamageBonus { get; private set; }
         public int GuardDamagePercent { get; private set; } = BattleRules.DefaultGuardDamagePercent;
         public bool IsPlayerDefending { get; private set; }
+
         public int StrongAttackCooldown => Math.Max(0,
             _strongReadyOnTurn - TurnCount - (CurrentTurn == TurnOwner.Enemy ? 1 : 0));
-        public bool CanUseStrongAttack => TurnCount > 0 && !IsFinished && CurrentTurn == TurnOwner.Player && StrongAttackCooldown == 0;
+
+        public bool CanUseStrongAttack => TurnCount > 0 && !IsFinished && CurrentTurn == TurnOwner.Player &&
+                                          StrongAttackCooldown == 0;
+
         public BattleAction EnemyIntent
         {
             get
@@ -32,13 +36,14 @@ namespace Domain.Battle
             }
         }
 
-        public int GetActionCooldown(BattleAction action) => action == BattleAction.StrongAttack ? StrongAttackCooldown : 0;
+        public int GetActionCooldown(BattleAction action) =>
+            action == BattleAction.StrongAttack ? StrongAttackCooldown : 0;
 
         public bool CanPlayerChoose(BattleAction action)
         {
             if (TurnCount == 0 || IsFinished || CurrentTurn != TurnOwner.Player) return false;
             return action == BattleAction.Attack || action == BattleAction.Defend ||
-                (action == BattleAction.StrongAttack && CanUseStrongAttack);
+                   (action == BattleAction.StrongAttack && CanUseStrongAttack);
         }
 
         internal void SelectPlayerAction(BattleAction action)
@@ -64,10 +69,14 @@ namespace Domain.Battle
                 throw new ArgumentOutOfRangeException(nameof(player));
             if (enemy.MaxHp <= 0 || enemy.Hp <= 0 || enemy.Hp > enemy.MaxHp)
                 throw new ArgumentOutOfRangeException(nameof(enemy));
-            if (!Enum.IsDefined(typeof(EnemyAttackPattern), pattern)) throw new ArgumentOutOfRangeException(nameof(pattern));
+            if (!Enum.IsDefined(typeof(EnemyAttackPattern), pattern))
+                throw new ArgumentOutOfRangeException(nameof(pattern));
             if (damageBonus < 0) throw new ArgumentOutOfRangeException(nameof(damageBonus));
-            if (guardDamagePercent < 1 || guardDamagePercent > 100) throw new ArgumentOutOfRangeException(nameof(guardDamagePercent));
-            EnemyPattern = pattern; PlayerDamageBonus = damageBonus; GuardDamagePercent = guardDamagePercent;
+            if (guardDamagePercent < 1 || guardDamagePercent > 100)
+                throw new ArgumentOutOfRangeException(nameof(guardDamagePercent));
+            EnemyPattern = pattern;
+            PlayerDamageBonus = damageBonus;
+            GuardDamagePercent = guardDamagePercent;
             Player = player;
             Enemy = enemy;
             CurrentTurn = TurnOwner.Player;

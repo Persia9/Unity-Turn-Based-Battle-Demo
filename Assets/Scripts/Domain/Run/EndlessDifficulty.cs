@@ -22,7 +22,9 @@ namespace Domain.Run
         }
 
         public static int ScaleHp(int baseHp, int round) => Scale(baseHp, 100 + Tier(round) * HpGrowthPercentPerTier);
-        public static int ScalePower(int basePower, int round) => Scale(basePower, 100 + Tier(round) * PowerGrowthPercentPerTier);
+
+        public static int ScalePower(int basePower, int round) =>
+            Scale(basePower, 100 + Tier(round) * PowerGrowthPercentPerTier);
 
         private static int Scale(int baseValue, int percent)
         {

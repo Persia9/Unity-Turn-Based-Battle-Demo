@@ -3,13 +3,18 @@ using Cysharp.Threading.Tasks;
 
 namespace Startup
 {
-    public interface ISceneBundleLoader { UniTask LoadScene(string sceneName); }
+    public interface ISceneBundleLoader
+    {
+        UniTask LoadScene(string sceneName);
+    }
+
     public interface ILoadingScreen
     {
         void Show(string message);
         void Hide();
         void Fail(Exception exception);
     }
+
     public sealed class StartupReady
     {
         private readonly UniTaskCompletionSource _ready = new();

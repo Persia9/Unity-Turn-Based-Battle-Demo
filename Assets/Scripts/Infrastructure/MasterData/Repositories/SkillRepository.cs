@@ -6,6 +6,7 @@ namespace Infrastructure.MasterData.Repositories
     {
         private readonly IMasterDatabaseProvider _provider;
         public SkillRepository(IMasterDatabaseProvider provider) => _provider = provider;
+
         public SkillMaster Get(int id)
         {
             if (_provider.CoreDb.SkillMasterTable.TryFindById(id, out var value)) return value;

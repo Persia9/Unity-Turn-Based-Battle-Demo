@@ -6,7 +6,6 @@ using Domain.Battle;
 
 namespace Application.UseCases
 {
-    // Scene scoped orchestration. Views submit intent; they do not decide enemy behavior.
     public sealed class PlayPlayerTurnUseCase : IDisposable
     {
         private readonly AttackUseCase _attack;
@@ -17,7 +16,11 @@ namespace Application.UseCases
         private bool _disposed;
 
         public PlayPlayerTurnUseCase(AttackUseCase attack, IBattleSession session, ITurnDelay delay)
-        { _attack = attack; _session = session; _delay = delay; }
+        {
+            _attack = attack;
+            _session = session;
+            _delay = delay;
+        }
 
         public UniTask Execute(CancellationToken cancellationToken) => Execute(BattleAction.Attack, cancellationToken);
 
@@ -34,12 +37,16 @@ namespace Application.UseCases
                 if (_session.State.IsFinished) return;
                 await _delay.Wait(token);
                 token.ThrowIfCancellationRequested();
-                // An old delayed action must never affect a newly initialized battle.
                 if (_session.Revision != revision) return;
                 _attack.ExecuteEnemyAttack();
             }
-            catch (OperationCanceledException) when (token.IsCancellationRequested) { }
-            finally { _busy = false; }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+            }
+            finally
+            {
+                _busy = false;
+            }
         }
 
         public void Dispose()

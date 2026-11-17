@@ -59,6 +59,7 @@ namespace SceneFlow.Battle
         }
 
         public void Initialize() => Run().Forget();
+
         private async UniTask Run()
         {
             try

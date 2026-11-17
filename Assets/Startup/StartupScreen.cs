@@ -14,7 +14,9 @@ namespace Startup
             _status.text = message;
             _canvas.enabled = true;
         }
+
         public void Hide() => _canvas.enabled = false;
+
         public void Fail(Exception exception)
         {
             Debug.LogException(exception);

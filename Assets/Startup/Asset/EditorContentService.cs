@@ -2,11 +2,10 @@
 using System;
 using Startup;
 using Cysharp.Threading.Tasks;
-using Infrastructure.Asset;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace HotUpdate
+namespace Infrastructure.Asset
 {
     public sealed class EditorContentService : IAssetService, ISceneBundleLoader
     {
@@ -14,10 +13,13 @@ namespace HotUpdate
         {
             var entry = LocalAssetCatalog.Get(key);
             var asset = UnityEditor.AssetDatabase.LoadAssetAtPath<T>(entry.Path);
-            return asset != null ? UniTask.FromResult(asset)
+            return asset != null
+                ? UniTask.FromResult(asset)
                 : UniTask.FromException<T>(new InvalidOperationException($"Missing editor asset: {key}"));
         }
+
         public UniTask Release(object assetOrInstance) => UniTask.CompletedTask;
+
         public async UniTask LoadScene(string sceneName)
         {
             if (sceneName != "Title" && sceneName != "Battle") throw new ArgumentException(sceneName);

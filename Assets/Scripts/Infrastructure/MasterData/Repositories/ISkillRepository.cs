@@ -7,4 +7,3 @@ namespace Infrastructure.MasterData.Repositories
         SkillMaster Get(int id);
     }
 }
-

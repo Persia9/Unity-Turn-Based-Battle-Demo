@@ -20,8 +20,12 @@ namespace Application.UseCases
             IPublisher<BattleFinishedMessage> finishPublisher,
             IPublisher<BattleActionResolvedMessage> actionPublisher)
         {
-            _session = battleSession; _rules = battleSystem; _damage = damagePublisher;
-            _turn = turnPublisher; _finish = finishPublisher; _action = actionPublisher;
+            _session = battleSession;
+            _rules = battleSystem;
+            _damage = damagePublisher;
+            _turn = turnPublisher;
+            _finish = finishPublisher;
+            _action = actionPublisher;
         }
 
         public bool ExecutePlayerAttack() => ExecutePlayerAction(BattleAction.Attack);
@@ -50,9 +54,13 @@ namespace Application.UseCases
                     state.NextTurn();
                     _turn.Publish(new TurnChangedMessage(state.CurrentTurn, state.TurnCount));
                 }
+
                 return true;
             }
-            finally { _executing = false; }
+            finally
+            {
+                _executing = false;
+            }
         }
     }
 }

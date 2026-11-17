@@ -163,7 +163,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ad2a481c6f94464a74f43290f6956ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: BattleDemo.Startup::Startup.StartupLauncher
-  _screenPrefab: {fileID: 990100, guid: dfb4e5eee1834f7eb8aaa3f157a60b6d, type: 3}
   _remoteRoot: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

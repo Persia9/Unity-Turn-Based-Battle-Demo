@@ -20,9 +20,17 @@ namespace Application.UseCases
         private bool _loading;
         private bool _advancePending;
         private int _completedRevision = -1;
+
         public RunFlowUseCase(RunSession run, IBattleSession battle, IStageRepository stages,
             ICharacterRepository characters, ISkillRepository skills, ISceneService scenes)
-        { _run = run; _battle = battle; _stages = stages; _characters = characters; _skills = skills; _scenes = scenes; }
+        {
+            _run = run;
+            _battle = battle;
+            _stages = stages;
+            _characters = characters;
+            _skills = skills;
+            _scenes = scenes;
+        }
 
         public async UniTask StartNewRun(RunMode mode = RunMode.Expedition)
         {
@@ -33,8 +41,12 @@ namespace Application.UseCases
                 ResetRun(mode);
                 await LoadCurrentBattle();
             }
-            finally { _loading = false; }
+            finally
+            {
+                _loading = false;
+            }
         }
+
         public void RestartInPlace(RunMode mode)
         {
             if (_loading) throw new InvalidOperationException("A battle transition is already in progress.");
@@ -62,7 +74,6 @@ namespace Application.UseCases
                 throw new InvalidOperationException("No upgrade is pending.");
             }
 
-            // If preparation fails, retry without applying the upgrade twice.
             PrepareCurrentBattle();
             _advancePending = false;
         }
@@ -71,7 +82,8 @@ namespace Application.UseCases
         {
             if (_run.State.Phase == RunPhase.NotStarted)
                 _run.State.Start(_characters.Get(_stages.Get(1).PlayerCharacterId).MaxHp);
-            if (_run.State.Phase != RunPhase.InBattle) throw new InvalidOperationException("Run cannot enter a battle now.");
+            if (_run.State.Phase != RunPhase.InBattle)
+                throw new InvalidOperationException("Run cannot enter a battle now.");
             var stage = _stages.Get(CurrentStageId());
             var player = _characters.Get(stage.PlayerCharacterId);
             var enemy = _characters.Get(stage.EnemyCharacterId);
@@ -83,10 +95,12 @@ namespace Application.UseCases
             var enemyPower = _run.State.Mode == RunMode.Endless
                 ? EndlessDifficulty.ScalePower(enemySkill.Power, _run.State.Round)
                 : enemySkill.Power;
-            _battle.Initialize(new BattleUnitSnapshot(player.Id, player.Name, _run.State.MaxHp, _run.State.Hp, playerSkill.Power),
+            _battle.Initialize(
+                new BattleUnitSnapshot(player.Id, player.Name, _run.State.MaxHp, _run.State.Hp, playerSkill.Power),
                 new BattleUnitSnapshot(enemy.Id, enemy.Name, enemyHp, enemyHp, enemyPower),
                 (EnemyAttackPattern)stage.EnemyPattern, _run.State.DamageBonus, _run.State.GuardDamagePercent);
         }
+
         public bool CompleteBattle()
         {
             if (!_battle.State.IsFinished || _completedRevision == _battle.Revision) return false;
@@ -96,6 +110,7 @@ namespace Application.UseCases
             _completedRevision = _battle.Revision;
             return true;
         }
+
         private async UniTask LoadCurrentBattle()
         {
             PrepareCurrentBattle();
