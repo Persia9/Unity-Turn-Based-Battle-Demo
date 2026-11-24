@@ -24,7 +24,7 @@ namespace Startup
          Tooltip("Empty uses installed content only.")]
         private string _remoteRoot = "";
 
-        private StartupScreen _screen;
+        private LoadingScreen _screen;
 #if !UNITY_EDITOR
         private AssetBundleAssetService _assets;
         private ContentRepository _repository;
@@ -62,7 +62,7 @@ namespace Startup
             try
             {
                 var container = ProjectContext.Instance.Container;
-                _screen = container.Resolve<StartupScreen>();
+                _screen = container.Resolve<LoadingScreen>();
                 _screen.Show(string.Empty);
                 var ready = container.Resolve<StartupReady>();
                 Assembly game;
@@ -85,6 +85,7 @@ namespace Startup
                 _repository = repository;
                 var content = await repository.Select(_remoteRoot, token);
                 _selection = content;
+                container.Resolve<ContentVersion>().ResourceVersion = content.Manifest.version;
                 foreach (var metadata in content.Manifest.aotAssemblies)
                 {
                     var bytes = await repository.ReadVerified(content, metadata.file, token);

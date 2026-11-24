@@ -1,4 +1,5 @@
 using System;
+using Startup;
 using Cysharp.Threading.Tasks;
 using Domain.Run;
 using Infrastructure.Localization;
@@ -24,6 +25,8 @@ namespace Presentation.Title
         [SerializeField] private TMP_Text _endlessLabel;
         [SerializeField] private TMP_Text _languageLabel;
         [SerializeField] private TMP_Text _errorLabel;
+        [SerializeField] private TMP_Text _versionLabel;
+        [Inject] private ContentVersion _contentVersion;
         [Inject] private TitleScreenViewModel _viewModel;
         private IDisposable _binding;
         private TMP_Text[] _texts;
@@ -31,6 +34,12 @@ namespace Presentation.Title
 
         public override void OnOpened()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            _versionLabel.gameObject.SetActive(true);
+            _versionLabel.text = $"App  {_contentVersion.AppVersion}\nContent  {_contentVersion.ResourceVersion}";
+#else
+            _versionLabel.gameObject.SetActive(false);
+#endif
             _viewModel.Open();
             _binding = _viewModel.State.Subscribe(Render);
             _startButton.onClick.AddListener(OnExpeditionClicked);

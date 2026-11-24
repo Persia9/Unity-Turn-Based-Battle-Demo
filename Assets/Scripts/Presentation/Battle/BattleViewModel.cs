@@ -44,7 +44,11 @@ namespace Presentation.Battle
         public ReactiveProperty<string> EnemyIntentText { get; } = new(string.Empty);
         public ReactiveProperty<string> DefenseText { get; } = new(string.Empty);
         public ReactiveProperty<string> RunText { get; } = new(string.Empty);
+        public ReactiveProperty<string> PlayerNameText { get; } = new(string.Empty);
+        public ReactiveProperty<string> PlayerAttackText { get; } = new(string.Empty);
         public ReactiveProperty<string> PlayerHpText { get; } = new(string.Empty);
+        public ReactiveProperty<string> EnemyNameText { get; } = new(string.Empty);
+        public ReactiveProperty<string> EnemyAttackText { get; } = new(string.Empty);
         public ReactiveProperty<string> EnemyHpText { get; } = new(string.Empty);
         public ReactiveProperty<GameLanguage> Language { get; } = new(GameLanguage.English);
 
@@ -68,10 +72,10 @@ namespace Presentation.Battle
             _opened = true;
             _turnCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime);
             _displaySubscriptions = new CompositeDisposable();
-            PlayerHp.Subscribe(_ => RefreshHp()).AddTo(_displaySubscriptions);
-            PlayerMaxHp.Subscribe(_ => RefreshHp()).AddTo(_displaySubscriptions);
-            EnemyHp.Subscribe(_ => RefreshHp()).AddTo(_displaySubscriptions);
-            EnemyMaxHp.Subscribe(_ => RefreshHp()).AddTo(_displaySubscriptions);
+            PlayerHp.Subscribe(_ => RefreshPlayerHp()).AddTo(_displaySubscriptions);
+            PlayerMaxHp.Subscribe(_ => RefreshPlayerHp()).AddTo(_displaySubscriptions);
+            EnemyHp.Subscribe(_ => RefreshEnemyHp()).AddTo(_displaySubscriptions);
+            EnemyMaxHp.Subscribe(_ => RefreshEnemyHp()).AddTo(_displaySubscriptions);
             _localization.LanguageChanged += RefreshTexts;
             ResetForBattle();
         }
@@ -131,7 +135,7 @@ namespace Presentation.Battle
                 ? "battle.finished"
                 : state.EnemyIntent == BattleAction.StrongAttack
                     ? "battle.intent.strong"
-                    : "battle.intent.normal");
+                    : "battle.intent.normal", BattleRules.EnemyStrongAttackMultiplier);
             foreach (BattleAction action in System.Enum.GetValues(typeof(BattleAction)))
                 _commands[action] =
                     new BattleCommandState(state.CanPlayerChoose(action), state.GetActionCooldown(action));
@@ -141,13 +145,15 @@ namespace Presentation.Battle
                 : Text("battle.guard.inactive", 100 - state.GuardDamagePercent);
         }
 
-        public string ActionLabel(BattleAction action) => Text(action switch
+        public string ActionLabel(BattleAction action, BattleSide actor = BattleSide.Player) => Text(action switch
         {
             BattleAction.Attack => "action.attack",
             BattleAction.Defend => "action.defend",
             BattleAction.StrongAttack => "action.strong",
             _ => "action.unassigned"
-        });
+        }, actor == BattleSide.Player
+            ? BattleRules.PlayerStrongAttackMultiplier
+            : BattleRules.EnemyStrongAttackMultiplier);
 
         public string CooldownLabel(BattleAction action, int cooldown)
             => Text("action.cooldown", ActionLabel(action), cooldown);
@@ -180,7 +186,11 @@ namespace Presentation.Battle
             DefenseText.Dispose();
             RunText.Dispose();
             PlayerHpText.Dispose();
+            PlayerNameText.Dispose();
+            PlayerAttackText.Dispose();
             EnemyHpText.Dispose();
+            EnemyNameText.Dispose();
+            EnemyAttackText.Dispose();
             Language.Dispose();
         }
 
@@ -194,21 +204,29 @@ namespace Presentation.Battle
                 2 => "character.slime", 3 => "character.sentinel", 4 => "character.warden", _ => null
             };
             RunText.Value = Text(run.Mode == RunMode.Endless ? "battle.run.endless" : "battle.run", run.Round,
-                enemyKey == null ? state.Enemy.Name : Text(enemyKey), run.DamageBonus, 100 - run.GuardDamagePercent);
+                enemyKey == null ? state.Enemy.Name : Text(enemyKey), run.DamageBonus, 100 - run.GuardDamagePercent, RunRules.ExpeditionBattleCount);
             TurnText.Value = Text("battle.turn", state.TurnCount,
                 Text(state.CurrentTurn == TurnOwner.Player ? "side.player" : "side.enemy"));
             Language.Value = _localization.CurrentLanguage;
-            RefreshHp();
+            PlayerNameText.Value = Text("character.hero");
+            EnemyNameText.Value = Text("side.enemy");
+            PlayerAttackText.Value = $"{Text("action.attack")} {state.Player.BasePower + state.PlayerDamageBonus}";
+            EnemyAttackText.Value = $"{Text("action.attack")} {state.Enemy.BasePower}";
+            RefreshPlayerHp();
+            RefreshEnemyHp();
             RefreshCommands(state);
         }
 
-        private void RefreshHp()
+        private void RefreshPlayerHp()
         {
             if (!_opened || _disposed) return;
-            var state = _session.State;
-            PlayerHpText.Value = Text("battle.hero_hp", PlayerHp.Value, PlayerMaxHp.Value,
-                state.Player.BasePower + state.PlayerDamageBonus);
-            EnemyHpText.Value = Text("battle.enemy_hp", EnemyHp.Value, EnemyMaxHp.Value, state.Enemy.BasePower);
+            PlayerHpText.Value = $"HP  {PlayerHp.Value} / {PlayerMaxHp.Value}";
+        }
+
+        private void RefreshEnemyHp()
+        {
+            if (!_opened || _disposed) return;
+            EnemyHpText.Value = $"HP  {EnemyHp.Value} / {EnemyMaxHp.Value}";
         }
 
         private string Text(string key, params object[] arguments)
@@ -217,13 +235,13 @@ namespace Presentation.Battle
             return key switch
             {
                 "battle.finished" => "Battle finished",
-                "battle.intent.strong" => "Enemy next: STRONG ATTACK x3 - Consider defending!",
+                "battle.intent.strong" => $"Enemy next: STRONG ATTACK x{arguments[0]} - Consider defending!",
                 "battle.intent.normal" => "Enemy next: Normal attack",
                 "battle.guard.active" => $"Guard active: next hit takes {arguments[0]}% damage",
                 "battle.guard.inactive" => $"Defend: reduce the next enemy hit by {arguments[0]}%",
                 "action.attack" => "Attack",
                 "action.defend" => "Defend",
-                "action.strong" => "Strong attack x2",
+                "action.strong" => $"Strong attack x{arguments[0]}",
                 "action.cooldown" => $"{arguments[0]} (CD {arguments[1]})",
                 _ => "Unassigned"
             };

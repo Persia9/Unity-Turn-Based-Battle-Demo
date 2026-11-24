@@ -15,6 +15,16 @@ namespace Startup
         void Fail(Exception exception);
     }
 
+    public sealed class ContentVersion
+    {
+        public string AppVersion { get; } = UnityEngine.Application.version;
+#if UNITY_EDITOR
+        public string ResourceVersion { get; set; } = "Editor (local assets)";
+#else
+        public string ResourceVersion { get; set; } = "Unavailable";
+#endif
+    }
+
     public sealed class StartupReady
     {
         private readonly UniTaskCompletionSource _ready = new();

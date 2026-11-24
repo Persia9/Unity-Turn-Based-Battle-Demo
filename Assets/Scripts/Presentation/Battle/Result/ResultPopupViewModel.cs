@@ -159,7 +159,7 @@ namespace Presentation.Battle.Result
             var endless = run.Mode == RunMode.Endless;
             var upgrades = run.Phase == RunPhase.ChoosingUpgrade || _selected.HasValue;
             var heading = upgrades
-                ? _localization.Get(endless ? "result.round_clear.endless" : "result.round_clear", run.Round)
+                ? _localization.Get(endless ? "result.round_clear.endless" : "result.round_clear", run.Round, RunRules.ExpeditionBattleCount)
                 : run.Phase == RunPhase.Cleared && _context.IsWin
                     ? _localization.Get("result.cleared")
                     : _localization.Get(endless ? "result.failed.endless" : "result.failed");
@@ -168,20 +168,21 @@ namespace Presentation.Battle.Result
                 Title = _localization.Get(endless ? "result.title.endless" : "result.title"),
                 Heading = heading.ToUpperInvariant(),
                 Progress = $"{_localization.Get("result.progress")}   " +
-                           $"{_localization.Get(endless ? "result.wins.endless" : "result.wins", run.Wins)}   •   " +
-                           _localization.Get(endless ? "result.reached.endless" : "result.reached", run.Round),
+                           $"{_localization.Get(endless ? "result.wins.endless" : "result.wins", run.Wins, RunRules.ExpeditionBattleCount)}   •   " +
+                           _localization.Get(endless ? "result.reached.endless" : "result.reached", run.Round, RunRules.ExpeditionBattleCount),
                 Statistics =
                     $"{_localization.Get("result.turns")}  {run.TotalTurns}      {_localization.Get("result.damage")}  {run.TotalDamageTaken}",
                 Hp = $"HP  {run.Hp} / {run.MaxHp}", Attack = $"ATK  +{run.DamageBonus}",
                 Guard = $"GUARD  {100 - run.GuardDamagePercent}%",
-                Guidance = _localization.Get(upgrades ? "result.guidance.upgrade" :
-                    endless ? "result.guidance.retry.endless" : "result.guidance.retry"),
+                Guidance = upgrades
+                    ? _localization.Get("result.guidance.upgrade", RunRules.BetweenBattleRecoveryHp)
+                    : _localization.Get(endless ? "result.guidance.retry.endless" : "result.guidance.retry"),
                 Error = _error, Language = _localization.CurrentLanguage,
                 Retry = _localization.Get(endless ? "result.retry.endless" : "result.retry"),
                 Return = _localization.Get("result.return"),
-                AttackUpgrade = _localization.Get("result.attack"),
-                VitalityUpgrade = _localization.Get("result.vitality"),
-                GuardUpgrade = _localization.Get("result.guard"),
+                AttackUpgrade = _localization.Get("result.attack", RunRules.AttackUpgradeBonus),
+                VitalityUpgrade = _localization.Get("result.vitality", RunRules.VitalityMaxHpIncrease, RunRules.VitalityHealAmount),
+                GuardUpgrade = _localization.Get("result.guard", RunRules.GuardUpgradeReductionPercent),
                 ShowUpgrades = upgrades, CanInteract = !_busy, SelectedUpgrade = _selected
             };
         }

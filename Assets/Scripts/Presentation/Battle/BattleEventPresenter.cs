@@ -87,7 +87,7 @@ namespace Presentation.Battle
             var result = message.Result;
             _viewModel.AppendLog(result.Action == BattleAction.Defend
                 ? _localization.Get("log.player_defends")
-                : _localization.Get("log.action", Side(result.Actor), _viewModel.ActionLabel(result.Action)));
+                : _localization.Get("log.action", Side(result.Actor), _viewModel.ActionLabel(result.Action, result.Actor)));
             _viewModel.RefreshCommands(_session.State);
         }
 

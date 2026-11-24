@@ -177,7 +177,7 @@ BattleUnitSnapshot.BasePower
 ```text
 Resources/ProjectContext.prefab
   └─ ProjectInstaller
-       └─ ILogger / StartupReady / StartupScreen
+       └─ ILogger / StartupReady / LoadingScreen
 
 StartupLauncher
   ├─ Editor / Player に応じたリソースローダーを登録

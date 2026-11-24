@@ -18,7 +18,11 @@ namespace Presentation.Battle
         [SerializeField] private TMP_Text _defenseText;
         [SerializeField] private TMP_Text _turnText;
         [SerializeField] private TMP_Text _runText;
+        [SerializeField] private TMP_Text _playerNameText;
+        [SerializeField] private TMP_Text _playerAttackText;
         [SerializeField] private TMP_Text _playerHpText;
+        [SerializeField] private TMP_Text _enemyNameText;
+        [SerializeField] private TMP_Text _enemyAttackText;
         [SerializeField] private TMP_Text _enemyHpText;
         [SerializeField] private TMP_Text _logText;
 
@@ -38,7 +42,11 @@ namespace Presentation.Battle
             _viewModel.Language.Subscribe(ApplyLanguage).AddTo(_disposables);
 
             _viewModel.TurnText.Subscribe(x => _turnText.text = x).AddTo(_disposables);
+            _viewModel.PlayerNameText.Subscribe(x => _playerNameText.text = x).AddTo(_disposables);
+            _viewModel.PlayerAttackText.Subscribe(x => _playerAttackText.text = x).AddTo(_disposables);
             _viewModel.PlayerHpText.Subscribe(x => _playerHpText.text = x).AddTo(_disposables);
+            _viewModel.EnemyNameText.Subscribe(x => _enemyNameText.text = x).AddTo(_disposables);
+            _viewModel.EnemyAttackText.Subscribe(x => _enemyAttackText.text = x).AddTo(_disposables);
             _viewModel.EnemyHpText.Subscribe(x => _enemyHpText.text = x).AddTo(_disposables);
             _viewModel.RunText.Subscribe(x => _runText.text = x).AddTo(_disposables);
             _viewModel.LogText.Subscribe(RefreshLog).AddTo(_disposables);

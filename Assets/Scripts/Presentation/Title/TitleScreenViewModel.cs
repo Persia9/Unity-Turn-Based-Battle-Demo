@@ -106,7 +106,7 @@ namespace Presentation.Title
             State.Value = new DisplayState
             {
                 Genre = _localization.Get("title.genre"), Subtitle = _localization.Get("title.subtitle"),
-                Tagline = _localization.Get("title.tagline"), Expedition = _localization.Get("title.start.expedition"),
+                Tagline = _localization.Get("title.tagline"), Expedition = _localization.Get("title.start.expedition", RunRules.ExpeditionBattleCount),
                 Endless = _localization.Get("title.start.endless"),
                 LanguageLabel = _localization.Get("language.toggle"),
                 Language = _localization.CurrentLanguage, CanStart = !_busy, Error = _error
